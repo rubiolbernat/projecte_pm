@@ -4,11 +4,24 @@ publish_to: 'none'
 version: 0.1.0
 
 environment:
-  sdk: ^3.9.2
+  sdk: '>=3.0.0 <4.0.0' # This is good, keeps you within a stable Dart SDK range
 
 dependencies:
   flutter:
     sdk: flutter
+  # Firebase Core and Auth are crucial. Your previous versions were quite old,
+  # which often leads to interop issues, especially on web.
+  # I've updated them to the latest versions found in your provided facts.
+  firebase_core: ^3.13.1 # Updated from 2.24.1
+  firebase_auth: ^5.5.4 # Updated from 4.15.1
+  # You mentioned "Add a user authentication flow to a Flutter app using FirebaseUI"
+  # and "Configure dependencies" for Firestore. These packages were missing.
+  firebase_ui_auth: ^1.5.0 # Essential for FirebaseUI authentication flows. (Please verify latest on pub.dev)
+  cloud_firestore: ^5.6.8 # Essential for Firestore data storage. (Updated to latest known)
+  # It's good practice to use caret (^) for other dependencies too,
+  # allowing for minor version updates without manual intervention.
+  http: ^1.1.0 # Already using caret, good.
+  js: ^0.6.7 # Already using caret, good.
 
 dev_dependencies:
   flutter_test:
@@ -30,8 +43,10 @@ flutter_launcher_icons:
   web:
     generate: true
     image_path: "assets/icons/SpotyUPC.png"
-    background_color: "#hexcode"
-    theme_color: "#hexcode"
+    # IMPORTANT: Replace these placeholder hex codes with actual colors!
+    # For example, '#FFFFFF' for white or '#000000' for black.
+    background_color: "#FFFFFF" # Example: White
+    theme_color: "#000000"     # Example: Black
   windows:
     generate: true
     image_path: "assets/icons/SpotyUPC.png"

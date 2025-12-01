@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "440325395288",
+    "project_id": "spotyupc",
+    "storage_bucket": "spotyupc.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:440325395288:android:977a4466dd375d467a8b2d",
+        "android_client_info": {
+          "package_name": "com.example.spotyupc"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAZvG6fEa9ZCI5RZhErVjCbyBTNi3NlgoA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:440325395288:android:f36ccd21e80761777a8b2d",
+        "android_client_info": {
+          "package_name": "com.spotyupc.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAZvG6fEa9ZCI5RZhErVjCbyBTNi3NlgoA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

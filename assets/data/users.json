@@ -1,0 +1,50 @@
+[
+  {
+    "id": "1",
+    "role": "admin",
+    "name": "Anna Artista",
+    "email": "anna@upc.edu",
+    "password": "password123",
+    "albumId": ["album1", "album2"],
+    "playlistId": ["playlist1", "playlist2"],
+    "seguits": ["2", "3"],
+    "seguidors": ["2", "3", "4"],
+    "createdAt": "2024-01-15T10:30:00Z"
+  },
+  {
+    "id": "2", 
+    "role": "user",
+    "name": "Pere Professor",
+    "email": "pere@upc.edu",
+    "password": "upc2024",
+    "albumId": null,
+    "playlistId": ["playlist3"],
+    "seguits": ["1"],
+    "seguidors": ["1"],
+    "createdAt": "2024-02-20T14:45:00Z"
+  },
+  {
+    "id": "3",
+    "role": "user", 
+    "name": "Maria Música",
+    "email": "maria@upc.edu",
+    "password": "music123",
+    "albumId": null,
+    "playlistId": ["playlist4", "playlist5"],
+    "seguits": ["1", "2"],
+    "seguidors": ["1"],
+    "createdAt": "2024-03-10T09:15:00Z"
+  },
+  {
+    "id": "4",
+    "role": "admin",
+    "name": "Admin SpotyUPC",
+    "email": "admin@spotyupc.com", 
+    "password": "admin123",
+    "albumId": ["album3", "album4", "album5"],
+    "playlistId": ["playlist6"],
+    "seguits": ["1", "2", "3"],
+    "seguidors": ["1", "2", "3"],
+    "createdAt": "2024-01-01T00:00:00Z"
+  }
+]
