@@ -10,6 +10,7 @@ class User {
   List<String> seguidors;
   DateTime createdAt;
 
+  //Constructor
   User({
     required this.id,
     required this.role,
