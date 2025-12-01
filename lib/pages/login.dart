@@ -1,47 +1,54 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // Add this import
-import 'package:projecte_pm/pages/LandingPage.dart';
-import 'package:projecte_pm/services/ServeiLogin.dart';
-import 'animated_background.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // Para autenticaciones de usuario
+import 'package:projecte_pm/pages/LandingPage.dart'; // Pagina landing despues de login
+import 'package:projecte_pm/services/ServeiLogin.dart'; // Servicio login a partir de firebase
+import 'animated_background.dart'; // Fondo animado hecho con IA
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
-
   @override
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final FirebaseAuthService _authService = FirebaseAuthService();
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  bool _isLoading = false;
-
-// APARTADO REGISTRO HECHO CON IA
+  final ServicioAutenticacion _authService =
+      ServicioAutenticacion(); // Instancia servei autenticació de firebase de ServeiLogin.dart
+  final TextEditingController _emailController =
+      TextEditingController(); // Controlador camps de text de mail
+  final TextEditingController _passwordController =
+      TextEditingController(); // Controladors camp de text de pass
+  bool _isLoading = false; // Per saber si carrega
 
   void _showRegistrationDialog() {
-    final TextEditingController regNameController = TextEditingController();
-    final TextEditingController regEmailController = TextEditingController();
+    // Popup para registrar nuevo usuario al firebase
+    final TextEditingController regNameController =
+        TextEditingController(); // Controlador camps de text de nom
+    final TextEditingController regEmailController =
+        TextEditingController(); // Se sobreentiende
     final TextEditingController regPasswordController = TextEditingController();
     final TextEditingController regConfirmPasswordController =
         TextEditingController();
 
-    bool _isLoading = false;
-    String? _errorMessage;
+    bool _isLoading = false; // Se sobreentiende
+    String?
+        _errorMessage; // String con el error en función de condiciones que hemos tenido en cuenta
 
     showDialog(
+      // Popup
       context: context,
-      barrierDismissible: false,
+      barrierDismissible:
+          false, // No se puede tirar atras a no ser que le des a cancelar
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: Text('Registre a SpotyUPC'),
+              title: Text('Registre a SpotyUPC'), // Titulo
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (_errorMessage != null)
+                    if (_errorMessage !=
+                        null) // Si el string tiene un error puesto cargamos ventana con error
                       Container(
                         padding: EdgeInsets.all(12),
                         decoration: BoxDecoration(
@@ -62,8 +69,12 @@ class _LoginScreenState extends State<LoginScreen> {
                           ],
                         ),
                       ),
-                    if (_errorMessage != null) SizedBox(height: 12),
+                    if (_errorMessage != null)
+                      SizedBox(
+                          height:
+                              12), // Si el string carga error pon espacio para quedar coherente esteticamente
                     TextField(
+                      //Input de nombre del usuario
                       controller: regNameController,
                       style: TextStyle(color: Colors.blue),
                       decoration: InputDecoration(
@@ -74,8 +85,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                     ),
-                    SizedBox(height: 12),
+                    SizedBox(height: 12), // espacio
                     TextField(
+                      // Input mail usuario
                       controller: regEmailController,
                       style: TextStyle(color: Colors.blue),
                       decoration: InputDecoration(
@@ -89,6 +101,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     SizedBox(height: 12),
                     TextField(
+                      //Input contraseña
                       controller: regPasswordController,
                       obscureText: true,
                       style: TextStyle(color: Colors.blue),
@@ -102,6 +115,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     SizedBox(height: 12),
                     TextField(
+                      //Input contraseña repetida
                       controller: regConfirmPasswordController,
                       obscureText: true,
                       style: TextStyle(color: Colors.blue),
@@ -115,6 +129,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     SizedBox(height: 16),
                     Text(
+                      // Texto que dice que se envia correo, el correo se configura en la consola del firebase
                       'Enviarem un correu de verificació a la teva adreça electronica.',
                       style: TextStyle(fontSize: 12, color: Colors.white),
                       textAlign: TextAlign.center,
@@ -124,15 +139,19 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               actions: [
                 TextButton(
-                  onPressed: _isLoading ? null : () => Navigator.pop(context),
+                  onPressed: _isLoading
+                      ? null
+                      : () => Navigator.pop(
+                          context), // Si no esta cargando, cierra popup
                   child: Text('Cancel·lar'),
                 ),
                 ElevatedButton(
                   onPressed: _isLoading
                       ? null
                       : () async {
-                          // Validation
-                          if (regNameController.text.isEmpty ||
+                          //Validamos que los campos del registro esten bien
+                          if (regNameController.text
+                                  .isEmpty || //Error que algo no esta escrito
                               regEmailController.text.isEmpty ||
                               regPasswordController.text.isEmpty ||
                               regConfirmPasswordController.text.isEmpty) {
@@ -142,12 +161,14 @@ class _LoginScreenState extends State<LoginScreen> {
                           }
 
                           if (regPasswordController.text.length < 6) {
+                            //Error clave < 6 caracteres
                             setState(() => _errorMessage =
                                 'La contrasenya ha de tenir almenys 6 caràcters');
                             return;
                           }
 
-                          if (regPasswordController.text !=
+                          if (regPasswordController
+                                  .text != // Error no coincidencia
                               regConfirmPasswordController.text) {
                             setState(() => _errorMessage =
                                 'Les contrasenyes no coincideixen');
@@ -155,11 +176,13 @@ class _LoginScreenState extends State<LoginScreen> {
                           }
 
                           setState(() {
+                            // Si todo correcto, cargamos pantalla de carga
                             _isLoading = true;
                             _errorMessage = null;
                           });
 
                           try {
+                            // Intentamos registrar usuario con firebase
                             final user = await _authService.register(
                               regEmailController.text,
                               regPasswordController.text,
@@ -167,7 +190,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             );
 
                             if (user != null) {
-                              Navigator.pop(context);
+                              // Si el usuario se ha registrado correctamente
+                              Navigator.pop(context); // Cerramos popup
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text(
@@ -179,49 +203,56 @@ class _LoginScreenState extends State<LoginScreen> {
                                   duration: Duration(seconds: 5),
                                 ),
                               );
-                              // Auto-fill email for login
-                              _emailController.text = regEmailController.text;
+                              _emailController.text = regEmailController
+                                  .text; // Ponemos el mail en el login para que inicie sesión más fácilmente
                             }
                           } on FirebaseAuthException catch (e) {
+                            // Capturamos errores de firebase y los mostramos en el popup
                             String errorMessage;
                             switch (e.code) {
-                              case 'email-already-in-use':
+                              // Diferentes errores que pueden salir
+                              case 'email-already-in-use': // Mail ya registrado
                                 errorMessage =
                                     'Aquest correu ja està registrat';
                                 break;
-                              case 'invalid-email':
+                              case 'invalid-email': // Mail no valido
                                 errorMessage = 'Correu electrònic no vàlid';
                                 break;
-                              case 'operation-not-allowed':
+                              case 'operation-not-allowed': // Operación no permitida
                                 errorMessage = 'Operació no permesa';
                                 break;
-                              case 'weak-password':
+                              case 'weak-password': // Contraseña débil
                                 errorMessage = 'Contrasenya massa feble';
                                 break;
-                              default:
+                              default: // Error desconocido
                                 errorMessage = 'Error: ${e.message}';
                             }
                             setState(() {
+                              // Mostramos error en el popup
                               _errorMessage = errorMessage;
-                              _isLoading = false;
+                              _isLoading = false; // Dejamos de cargar
                             });
                           } catch (e) {
+                            // Otro error desconocido
                             setState(() {
-                              _errorMessage = 'Error desconegut: $e';
-                              _isLoading = false;
+                              _errorMessage =
+                                  'Error desconegut: $e'; // Mostramos error
+                              _isLoading = false; // Dejamos de cargar
                             });
                           }
                         },
-                  child: _isLoading
-                      ? SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : Text('Registrar-me'),
+                  child:
+                      _isLoading // Si esta cargando mostramos circulo de carga
+                          ? SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : Text(
+                              'Registrar-me'), // Si no, mostramos texto registrar
                 ),
               ],
             );
@@ -232,27 +263,34 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _login() async {
-    setState(() => _isLoading = true);
+    // Función login
+    setState(() => _isLoading = true); // Mostramos pantalla de carga
 
     try {
+      // Intentamos loguear usuario
       final user = await _authService.login(
+        // Llamada a la función login del ServeiLogin.dart
         _emailController.text,
         _passwordController.text,
       );
 
-      setState(() => _isLoading = false);
+      setState(
+          () => _isLoading = false); // Dejamos de mostrar pantalla de carga
 
       if (user != null) {
-        // Login successful - navigate to main app
+        // Si el usuario se ha logueado correctamente
         Navigator.pushReplacement(
+          // Navegamos a la pagina landing y no podemos volver atras
           context,
           MaterialPageRoute(builder: (context) => LandingPage()),
         );
       }
     } on FirebaseAuthException catch (e) {
-      setState(() => _isLoading = false);
+      // Capturamos errores de firebase
+      setState(
+          () => _isLoading = false); // Dejamos de mostrar pantalla de carga
       if (e.code == 'email-not-verified') {
-        // Login failed - show error
+        // Si hay error de mail no verificado
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text(
@@ -266,8 +304,8 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
     } catch (e) {
+      // Otro error desconocido
       setState(() => _isLoading = false);
-      // Login failed - show error
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
             content: Text(
@@ -278,10 +316,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Pantalla login
     return Scaffold(
       body: Stack(
+        // Usamos stack para poner fondo animado y encima el login
         children: [
-          Positioned.fill(child: AnimatedSoundWaveBackground()),
+          Positioned.fill(
+              child: AnimatedSoundWaveBackground()), // Fondo animado
           Center(
             child: Container(
               height: 450,
@@ -353,7 +394,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     SizedBox(height: 24),
                     ElevatedButton(
-                      onPressed: _isLoading ? null : _login,
+                      onPressed: _isLoading
+                          ? null
+                          : _login, // Si esta cargando no se puede pulsar
                       child: _isLoading
                           ? SizedBox(
                               height: 20,
@@ -369,7 +412,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     TextButton(
-                      onPressed: _showRegistrationDialog,
+                      // Boton registrar
+                      onPressed:
+                          _showRegistrationDialog, // Muestra popup registro
                       child: Text('Registra\'t'),
                       style: TextButton.styleFrom(
                         shape: RoundedRectangleBorder(

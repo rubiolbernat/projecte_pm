@@ -1,129 +1,156 @@
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:projecte_pm/models/User.dart' as ClaseUsuari;
+import 'package:firebase_auth/firebase_auth.dart'; // Importamos Firebase
+import 'package:projecte_pm/models/User.dart'
+    as ClaseUsuari; // Importamos nuestro modelo de usuario
 
-class FirebaseAuthService {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+class ServicioAutenticacion {
+  // Servicio de autenticación
+  final FirebaseAuth _autenticacion =
+      FirebaseAuth.instance; // Instancia de FirebaseAuth
 
-  // 1. LOGIN - Sign in with email/password
   Future<ClaseUsuari.User?> login(String email, String password) async {
+    // 1. LOGIN
     try {
-      final userCredential = await _auth.signInWithEmailAndPassword(
+      // Intentamos loguear
+      final userCredential = await _autenticacion.signInWithEmailAndPassword(
+        // Llamada a Firebase
         email: email,
         password: password,
       );
       if (!userCredential.user!.emailVerified) {
-        await _auth.signOut(); // Sign them out
+        // Comprobamos si el email está verificado, sino esta verificado:
+        await _autenticacion.signOut(); // Desconectamos al usuario
         throw FirebaseAuthException(
+          // Lanzamos excepción personalizada
           code: 'email-not-verified',
           message: 'Verifica el teu correu electrònic per registrar-te.',
-        ); // Remove "rethrow;" from here
+        );
       }
-      return _userFromFirebaseUser(userCredential.user);
+      return _convertirUsuario(
+          userCredential.user); // Convertimos a nuestro modelo User
     } on FirebaseAuthException catch (e) {
+      // Capturamos errores de Firebase
       print("Login error: ${e.code}: ${e.message}");
-      rethrow; // Keep this here
+      rethrow;
     } catch (e) {
       print("Login error: $e");
       rethrow;
     }
   }
 
-  // 2. REGISTER - Create new account
   Future<ClaseUsuari.User?> register(
+    // 2. REGISTRO
     String email,
     String password,
     String name,
   ) async {
     try {
-      final userCredential = await _auth.createUserWithEmailAndPassword(
+      // Intentamos registrar
+      final userCredential =
+          await _autenticacion.createUserWithEmailAndPassword(
+        // Llamada a Firebase
         email: email,
         password: password,
       );
 
-      // Update display name in Firebase
-      await userCredential.user?.updateDisplayName(name);
-      await userCredential.user?.sendEmailVerification();
-      await _auth.signOut();
-      return _userFromFirebaseUser(userCredential.user);
+      await userCredential.user?.updateDisplayName(name); // Actualizamos nombre
+      await userCredential.user
+          ?.sendEmailVerification(); // Enviamos email verificación
+      await _autenticacion.signOut(); // Desconectamos al usuario tras registrar
+      return _convertirUsuario(
+          userCredential.user); // Convertimos a nuestro modelo User
     } on FirebaseAuthException catch (e) {
-      print("Registration error: ${e.code}: ${e.message}");
+      // Capturamos errores de Firebase
+      print("Registration error: ${e.code}: ${e.message}"); // Log del error
       rethrow;
     } catch (e) {
+      // Otro tipo de error
       print("Registration error: $e");
-      rethrow; // Change this from "return null" to "rethrow"
-    }
-  }
-
-  // NEW: Resend verification email
-  Future<void> resendVerificationEmail() async {
-    try {
-      User? user = _auth.currentUser;
-      if (user != null) {
-        await user.sendEmailVerification();
-      }
-    } catch (e) {
-      print("Resend verification error: $e");
       rethrow;
     }
   }
 
-  // NEW: Check if email is verified
-  Future<bool> isEmailVerified() async {
+  Future<void> resendVerificationEmail() async {
+    //Reenviar email verificación
     try {
-      User? user = _auth.currentUser;
+      User? user = _autenticacion.currentUser; // Usuario actual
       if (user != null) {
-        await user.reload(); // Refresh user data
-        return user.emailVerified;
+        // Si existe usuario
+        await user.sendEmailVerification(); // Enviamos email verificación
       }
-      return false;
     } catch (e) {
+      // Otro tipo de error
+      print("Resend verification error: $e"); // Log del error
+      rethrow;
+    }
+  }
+
+  Future<bool> isEmailVerified() async {
+    // Comprobar si email verificado
+    try {
+      // Intentamos comprobar
+      User? user = _autenticacion.currentUser; // Usuario actual
+      if (user != null) {
+        // Si existe usuario
+        await user.reload(); // Recargamos datos usuario
+        return user.emailVerified; // Devolvemos estado verificación
+      }
+      return false; // Si no hay usuario, no está verificado
+    } catch (e) {
+      // Otro tipo de error
       print("Email verification check error: $e");
       return false;
     }
   }
 
-  // NEW: Wait for email verification (polling)
   Future<bool> waitForEmailVerification({int maxSeconds = 60}) async {
-    int secondsWaited = 0;
+    // Esperar verificación email
+    int secondsWaited = 0; // Segundos esperados
 
     while (secondsWaited < maxSeconds) {
-      await Future.delayed(Duration(seconds: 2));
-      secondsWaited += 2;
+      //  Mientras no superemos el máximo de segundos
+      await Future.delayed(Duration(seconds: 2)); // Esperamos 2 segundos
+      secondsWaited += 2; // Incrementamos contador
 
       if (await isEmailVerified()) {
-        return true;
+        // Comprobamos verificación
+        return true; // Si está verificado, devolvemos true
       }
     }
 
-    return false;
+    return false; // Si se supera el tiempo, devolvemos false
   }
 
-  // 3. Convert Firebase User to your User class
-  ClaseUsuari.User? _userFromFirebaseUser(User? firebaseUser) {
-    if (firebaseUser == null) return null;
+  ClaseUsuari.User? _convertirUsuario(User? firebaseUser) {
+    // Convertir usuario
+    if (firebaseUser == null) return null; // Si es nulo, devolvemos nulo
 
     return ClaseUsuari.User(
-      id: firebaseUser.uid,
-      role: false,
-      name: firebaseUser.displayName ?? firebaseUser.email!.split('@')[0],
-      email: firebaseUser.email!,
-      password: '',
-      albumId: null,
-      playlistId: [],
-      seguits: [],
-      seguidors: [],
-      createdAt: DateTime.now(),
+      // Convertimos a nuestro modelo User
+      id: firebaseUser.uid, // ID de Firebase
+      role: false, // Por defecto, rol usuario normal
+      name: firebaseUser
+              .displayName ?? // Nombre de Firebase o parte del email si no se encuentra nombre en firebase (deberia ser imposible)
+          firebaseUser.email!.split('@')[0],
+      email: firebaseUser.email!, // Email del usuario
+      password: '', // No almacenamos la contraseña porque se guarda en firebase
+      albumId: null, // Álbumes vacíos por defecto
+      playlistId: [], // Listas de reproducción vacías por defecto
+      seguits: [], // Usuarios seguidos vacíos por defecto
+      seguidors: [], // Seguidores vacíos por defecto
+      createdAt: DateTime.now(), // Fecha de creación actual
     );
   }
 
-  // 4. Logout
   Future<void> logout() async {
-    await _auth.signOut();
+    // 4. LOGOUT
+    await _autenticacion.signOut(); // Llamada a Firebase para desconectar
   }
 
-  // 5. Check current user
-  ClaseUsuari.User? get currentUser {
-    final user = _auth.currentUser;
-    return user != null ? _userFromFirebaseUser(user) : null;
+  ClaseUsuari.User? get usuarioActual {
+    // Obtener usuario actual
+    final user = _autenticacion.currentUser; // Usuario de Firebase
+    return user != null
+        ? _convertirUsuario(user)
+        : null; // Convertimos a nuestro modelo User
   }
 }
