@@ -1,40 +1,19 @@
 class Song {
-  final String _id; //No modificable
-  String _nom;
-  List<String> _artista; //Pot tenir mes d'un artista
-  List<String> _albumId; //Pot estar en mes d'un album
-  double _durada; //Durada de la cançó
-  final DateTime _dataPujada; //No modificable
-  final String _uploaderId; //No modificable
+  final String id; // id de la cançó
+  final String name; // nom de la cançó
+  final List<String> artists; // llista d'ids d'artistes
+  final String? albumId; // pot ser null si no està en cap àlbum
+  final Duration duration; // durada de la cançó
+  final String creatorId; // id de l'usuari que ha pujat la cançó
+  final DateTime createdAt; // data de creació pujada
 
-  //Constructor
   Song({
-    required String id,
-    required String nom,
-    required List<String> artista,
-    List<String>? albumId,
-    required double durada,
-    required String uploaderId,
-  }) : _id = id,
-       _nom = nom,
-       _artista = artista,
-       _albumId = albumId ?? [], //Si albumId == null, es substitueix per empty.
-       _durada = durada,
-       _dataPujada = DateTime.now(), //Guarda data de pujada.
-       _uploaderId = uploaderId;
-
-  //Llista de getters
-  String get id => _id;
-  String get nom => _nom;
-  List<String> get artista => _artista;
-  List<String> get albumId => _albumId;
-  double get durada => _durada;
-  DateTime get dataPujada => _dataPujada;
-  String get uploaderId => _uploaderId;
-
-  //Llista de Setters
-  set nom(String nom) => _nom = nom;
-  set artista(List<String> artista) => _artista = artista;
-  set albumId(List<String> albumId) => _albumId = albumId;
-  set durada(double durada) => _durada = durada;
+    required this.id, // id de la cançó
+    required this.name, // nom de la cançó
+    required this.artists, // llista d'ids d'artistes
+    this.albumId, // pot ser null si no està en cap àlbum
+    required this.duration, // durada de la cançó
+    required this.creatorId, // id de l'usuari que ha pujat la cançó
+    required this.createdAt, // data de creació pujada
+  });
 }
