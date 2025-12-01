@@ -67,7 +67,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       controller: regNameController,
                       style: TextStyle(color: Colors.blue),
                       decoration: InputDecoration(
-                        labelText: 'Nom complet',
+                        labelText: 'Nom',
                         labelStyle: TextStyle(color: Colors.blue),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -79,7 +79,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       controller: regEmailController,
                       style: TextStyle(color: Colors.blue),
                       decoration: InputDecoration(
-                        labelText: 'Correu UPC (@upc.edu)',
+                        labelText: 'E-mail',
                         labelStyle: TextStyle(color: Colors.blue),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -115,8 +115,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     SizedBox(height: 16),
                     Text(
-                      'Enviarem un correu de verificació a la teva adreça UPC.',
-                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                      'Enviarem un correu de verificació a la teva adreça electronica.',
+                      style: TextStyle(fontSize: 12, color: Colors.white),
                       textAlign: TextAlign.center,
                     ),
                   ],
@@ -171,8 +171,11 @@ class _LoginScreenState extends State<LoginScreen> {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text(
-                                      'Registre completat! Revisa el teu correu per verificar el compte.'),
-                                  backgroundColor: Colors.green,
+                                    'Registre completat! Revisa el teu correu per verificar el compte.',
+                                    style: TextStyle(color: Colors.blue),
+                                  ),
+                                  backgroundColor: Colors.white,
+                                  behavior: SnackBarBehavior.floating,
                                   duration: Duration(seconds: 5),
                                 ),
                               );
