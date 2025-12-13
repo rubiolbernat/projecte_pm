@@ -18,7 +18,7 @@ class Artist {
   //Constructor
   Artist({
     required String id,
-    required String name,
+    String? name,
     required String email,
     String? photoURL,
     String? coverURL,
@@ -30,7 +30,7 @@ class Artist {
     Map<String, String>? socialLink,
     DateTime? createdAt,
   }) : _id = id,
-       _name = name,
+       _name = name ?? 'unnamed',
        _email = email,
        _photoURL = photoURL ?? '',
        _coverURL = coverURL ?? '',
@@ -72,7 +72,24 @@ class Artist {
   //Metodes per socialLink
   void addSocialLink(String platform, String url) => socialLink[platform] = url;
   void removeSocialLink(String platform) => socialLink.remove(platform);
-  
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': _id,
+      'name': _name,
+      'bio': _bio,
+      'email': _email,
+      'photoURL': _photoURL,
+      'coverURL': _coverURL,
+      'verified': _verified,
+      'label': _label,
+      'manager': _manager,
+      'genre': _genre,
+      'socialLink': _socialLink,
+      'createdAt': _createdAt,
+    };
+  }
+
   factory Artist.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
 

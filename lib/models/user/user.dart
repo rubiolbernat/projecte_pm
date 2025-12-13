@@ -11,13 +11,13 @@ class User {
   //Constructor
   User({
     required String id,
-    required String name,
+    String? name,
     required String email,
     String? photoURL,
     String? bio,
     DateTime? createdAt,
   }) : _id = id,
-       _name = name,
+       _name = name ?? 'unnamed',
        _email = email,
        _photoURL = photoURL ?? '',
        _bio = bio ?? '',
@@ -36,9 +36,20 @@ class User {
   set photoURL(String photoURL) => _photoURL = photoURL;
   set bio(String bio) => _bio = bio;
 
+  Map<String, dynamic> toMap() {
+    return {
+      'id': _id,
+      'name': _name,
+      'email': _email,
+      'photoURL': _photoURL,
+      'bio': _bio,
+      'createdAt': _createdAt,
+    };
+  }
+
   factory User.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
-    
+
     // Converteix Timestamp a DateTime
     final createdAtTimestamp = data['createdAt'] as Timestamp?;
     final createdAt = createdAtTimestamp?.toDate();
