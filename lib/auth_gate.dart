@@ -4,7 +4,7 @@ import 'package:firebase_ui_oauth_google/firebase_ui_oauth_google.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:projecte_pm/widgets/RoleSelectionScreen.dart';
-import 'package:projecte_pm/pages/landing_page.dart';
+import 'package:projecte_pm/landing_page.dart';
 
 // Importa la teva funció de creació de perfils d'abans
 // import 'firebase_service.dart'; 
