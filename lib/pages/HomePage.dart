@@ -1,16 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:projecte_pm/models/artist/artist.dart';
-import 'package:projecte_pm/models/user/user.dart' as models;
+import 'package:projecte_pm/models/user/user.dart';
+import 'package:projecte_pm/widgets/history_list.dart';
 
 class HomePage extends StatefulWidget {
-  final dynamic userProfile; // Model User o Artist
-  final bool isArtist;
+  final User? userProfile;
 
-  const HomePage({
-    super.key,
-    required this.userProfile,
-    required this.isArtist,
-  });
+  const HomePage({super.key, required this.userProfile});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -25,17 +20,13 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     // AQUÍ és on cridaràs al teu servei per omplir aquesta vista
     // _loadHomeData(widget.userProfile.id);
-    print(
-      "Iniciant HomePage per a: ${widget.isArtist ? (widget.userProfile as Artist).name : (widget.userProfile as models.User).name}",
-    );
+    print("Iniciant HomePage per a: ${widget.userProfile?.name}");
   }
 
   @override
   Widget build(BuildContext context) {
     // Extracció de dades segura per mostrar a la UI
-    String bio = widget.isArtist
-        ? (widget.userProfile as Artist).bio
-        : (widget.userProfile as models.User).bio;
+    String bio = widget.userProfile?.bio ?? "Bio no disponible";
 
     return Center(
       child: Column(

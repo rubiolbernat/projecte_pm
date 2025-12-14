@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:projecte_pm/models/user/user.dart';
 
 class LibraryPage extends StatefulWidget{
-  final dynamic userProfile;
-  final bool isArtist;
+  final User? userProfile;
 
-  const LibraryPage({super.key, required this.userProfile, required this.isArtist});
+  const LibraryPage({super.key, required this.userProfile});
 
   @override
   State<LibraryPage> createState() => _LibraryPageState();

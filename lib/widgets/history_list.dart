@@ -4,8 +4,9 @@ import 'package:flutter/material.dart';
 
 class HistoryList extends StatelessWidget {
   final List<Map<String, dynamic>> history;
+  final String listName;
 
-  const HistoryList({required this.history, super.key});
+  const HistoryList({required this.history, required this.listName, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -16,8 +17,8 @@ class HistoryList extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          "Torna a escoltar",
+        Text(
+          listName,
           style: TextStyle(
             fontSize: 20,
             color: Colors.white,
@@ -34,8 +35,11 @@ class HistoryList extends StatelessWidget {
               final item = history[index];
               final songDetails = item['songDetails'] ?? {};
               final title = songDetails['title'] ?? 'Cançó desconeguda';
-              final artistName = songDetails['artistName'] ?? 'Artista desconegut';
-              final coverUrl = songDetails['coverURL'] ?? 'https://via.placeholder.com/200?text=Music';
+              final artistName =
+                  songDetails['artistName'] ?? 'Artista desconegut';
+              final coverUrl =
+                  songDetails['coverURL'] ??
+                  'https://via.placeholder.com/200?text=Music';
 
               return Padding(
                 padding: EdgeInsets.only(right: 16.0),
@@ -52,24 +56,36 @@ class HistoryList extends StatelessWidget {
                           width: 130,
                           height: 130,
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => Container(
-                            width: 130, height: 130, color: Colors.grey.shade800,
-                            child: const Icon(Icons.music_note, color: Colors.white54)
-                          ),
+                          errorBuilder: (context, error, stackTrace) =>
+                              Container(
+                                width: 130,
+                                height: 130,
+                                color: Colors.grey.shade800,
+                                child: const Icon(
+                                  Icons.music_note,
+                                  color: Colors.white54,
+                                ),
+                              ),
                         ),
                       ),
                       const SizedBox(height: 8),
                       // Títol
                       Text(
                         title,
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                       // Artista
                       Text(
                         artistName,
-                        style: const TextStyle(color: Colors.grey, fontSize: 12),
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 12,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),

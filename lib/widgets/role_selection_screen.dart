@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:projecte_pm/crud/user_crud.dart';
-import 'package:projecte_pm/crud/artist_crud.dart';
+import 'package:projecte_pm/services/LoginRegisterService.dart';
 
 class RoleSelectionScreen extends StatefulWidget {
   final String _userId;
@@ -26,34 +25,36 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
         title: const Text('Completa el teu Perfil'),
         automaticallyImplyLeading: false, //Treure flecha automatica del push
       ),
-      body: Column(
-        children: [
-          Text('Selecciona el teu Rol'),
-          Row(
-            children: [
-              ElevatedButton(
-                child: Text('User'),
-                onPressed: () {
-                  UserCrud.newUser(
-                    userId: widget._userId,
-                    userEmail: widget._userEmail,
-                  );
-                  Navigator.pop(context);
-                },
-              ),
-              ElevatedButton(
-                child: Text('Artist'),
-                onPressed: () {
-                  ArtistCrud.newArtist(
-                    artistId: widget._userId,
-                    artistEmail: widget._userEmail,
-                  );
-                  Navigator.pop(context);
-                },
-              ),
-            ],
-          ),
-        ],
+      body: Center(
+        child: Column(
+          children: [
+            Text('Selecciona el teu Rol'),
+            Row(
+              children: [
+                ElevatedButton(
+                  child: Text('User'),
+                  onPressed: () {
+                    LoginRegisterService.newUser(
+                      userId: widget._userId,
+                      userEmail: widget._userEmail,
+                    );
+                    Navigator.pop(context);
+                  },
+                ),
+                ElevatedButton(
+                  child: Text('Artist'),
+                  onPressed: () {
+                    LoginRegisterService.newArtist(
+                      artistId: widget._userId,
+                      artistEmail: widget._userEmail,
+                    );
+                    Navigator.pop(context);
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

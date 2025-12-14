@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+/*import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:projecte_pm/models/user/user.dart' as models; 
 import 'package:projecte_pm/models/artist/artist.dart'; 
@@ -260,4 +260,4 @@ class UserDataService {
           'history': history,
       };
   }
-}
+}*/

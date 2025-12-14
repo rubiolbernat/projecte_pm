@@ -1,11 +1,13 @@
 import 'package:firebase_auth/firebase_auth.dart' hide EmailAuthProvider;
 import 'package:firebase_ui_auth/firebase_ui_auth.dart';
 
-import 'package:firebase_ui_oauth_google/firebase_ui_oauth_google.dart'; // new
+import 'package:firebase_ui_oauth_google/firebase_ui_oauth_google.dart';
 
 import 'package:flutter/material.dart';
+import 'package:projecte_pm/LandingArtistPage.dart';
+import 'package:projecte_pm/LandingUserPage.dart';
 
-import 'package:projecte_pm/pages/landing_page.dart';
+import 'package:projecte_pm/services/LoginRegisterService.dart';
 import 'package:projecte_pm/widgets/role_selection_screen.dart';
 
 class AuthGate extends StatelessWidget {
@@ -50,13 +52,13 @@ class AuthGate extends StatelessWidget {
               }),
             ],
 
-            /******************************************************************/
+            /*************** Disseny de la pantalla de Login ***************/
             headerBuilder: (context, constraints, shrinkOffset) {
               return Padding(
                 padding: const EdgeInsets.all(20),
                 child: AspectRatio(
                   aspectRatio: 1,
-                  child: Image.asset('cistell_productes.jpg'),
+                  child: Image.asset('icons/SpotyUPC.png'),
                 ),
               );
             },
@@ -82,14 +84,54 @@ class AuthGate extends StatelessWidget {
                 padding: const EdgeInsets.all(20),
                 child: AspectRatio(
                   aspectRatio: 1,
-                  child: Image.asset('cistell_productes.jpg'),
+                  child: Image.asset('icons/SpotyUPC.png'),
                 ),
               );
             },
           );
         }
-        //Canvi de auth gate per defecte, he canviat la pagina.
-        return const LandingPage();
+
+        final userId = snapshot.data!.uid;
+
+        return FutureBuilder<String>(
+          future: LoginRegisterService.getUserRole(userId),
+          builder: (context, roleSnapshot) {
+            // 1. Carregant
+            if (roleSnapshot.connectionState == ConnectionState.waiting) {
+              return const Scaffold(
+                backgroundColor: Color(0xFF121212),
+                body: Center(
+                  child: CircularProgressIndicator(color: Colors.blueAccent),
+                ),
+              );
+            }
+
+            // 2. Tenim el rol
+            if (roleSnapshot.hasData) {
+              final role = roleSnapshot.data;
+
+              if (role == 'user') {
+                // Landing user
+                return LandingUserPage(userId: userId);
+              } else if (role == 'artist') {
+                // Landing artistes
+                return LandingArtistPage(artistId: userId);
+              } else {
+                // 'unknown': Cas especial. Està loguejat a Firebase Auth però no té dades a Firestore.
+                // (Va tancar l'app abans de triar). El tornem a enviar a triar.
+                return RoleSelectionScreen(
+                  userId: userId,
+                  userEmail: snapshot.data!.email ?? '',
+                );
+              }
+            }
+
+            // 3. Error inesperat
+            return const Scaffold(
+              body: Center(child: Text("Error carregant el perfil d'usuari")),
+            );
+          },
+        );
       },
     );
   }

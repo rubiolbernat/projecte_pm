@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class Album {
   final String _id;
   String _name;
@@ -8,7 +10,7 @@ class Album {
   String _type;
   bool _isPublic;
   String _label;
-  DateTime _createdAt;
+  Timestamp _createdAt;
 
   //Constructor
   Album({
@@ -30,7 +32,7 @@ class Album {
        _type = type ?? 'album',
        _isPublic = isPublic ?? false,
        _label = label ?? '',
-       _createdAt = DateTime.now();
+       _createdAt = Timestamp.now();
 
   //Llista de getters
   String get id => _id;
@@ -40,7 +42,7 @@ class Album {
   String get type => _type;
   bool get isPublic => _isPublic;
   String get label => _label;
-  DateTime get createdAt => _createdAt;
+  Timestamp get createdAt => _createdAt;
 
   //Llista de Setters
   set name(String name) => _name = name;

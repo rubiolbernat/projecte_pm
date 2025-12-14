@@ -6,7 +6,7 @@ class User {
   final String _email;
   String _photoURL;
   String _bio;
-  final DateTime _createdAt;
+  final Timestamp _createdAt;
 
   //Constructor
   User({
@@ -15,13 +15,13 @@ class User {
     required String email,
     String? photoURL,
     String? bio,
-    DateTime? createdAt,
+    Timestamp? createdAt,
   }) : _id = id,
        _name = name ?? 'unnamed',
        _email = email,
        _photoURL = photoURL ?? '',
        _bio = bio ?? '',
-       _createdAt = DateTime.now();
+       _createdAt = createdAt ?? Timestamp.now();
 
   //Llista de getters
   String get id => _id;
@@ -29,12 +29,23 @@ class User {
   String get email => _email;
   String get photoURL => _photoURL;
   String get bio => _bio;
-  DateTime get createdAt => _createdAt;
+  Timestamp get createdAt => _createdAt;
 
   //Llista de Setters
   set name(String name) => _name = name;
   set photoURL(String photoURL) => _photoURL = photoURL;
   set bio(String bio) => _bio = bio;
+
+  factory User.fromMap(Map<String, dynamic> data) {
+    return User(
+      id: data['id'] as String,
+      name: data['name'] as String,
+      email: data['email'] as String,
+      photoURL: data['photoURL'] as String? ?? '',
+      bio: data['bio'] as String? ?? '',
+      createdAt: data['createdAt'] as Timestamp,
+    );
+  }
 
   Map<String, dynamic> toMap() {
     return {
@@ -45,22 +56,5 @@ class User {
       'bio': _bio,
       'createdAt': _createdAt,
     };
-  }
-
-  factory User.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
-
-    // Converteix Timestamp a DateTime
-    final createdAtTimestamp = data['createdAt'] as Timestamp?;
-    final createdAt = createdAtTimestamp?.toDate();
-
-    return User(
-      id: doc.id,
-      name: data['name'] ?? '',
-      email: data['email'] ?? '',
-      photoURL: data['photoURL'],
-      bio: data['bio'],
-      createdAt: createdAt,
-    );
   }
 }

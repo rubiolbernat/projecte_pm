@@ -1,8 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class AlbumSong {
   final String _id;
   String _songId;
   int _trackNumber;
-  final DateTime _addedAt;
+  final Timestamp _addedAt;
 
   //Constructor
   AlbumSong({
@@ -12,13 +14,13 @@ class AlbumSong {
   }) : _id = id,
        _songId = songId,
        _trackNumber = trackNumber,
-       _addedAt = DateTime.now();
+       _addedAt = Timestamp.now();
 
   //Llista de getters
   String get id => _id;
   String get songId => _songId;
   int get trackNumber => _trackNumber;
-  DateTime get addedAt => _addedAt;
+  Timestamp get addedAt => _addedAt;
 
   //Llista de setters
   set songId(String songId) => _songId = songId;

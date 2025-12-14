@@ -13,7 +13,7 @@ class Artist {
   String _manager;
   List<String> _genre;
   Map<String, String> _socialLink;
-  final DateTime _createdAt;
+  final Timestamp _createdAt;
 
   //Constructor
   Artist({
@@ -28,7 +28,7 @@ class Artist {
     String? manager,
     List<String>? genre,
     Map<String, String>? socialLink,
-    DateTime? createdAt,
+    Timestamp? createdAt,
   }) : _id = id,
        _name = name ?? 'unnamed',
        _email = email,
@@ -40,7 +40,7 @@ class Artist {
        _manager = manager ?? '',
        _genre = genre ?? [],
        _socialLink = socialLink ?? {},
-       _createdAt = createdAt ?? DateTime.now(); //Guarda data de pujada.
+       _createdAt = createdAt ?? Timestamp.now(); //Guarda data de pujada.
 
   //Llista de getters
   String get id => _id;
@@ -54,7 +54,7 @@ class Artist {
   String get manager => _manager;
   List<String> get genre => _genre;
   Map<String, String> get socialLink => _socialLink;
-  DateTime get createdAt => _createdAt;
+  Timestamp get createdAt => _createdAt;
 
   //Llista de Setters
   set name(String name) => _name = name;
@@ -73,6 +73,23 @@ class Artist {
   void addSocialLink(String platform, String url) => socialLink[platform] = url;
   void removeSocialLink(String platform) => socialLink.remove(platform);
 
+  factory Artist.fromMap(Map<String, dynamic> data) {
+    return Artist(
+      id: data['id'],
+      name: data['name'],
+      bio: data['bio'],
+      email: data['email'],
+      photoURL: data['photoURL'],
+      coverURL: data['coverURL'],
+      verified: data['verified'],
+      label: data['label'],
+      manager: data['manager'],
+      genre: List<String>.from(data['genre']),
+      socialLink: Map<String, String>.from(data['socialLink']),
+      createdAt: data['createdAt'],
+    );
+  }
+  
   Map<String, dynamic> toMap() {
     return {
       'id': _id,
@@ -88,28 +105,5 @@ class Artist {
       'socialLink': _socialLink,
       'createdAt': _createdAt,
     };
-  }
-
-  factory Artist.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
-
-    // Converteix Timestamp a DateTime
-    final createdAtTimestamp = data['createdAt'] as Timestamp?;
-    final createdAt = createdAtTimestamp?.toDate();
-
-    return Artist(
-      id: doc.id, // L'ID del document és l'UID
-      name: data['name'] ?? 'Artista sense nom',
-      email: data['email'] ?? '',
-      photoURL: data['photoURL'],
-      coverURL: data['coverURL'],
-      bio: data['bio'],
-      verified: data['verified'] ?? false,
-      label: data['label'],
-      manager: data['manager'],
-      genre: List<String>.from(data['genre'] ?? []),
-      socialLink: Map<String, String>.from(data['socialLink'] ?? {}),
-      createdAt: createdAt,
-    );
   }
 }

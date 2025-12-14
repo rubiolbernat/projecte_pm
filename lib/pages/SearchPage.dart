@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 class SearchPage extends StatefulWidget {
+  //dynamic perque aquest component serà per a users i artists
   final dynamic userProfile;
 
   const SearchPage({super.key, required this.userProfile});
@@ -10,7 +11,6 @@ class SearchPage extends StatefulWidget {
 }
 
 class _SearchPageState extends State<SearchPage> {
-  
   @override
   void initState() {
     super.initState();
@@ -21,7 +21,7 @@ class _SearchPageState extends State<SearchPage> {
   Widget build(BuildContext context) {
     return const Center(
       child: Text(
-        "Search View\n(Aquí buscaràs l'historial de cerca del User)", 
+        "Search View\n(Aquí buscaràs l'historial de cerca del User)",
         textAlign: TextAlign.center,
         style: TextStyle(color: Colors.white),
       ),
