@@ -1,7 +1,8 @@
+import 'dart:developer';
+
 import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:flutter/material.dart';
 import 'package:projecte_pm/auth_gate.dart';
-import 'package:projecte_pm/models/user/user.dart';
 import 'package:projecte_pm/pages/HomePage.dart';
 import 'package:projecte_pm/pages/LibraryPage.dart';
 import 'package:projecte_pm/pages/SearchPage.dart';
@@ -11,10 +12,7 @@ import 'package:projecte_pm/pages/EditProfilePage.dart';
 class LandingUserPage extends StatefulWidget {
   final String userId;
 
-  const LandingUserPage({
-    super.key,
-    required this.userId,
-  });
+  const LandingUserPage({super.key, required this.userId});
 
   @override
   State<StatefulWidget> createState() => _LandingUserPageState();
@@ -25,33 +23,23 @@ class _LandingUserPageState extends State<LandingUserPage> {
 
   int _currentIndex = 0;
   bool _isLoading = true;
-  User? _userProfile;
-
-  // Per controlar que només redirigim un cop
-  bool _hasRedirectedToEdit = false;
 
   @override
   void initState() {
     super.initState();
-    _userService = UserService(userId: widget.userId);
-    _loadUserProfile();
+    _initUserService();
   }
 
-  Future<void> _loadUserProfile() async {
+  Future<void> _initUserService() async {
     try {
-      final User? user = await _userService.getCurrentUser();
-
+      _userService = await UserService.create(userId: widget.userId);
+    } catch (e, st) {
+      log('Error inicialitzant UserService', error: e, stackTrace: st);
+      rethrow;
+    } finally {
       if (mounted) {
-        setState(() {
-          if (user != null) {
-            _userProfile = user;
-          }
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
       }
-    } catch (e) {
-      print("Error carregant: $e");
-      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -76,13 +64,10 @@ class _LandingUserPageState extends State<LandingUserPage> {
 
   // Editar i recarregar en tornar
   Future<void> _navigateToEditProfile() async {
-    if (_userProfile == null) return;
-
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) =>
-            EditProfilePage(user: _userProfile!, userService: _userService),
+        builder: (context) => EditProfilePage(userService: _userService),
       ),
     );
 
@@ -90,26 +75,26 @@ class _LandingUserPageState extends State<LandingUserPage> {
     // tornem a carregar l'usuari per actualitzar la capçalera (Header)
     if (result == true) {
       setState(() => _isLoading = true);
-      _loadUserProfile();
+
+      await _userService.refreshUser();
+
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
   // --- Selector de Vistes ---
   Widget _buildCurrentView() {
-    if (_userProfile == null && !_isLoading) {
-      return const Center(
-        child: Text("Error de perfil", style: TextStyle(color: Colors.white)),
-      );
-    }
     if (_isLoading) return const SizedBox();
 
     switch (_currentIndex) {
       case 0:
-        return HomePage(userProfile: _userProfile);
+        return HomePage(userService: _userService);
       case 1:
-        return SearchPage(userProfile: _userProfile);
+        return SearchPage(service: _userService);
       case 2:
-        return LibraryPage(userProfile: _userProfile);
+        return LibraryPage(userService: _userService);
       case 3:
         return const Center(
           child: Text(
@@ -154,7 +139,7 @@ class _LandingUserPageState extends State<LandingUserPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Hola, ${_userProfile?.name ?? 'Error'}",
+                  "Hola, ${_userService.user.name.isEmpty ? "Error" : _userService.user.name}",
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -162,8 +147,8 @@ class _LandingUserPageState extends State<LandingUserPage> {
                   ),
                 ),
                 Text(
-                  _userProfile?.bio.isNotEmpty == true
-                      ? _userProfile!.bio
+                  _userService.user.bio.isNotEmpty == true
+                      ? _userService.user.bio
                       : "Sense biografia",
                   style: TextStyle(color: Colors.grey.shade400, fontSize: 10),
                 ),

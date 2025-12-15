@@ -4,17 +4,37 @@ import 'package:projecte_pm/models/user/user_follower.dart';
 import 'dart:developer';
 
 class UserService {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseFirestore _firestore;
+  final DocumentReference? _currentUserRef;
+  User _user;
 
-  String _currentUserId; // ID de l'usuari loguejat
-  DocumentReference? _currentUserRef;
+  UserService._({
+    required FirebaseFirestore firestore,
+    required DocumentReference currentUserRef,
+    required User user,
+  }) : _firestore = firestore,
+       _currentUserRef = currentUserRef,
+       _user = user;
 
-  UserService({required String userId}) : _currentUserId = userId {
-    _currentUserRef = _firestore.collection('users').doc(userId);
+  static Future<UserService> create({required String userId}) async {
+    final firestore = FirebaseFirestore.instance;
+    final ref = firestore.collection('users').doc(userId);
+
+    final snap = await ref.get();
+    if (!snap.exists) {
+      throw Exception('Usuari no trobat');
+    }
+
+    final user = User.fromMap(snap.data() as Map<String, dynamic>);
+
+    return UserService._(firestore: firestore, currentUserRef: ref, user: user);
   }
 
-  String? get currentUserId => _currentUserId;
+  String? get currentUserId => _user.id;
   DocumentReference? get currentUserRef => _currentUserRef;
+
+  // Getters de user
+  User get user => _user;
 
   // Metòdes CRUD
   Future<User?> getCurrentUser() async {
@@ -23,6 +43,11 @@ class UserService {
     if (!snap.exists) return null;
     log('Dades usuari rebudes: ${snap.data()}', name: 'FIREBASE_LOG');
     return User.fromMap(snap.data() as Map<String, dynamic>);
+  }
+
+  Future<void> refreshUser() async {
+    final snap = await _currentUserRef!.get();
+    _user = User.fromMap(snap.data() as Map<String, dynamic>);
   }
 
   Future<void> updateUser(User user) async {
@@ -50,7 +75,7 @@ class UserService {
         .collection('users')
         .doc(targetUserId)
         .collection('followers')
-        .doc(_currentUserId);
+        .doc(_user.id);
 
     final relation = UserFollower(userId: targetUserId);
 
@@ -71,7 +96,7 @@ class UserService {
           .collection('users')
           .doc(targetUserId)
           .collection('followers')
-          .doc(_currentUserId),
+          .doc(_user.id),
     );
 
     await batch.commit();

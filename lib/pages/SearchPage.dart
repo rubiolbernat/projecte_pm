@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 
 class SearchPage extends StatefulWidget {
   //dynamic perque aquest component serà per a users i artists
-  final dynamic userProfile;
+  final dynamic service;
 
-  const SearchPage({super.key, required this.userProfile});
+  const SearchPage({super.key, required this.service});
 
   @override
   State<SearchPage> createState() => _SearchPageState();

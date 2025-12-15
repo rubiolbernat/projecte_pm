@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:flutter/material.dart';
 import 'package:projecte_pm/auth_gate.dart';
@@ -12,10 +14,7 @@ import 'package:projecte_pm/pages/EditProfilePage.dart';
 class LandingArtistPage extends StatefulWidget {
   final String artistId;
 
-  const LandingArtistPage({
-    super.key,
-    required this.artistId,
-  });
+  const LandingArtistPage({super.key, required this.artistId});
 
   @override
   State<StatefulWidget> createState() => _LandingArtistPageState();
@@ -26,33 +25,23 @@ class _LandingArtistPageState extends State<LandingArtistPage> {
 
   int _currentIndex = 0;
   bool _isLoading = true;
-  Artist? _artistProfile;
-
-  // Per controlar que només redirigim un cop
-  bool _hasRedirectedToEdit = false;
 
   @override
   void initState() {
     super.initState();
-    _artistService = ArtistService(artistId: widget.artistId);
-    _loadartistProfile();
+    _initArtistService();
   }
 
-  Future<void> _loadartistProfile() async {
+  Future<void> _initArtistService() async {
     try {
-      final Artist? artist = await _artistService.getCurrentArtist();
-
+      _artistService = await ArtistService.create(artistId: widget.artistId);
+    } catch (e, st) {
+      log('Error inicialitzant UserService', error: e, stackTrace: st);
+      rethrow;
+    } finally {
       if (mounted) {
-        setState(() {
-          if (artist != null) {
-            _artistProfile = artist;
-          }
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
       }
-    } catch (e) {
-      print("Error carregant: $e");
-      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -77,42 +66,41 @@ class _LandingArtistPageState extends State<LandingArtistPage> {
 
   // Editar i recarregar en tornar
   Future<void> _navigateToEditProfile() async {
-    if (_artistProfile == null) return;
-
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => EditArtistProfilePage(
-          artist: _artistProfile!,
-          artistService: _artistService,
-        ),
+        builder: (context) =>
+            EditArtistProfilePage(artistService: _artistService),
       ),
     );
 
-    // Si tornem de la pàgina (result == true vol dir que ha guardat canvis)
-    // tornem a carregar l'usuari per actualitzar la capçalera (Header)
     if (result == true) {
-      setState(() => _isLoading = true);
-      _loadartistProfile();
+      setState(() {
+        _isLoading = true;
+      });
+
+      await _artistService.refreshArtist();
+
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
   // --- Selector de Vistes ---
   Widget _buildCurrentView() {
-    if (_artistProfile == null && !_isLoading) {
-      return const Center(
-        child: Text("Error de perfil", style: TextStyle(color: Colors.white)),
-      );
-    }
     if (_isLoading) return const SizedBox();
 
     switch (_currentIndex) {
       case 0:
         return Center(
-          child: Text("BENVINGUT ARTISTA", style: TextStyle(color: Colors.white)),
+          child: Text(
+            "BENVINGUT ARTISTA",
+            style: TextStyle(color: Colors.white),
+          ),
         );
       case 1:
-        return SearchPage(userProfile: _artistProfile);
+        return SearchPage(service: _artistService);
       case 2:
         return const Center(
           child: Text(
@@ -157,7 +145,7 @@ class _LandingArtistPageState extends State<LandingArtistPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Hola, ${_artistProfile?.name ?? 'Error'}",
+                  "Hola, ${_artistService.artist.name.isEmpty ? "Error" : _artistService.artist.name}",
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -165,8 +153,8 @@ class _LandingArtistPageState extends State<LandingArtistPage> {
                   ),
                 ),
                 Text(
-                  _artistProfile?.bio.isNotEmpty == true
-                      ? _artistProfile!.bio
+                  _artistService.artist.bio.isNotEmpty == true
+                      ? _artistService.artist.bio
                       : "Sense biografia",
                   style: TextStyle(color: Colors.grey.shade400, fontSize: 10),
                 ),

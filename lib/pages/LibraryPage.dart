@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:projecte_pm/models/user/user.dart';
+import 'package:projecte_pm/services/UserService.dart';
 
 class LibraryPage extends StatefulWidget{
-  final User? userProfile;
+  final UserService userService;
 
-  const LibraryPage({super.key, required this.userProfile});
+  const LibraryPage({super.key, required this.userService});
 
   @override
   State<LibraryPage> createState() => _LibraryPageState();

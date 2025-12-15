@@ -3,17 +3,41 @@ import 'package:projecte_pm/models/artist/artist.dart';
 import 'dart:developer';
 
 class ArtistService {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseFirestore _firestore;
+  final DocumentReference? _currentArtistRef;
+  Artist _artist;
 
-  String _currentArtistId; // ID de l'usuari loguejat
-  DocumentReference? _currentArtistRef;
+  ArtistService._({
+    required FirebaseFirestore firestore,
+    required DocumentReference currentArtistRef,
+    required Artist artist,
+  }) : _firestore = firestore,
+       _currentArtistRef = currentArtistRef,
+       _artist = artist;
 
-  ArtistService({required String artistId}) : _currentArtistId = artistId {
-    _currentArtistRef = _firestore.collection('artists').doc(artistId);
+  static Future<ArtistService> create({required String artistId}) async {
+    final firestore = FirebaseFirestore.instance;
+    final ref = firestore.collection('artists').doc(artistId);
+
+    final snap = await ref.get();
+    if (!snap.exists) {
+      throw Exception('Artist no trobat');
+    }
+
+    final artist = Artist.fromMap(snap.data() as Map<String, dynamic>);
+
+    return ArtistService._(
+      firestore: firestore,
+      currentArtistRef: ref,
+      artist: artist,
+    );
   }
 
-  String? get currentArtistId => _currentArtistId;
+  String? get currentArtistId => _artist.id;
   DocumentReference? get currentArtistRef => _currentArtistRef;
+
+  // Getters de artist
+  Artist get artist => _artist;
 
   // Metòdes CRUD
   Future<Artist?> getCurrentArtist() async {
@@ -22,5 +46,21 @@ class ArtistService {
     if (!snap.exists) return null;
     log('Dades artist rebudes: ${snap.data()}', name: 'FIREBASE_LOG');
     return Artist.fromMap(snap.data() as Map<String, dynamic>);
+  }
+
+  Future<void> refreshArtist() async {
+    final snap = await _currentArtistRef!.get();
+    _artist = Artist.fromMap(snap.data() as Map<String, dynamic>);
+  }
+
+  Future<void> updateArtist(Artist artist) async {
+    if (_currentArtistRef == null) return;
+    try {
+      // Actualitzem només els camps necessaris (excepte ID i email que solen ser fixos)
+      await _currentArtistRef!.update(artist.toMap());
+    } catch (e) {
+      print("Error actualitzant usuari: $e");
+      rethrow; // Llancem l'error perquè la UI sàpiga que ha fallat
+    }
   }
 }

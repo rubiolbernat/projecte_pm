@@ -3,14 +3,9 @@ import 'package:projecte_pm/models/artist/artist.dart';
 import 'package:projecte_pm/services/ArtistService.dart';
 
 class EditArtistProfilePage extends StatefulWidget {
-  final Artist artist;
   final ArtistService artistService;
 
-  const EditArtistProfilePage({
-    super.key,
-    required this.artist,
-    required this.artistService,
-  });
+  const EditArtistProfilePage({super.key, required this.artistService});
 
   @override
   State<EditArtistProfilePage> createState() => _EditArtistProfilePageState();
@@ -19,17 +14,36 @@ class EditArtistProfilePage extends StatefulWidget {
 class _EditArtistProfilePageState extends State<EditArtistProfilePage> {
   late TextEditingController nameController;
   late TextEditingController bioController;
+  late Artist draftArtist;
+
   bool saving = false;
 
   @override
   void initState() {
     super.initState();
-    nameController = TextEditingController(text: widget.artist.name);
-    bioController = TextEditingController(text: widget.artist.bio);
+
+    draftArtist = Artist(
+      id: widget.artistService.artist.id,
+      name: widget.artistService.artist.name,
+      email: widget.artistService.artist.email,
+      bio: widget.artistService.artist.bio,
+    );
+
+    nameController = TextEditingController(text: draftArtist.name);
+    bioController = TextEditingController(text: draftArtist.bio);
   }
 
   Future<void> save() async {
-    
+    setState(() => saving = true);
+
+    draftArtist.name = nameController.text.trim();
+    draftArtist.bio = bioController.text.trim();
+
+    await widget.artistService.updateArtist(draftArtist);
+
+    if (mounted) {
+      Navigator.pop(context, true);
+    }
   }
 
   @override
@@ -48,10 +62,7 @@ class _EditArtistProfilePageState extends State<EditArtistProfilePage> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            _darkField(
-              controller: nameController,
-              label: "Nom d'usuari",
-            ),
+            _darkField(controller: nameController, label: "Nom d'usuari"),
             const SizedBox(height: 16),
             _darkField(
               controller: bioController,

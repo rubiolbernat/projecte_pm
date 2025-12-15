@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:projecte_pm/models/user/user.dart';
+import 'package:projecte_pm/services/UserService.dart';
 import 'package:projecte_pm/widgets/history_list.dart';
 
 class HomePage extends StatefulWidget {
-  final User? userProfile;
+  final UserService userService;
 
-  const HomePage({super.key, required this.userProfile});
+  const HomePage({super.key, required this.userService});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -20,13 +21,13 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     // AQUÍ és on cridaràs al teu servei per omplir aquesta vista
     // _loadHomeData(widget.userProfile.id);
-    print("Iniciant HomePage per a: ${widget.userProfile?.name}");
+    print("Iniciant HomePage per a: ${widget.userService.user.name}");
   }
 
   @override
   Widget build(BuildContext context) {
     // Extracció de dades segura per mostrar a la UI
-    String bio = widget.userProfile?.bio ?? "Bio no disponible";
+    String bio = widget.userService.user.bio.isEmpty ? "Sense bio" : widget.userService.user.bio;
 
     return Center(
       child: Column(

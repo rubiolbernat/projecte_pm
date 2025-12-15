@@ -3,38 +3,50 @@ import 'package:projecte_pm/models/user/user.dart';
 import 'package:projecte_pm/services/UserService.dart';
 
 class EditProfilePage extends StatefulWidget {
-  final User user;
   final UserService userService;
 
-  const EditProfilePage({
-    super.key,
-    required this.user,
-    required this.userService,
-  });
+  const EditProfilePage({super.key, required this.userService});
 
   @override
   State<EditProfilePage> createState() => _EditProfilePageState();
 }
 
 class _EditProfilePageState extends State<EditProfilePage> {
-  late TextEditingController nameController;
-  late TextEditingController bioController;
+  late final TextEditingController nameController;
+  late final TextEditingController bioController;
+  late User draftUser;
+
   bool saving = false;
 
   @override
   void initState() {
     super.initState();
-    nameController = TextEditingController(text: widget.user.name);
-    bioController = TextEditingController(text: widget.user.bio);
+
+    draftUser = User(
+      id: widget.userService.user.id,
+      name: widget.userService.user.name,
+      email: widget.userService.user.email,
+      bio: widget.userService.user.bio,
+    );
+
+    nameController = TextEditingController(text: draftUser.name);
+    bioController = TextEditingController(text: draftUser.bio);
+  }
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    bioController.dispose();
+    super.dispose();
   }
 
   Future<void> save() async {
     setState(() => saving = true);
 
-    widget.user.name = nameController.text.trim();
-    widget.user.bio = bioController.text.trim();
+    draftUser.name = nameController.text.trim();
+    draftUser.bio = bioController.text.trim();
 
-    await widget.userService.updateUser(widget.user);
+    await widget.userService.updateUser(draftUser);
 
     if (mounted) {
       Navigator.pop(context, true);
@@ -57,10 +69,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            _darkField(
-              controller: nameController,
-              label: "Nom d'usuari",
-            ),
+            _darkField(controller: nameController, label: "Nom d'usuari"),
             const SizedBox(height: 16),
             _darkField(
               controller: bioController,
