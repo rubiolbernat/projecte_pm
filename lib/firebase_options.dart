@@ -21,10 +21,7 @@ class DefaultFirebaseOptions {
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for android - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return android;
       case TargetPlatform.iOS:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for ios - '
@@ -36,10 +33,7 @@ class DefaultFirebaseOptions {
           'you can reconfigure this by running the FlutterFire CLI again.',
         );
       case TargetPlatform.windows:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for windows - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return windows;
       case TargetPlatform.linux:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for linux - '
@@ -61,4 +55,23 @@ class DefaultFirebaseOptions {
     storageBucket: 'proyecte-pm.firebasestorage.app',
     measurementId: 'G-LV0C0WJ439',
   );
+
+  static const FirebaseOptions android = FirebaseOptions(
+    apiKey: 'AIzaSyCndgONmGnwQYJl4qt57uImCpI2Y6BzUVs',
+    appId: '1:587144620346:android:76da7b8d3969dfeee1c803',
+    messagingSenderId: '587144620346',
+    projectId: 'proyecte-pm',
+    storageBucket: 'proyecte-pm.firebasestorage.app',
+  );
+
+  static const FirebaseOptions windows = FirebaseOptions(
+    apiKey: 'AIzaSyDpC7dPz0VAQU4AE3sp88_jjB8TfYICCu0',
+    appId: '1:587144620346:web:da3c7ba65c46fecee1c803',
+    messagingSenderId: '587144620346',
+    projectId: 'proyecte-pm',
+    authDomain: 'proyecte-pm.firebaseapp.com',
+    storageBucket: 'proyecte-pm.firebasestorage.app',
+    measurementId: 'G-40ZL8V0V2H',
+  );
+
 }
