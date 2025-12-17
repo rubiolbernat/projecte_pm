@@ -14,6 +14,7 @@ class EditProfilePage extends StatefulWidget {
 class _EditProfilePageState extends State<EditProfilePage> {
   late final TextEditingController nameController;
   late final TextEditingController bioController;
+  late final TextEditingController photoURLController;
   late User draftUser;
 
   bool saving = false;
@@ -26,17 +27,20 @@ class _EditProfilePageState extends State<EditProfilePage> {
       id: widget.userService.user.id,
       name: widget.userService.user.name,
       email: widget.userService.user.email,
+      photoURL: widget.userService.user.photoURL,
       bio: widget.userService.user.bio,
     );
 
     nameController = TextEditingController(text: draftUser.name);
     bioController = TextEditingController(text: draftUser.bio);
+    photoURLController = TextEditingController(text: draftUser.photoURL);
   }
 
   @override
   void dispose() {
     nameController.dispose();
     bioController.dispose();
+    photoURLController.dispose();
     super.dispose();
   }
 
@@ -45,6 +49,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
     draftUser.name = nameController.text.trim();
     draftUser.bio = bioController.text.trim();
+    draftUser.photoURL = photoURLController.text.trim();
 
     await widget.userService.updateUser(draftUser);
 
@@ -65,38 +70,42 @@ class _EditProfilePageState extends State<EditProfilePage> {
           style: TextStyle(color: Colors.white),
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            _darkField(controller: nameController, label: "Nom d'usuari"),
-            const SizedBox(height: 16),
-            _darkField(
-              controller: bioController,
-              label: "Biografia",
-              maxLines: 3,
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton(
-                onPressed: saving ? null : save,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blueAccent,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                ),
-                child: saving
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text(
-                        'Guardar',
-                        style: TextStyle(color: Colors.white),
-                      ),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              _darkField(controller: nameController, label: "Nom d'usuari"),
+              const SizedBox(height: 16),
+              _darkField(
+                controller: bioController,
+                label: "Biografia",
+                maxLines: 3,
               ),
+              const SizedBox(height: 16),
+              _darkField(
+                controller: photoURLController,
+                label: "URL imatge de perfil",
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: SizedBox(
+        width: double.infinity,
+        height: 48,
+        child: ElevatedButton(
+          onPressed: saving ? null : save,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.blueAccent,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
             ),
-          ],
+          ),
+          child: saving
+              ? const CircularProgressIndicator(color: Colors.white)
+              : const Text('Guardar', style: TextStyle(color: Colors.white)),
         ),
       ),
     );

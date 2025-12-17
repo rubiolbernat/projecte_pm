@@ -78,10 +78,12 @@ class Artist {
   set manager(String manager) => _manager = manager;
 
   //Metodes per genre
+  set genre(List<String> genre) => _genre = genre;
   void addGenre(String genre) => _genre.add(genre);
   void removeGenre(String genre) => _genre.remove(genre);
 
   //Metodes per socialLink
+  set socialLink(Map<String, String> socialLink) => _socialLink = socialLink;
   void addSocialLink(String platform, String url) => socialLink[platform] = url;
   void removeSocialLink(String platform) => socialLink.remove(platform);
 
