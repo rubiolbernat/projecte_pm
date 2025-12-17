@@ -82,8 +82,8 @@ class Album {
   }
 
   //Metode per afegir una cançó al album
-  void addSong(String songId, int trackNumber) {
-    _albumSong.add(AlbumSong(songId: songId, trackNumber: trackNumber));
+  void addSong(String songId, int trackNumber, String title, double duration) {
+    _albumSong.add(AlbumSong(songId: songId, trackNumber: trackNumber, title: title, duration: duration));
   }
 
   //Metode per eliminar una cançó de l'album

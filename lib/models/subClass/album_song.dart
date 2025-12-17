@@ -4,19 +4,27 @@ class AlbumSong {
   String _songId;
   int _trackNumber;
   final Timestamp _addedAt;
+  String _title;
+  double _duration;
 
   //Constructor
   AlbumSong({
     required String songId,
     required int trackNumber,
+    required String title,
+    required double duration,
     Timestamp? addedAt,
   }) : _songId = songId,
        _trackNumber = trackNumber,
+       _title = title,
+       _duration = duration,
        _addedAt = addedAt ?? Timestamp.now();
 
   //Llista de getters
   String get songId => _songId;
   int get trackNumber => _trackNumber;
+  String get title => _title;
+  double get duration => _duration;
   Timestamp get addedAt => _addedAt;
 
   //Llista de setters
@@ -27,6 +35,8 @@ class AlbumSong {
     return AlbumSong(
       songId: data['songId'] as String,
       trackNumber: data['trackNumber'] as int,
+      title: data['title'] as String,
+      duration: data['duration'] as double,
       addedAt: data['addedAt'] as Timestamp,
     );
   }
@@ -35,6 +45,8 @@ class AlbumSong {
     return {
       'songId': _songId,
       'trackNumber': _trackNumber,
+      'title': _title,
+      'duration': _duration,
       'addedAt': _addedAt,
     };
   }

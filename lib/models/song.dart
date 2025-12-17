@@ -7,11 +7,10 @@ class Song {
   String _name;
   String _artistId; //Només un artista principal
   final List<String> _collaboratorsId; //Pot tenir mes d'un colaborador
-  final List<String> _albumId; //Pot estar en mes d'un album
+  final String _albumId;
   double _duration;
   String _fileURL;
   String _coverURL;
-  String _linkURL; //***link que dona accés a la cançó, demanat per Fatos***
   final List<String> _genre;
   bool _isPublic;
   String _lyrics;
@@ -25,15 +24,14 @@ class Song {
 
   //Constructor
   Song({
-    required String id,
+    String? id,
     required String name,
     required String artistId,
     List<String>? collaboratorsId,
-    List<String>? albumId,
+    String? albumId,
     required double duration,
     required String fileURL,
     required String coverURL,
-    required String linkURL,
     List<String>? genre,
     bool? isPublic,
     String? lyrics,
@@ -43,15 +41,14 @@ class Song {
     List<SaveId>? share,
     List<SaveId>? like,
     List<SaveId>? play,
-  }) : _id = id,
+  }) : _id = id ?? '',
        _name = name,
        _artistId = artistId,
        _collaboratorsId = collaboratorsId ?? [],
-       _albumId = albumId ?? [],
+       _albumId = albumId?? '',
        _duration = duration,
        _fileURL = fileURL,
        _coverURL = coverURL,
-       _linkURL = linkURL,
        _genre = genre ?? [],
        _isPublic = isPublic ?? false,
        _lyrics = lyrics ?? '',
@@ -69,7 +66,6 @@ class Song {
   double get duration => _duration;
   String get fileURL => _fileURL;
   String get coverURL => _coverURL;
-  String get linkURL => _linkURL;
   bool get isPublic => _isPublic;
   String get lyrics => _lyrics;
   Timestamp get createdAt => _createdAt;
@@ -80,17 +76,12 @@ class Song {
   set duration(double duration) => _duration = duration;
   set fileURL(String fileURL) => _fileURL = fileURL;
   set coverURL(String coverURL) => _coverURL = coverURL;
-  set linkURL(String linkURL) => _linkURL = linkURL;
   set isPublic(bool isPublic) => _isPublic = isPublic;
   set lyrics(String lyrics) => _lyrics = lyrics;
 
   //Metodes per collaboratosId
   void addCollaboratorsId(String id) => _collaboratorsId.add(id);
   void removeCollaboratorsId(String id) => _collaboratorsId.remove(id);
-
-  //Metodes per albumId
-  void addAlbumId(String id) => _albumId.add(id);
-  void removeAlbumId(String id) => _albumId.remove(id);
 
   //Metodes per genre
   void addGenre(String genre) => _genre.add(genre);
@@ -173,11 +164,10 @@ class Song {
       name: data['name'] as String,
       artistId: data['artistId'] as String,
       collaboratorsId: data['collaboratorsId'] as List<String>,
-      albumId: data['albumId'] as List<String>,
+      albumId: data['albumId'] as String,
       duration: data['duration'] as double,
       fileURL: data['fileURL'] as String,
       coverURL: data['coverURL'] as String,
-      linkURL: data['linkURL'] as String,
       genre: data['genre'] as List<String>,
       isPublic: data['isPublic'] as bool,
       lyrics: data['lyrics'] as String,
@@ -214,7 +204,6 @@ class Song {
       'duration': _duration,
       'fileURL': _fileURL,
       'coverURL': _coverURL,
-      'linkURL': _linkURL,
       'genre': _genre,
       'isPublic': _isPublic,
       'lyrics': _lyrics,

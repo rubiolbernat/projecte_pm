@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:flutter/material.dart';
 import 'package:projecte_pm/auth_gate.dart';
 import 'package:projecte_pm/models/artist.dart';
+import 'package:projecte_pm/pages/CreateAlbum.dart';
 import 'package:projecte_pm/pages/EditArtistProfilePage.dart';
 import 'package:projecte_pm/pages/HomePage.dart';
 import 'package:projecte_pm/pages/LibraryPage.dart';
@@ -102,11 +103,13 @@ class _LandingArtistPageState extends State<LandingArtistPage> {
       case 1:
         return SearchPage(service: _artistService);
       case 2:
-        return const Center(
-          child: Text(
-            "Pantalla Crea (Pendent)",
-            style: TextStyle(color: Colors.white),
-          ),
+        return CreateAlbumPage(
+          artistService: _artistService,
+          onCreated: () {
+            setState(() {
+              _currentIndex = 0;
+            });
+          },
         );
       default:
         return Container();
