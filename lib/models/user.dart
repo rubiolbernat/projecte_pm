@@ -173,8 +173,8 @@ class User {
       id: data['id'] as String,
       name: data['name'] as String,
       email: data['email'] as String,
-      photoURL: data['photoURL'] as String? ?? '',
-      bio: data['bio'] as String? ?? '',
+      photoURL: data['photoURL'] ?? '',
+      bio: data['bio'] ?? '',
       createdAt: data['createdAt'] as Timestamp,
       follower: (data['follower'] as List<dynamic>? ?? [])
           .map(

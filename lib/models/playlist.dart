@@ -138,11 +138,11 @@ class Playlist {
     return Playlist(
       id: data['id'] as String,
       name: data['name'] as String,
-      description: data['description'] as String,
+      description: data['description'] ?? '',
       ownerId: data['ownerId'] as String,
-      coverURL: data['coverURL'] as String,
-      isPublic: data['isPublic'] as bool,
-      isCollaborative: data['isCollaborative'] as bool,
+      coverURL: data['coverURL'] ?? '',
+      isPublic: data['isPublic'] ?? false,
+      isCollaborative: data['isCollaborative'] ?? false,
       updatedAt: data['updatedAt'] as Timestamp,
       createdAt: data['createdAt'] as Timestamp,
       follower: (data['follower'] as List<dynamic>? ?? [])
