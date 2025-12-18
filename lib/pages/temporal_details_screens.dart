@@ -11,18 +11,6 @@ class SongPlayerScreen extends StatelessWidget {
   );
 }
 
-class AlbumDetailScreen extends StatelessWidget {
-  final String albumId;
-  const AlbumDetailScreen({required this.albumId, super.key});
-  @override
-  Widget build(BuildContext context) => Center(
-    child: Text(
-      "Album Details: $albumId",
-      style: const TextStyle(color: Colors.white),
-    ),
-  );
-}
-
 class PlaylistDetailScreen extends StatelessWidget {
   final String playlistId;
   const PlaylistDetailScreen({required this.playlistId, super.key});

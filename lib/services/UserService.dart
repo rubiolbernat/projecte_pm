@@ -107,14 +107,18 @@ class UserService {
   /////////////////////////////////////////////////////////////////////////////
   Future<List<Map<String, dynamic>>> getGlobalNewReleases({
     String? name,
-    String? type,
+    bool readSongs = false,
+    bool readAlbums = false,
+    bool readPlaylists = false,
+    bool readArtists = false,
+    bool readUsers = false,
   }) async {
     try {
       final futures = <Future<QuerySnapshot>>[];
 
       // 1. SONGS
       // log('2. Llançant consulta Songs...', name: 'DEBUG_FIREBASE');
-      if (type == null || type == 'song') {
+      if (readSongs) {
         Query<Map<String, dynamic>> query = _firestore.collection('songs');
         query = (name == null || name.isEmpty)
             ? query.orderBy('createdAt', descending: true).limit(5)
@@ -128,7 +132,7 @@ class UserService {
 
       // 2. ALBUMS
       // log('3. Llançant consulta Albums...', name: 'DEBUG_FIREBASE');
-      if (type == null || type == 'album') {
+      if (readAlbums) {
         Query<Map<String, dynamic>> query = _firestore.collection('albums');
         query = (name == null || name.isEmpty)
             ? query.orderBy('createdAt', descending: true).limit(5)
@@ -142,7 +146,7 @@ class UserService {
 
       // 3. PLAYLISTS (Aquesta sol fallar per l'índex)
       //log('4. Llançant consulta Playlists...', name: 'DEBUG_FIREBASE');
-      if (type == null || type == 'playlist') {
+      if (readPlaylists) {
         var query = _firestore
             .collection('playlists')
             .where('isPublic', isEqualTo: true);
@@ -156,7 +160,7 @@ class UserService {
       }
 
       // 4. ARTISTS
-      if (type == null || type == 'artist') {
+      if (readArtists) {
         Query<Map<String, dynamic>> query = _firestore.collection('artists');
         query = (name == null || name.isEmpty)
             ? query.orderBy('createdAt', descending: true).limit(5)
@@ -168,8 +172,8 @@ class UserService {
       }
 
       // 5. USERS
-      if (type == null || type == 'user') {
-        Query<Map<String, dynamic>> query = _firestore.collection('user');
+      if (readUsers) {
+        Query<Map<String, dynamic>> query = _firestore.collection('users');
         query = (name == null || name.isEmpty)
             ? query.orderBy('createdAt', descending: true).limit(5)
             : query
@@ -230,7 +234,7 @@ class UserService {
             'id': doc.id,
             'type': type,
             'title': data['name'] ?? 'Sin título',
-            'subtitle': type == 'user' ? data['email'] ?? '' : 'subtitle',
+            'subtitle': type, //== 'user' ? data['email'] ?? '' : 'subtitle',
             'imageUrl': data['coverURL'] ?? data['avatarURL'] ?? '',
             'createdAt': getDate(doc),
           });

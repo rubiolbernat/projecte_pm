@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:projecte_pm/models/song.dart';
 import 'package:projecte_pm/models/album.dart';
 
-class MusicDataService {
+class AlbumService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   Future<void> createAlbum({
@@ -70,4 +70,30 @@ class MusicDataService {
       throw Exception('Error creant l’àlbum: $e');
     }
   }
+
+  //////////////////////////////////////////////////////////////////////////////
+  //**************************************************************************//
+
+  static Future<Album?> getAlbum(String albumId) async {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('albums')
+          .doc(albumId)
+          .get();
+
+      if (!doc.exists) return null; //Id no valid, retorna null
+
+      final data = doc.data();
+      data!['id'] = doc.id; // añadimos el id del documento
+
+      Album album = Album.fromMap(data);
+
+      return album; //Id valid, retorna album
+    } catch (e) {
+      throw Exception('Error obtenint album: $e');
+    }
+  }
+
+  //**************************************************************************//
+  //////////////////////////////////////////////////////////////////////////////
 }

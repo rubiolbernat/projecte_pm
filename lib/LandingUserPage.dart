@@ -10,6 +10,7 @@ import 'package:projecte_pm/pages/SearchPage.dart';
 import 'package:projecte_pm/pages/temporal_details_screens.dart';
 import 'package:projecte_pm/services/UserService.dart';
 import 'package:projecte_pm/pages/EditProfilePage.dart';
+import 'package:projecte_pm/pages/detail_screen/album_detail_screen.dart';
 
 class LandingUserPage extends StatefulWidget {
   final String userId;

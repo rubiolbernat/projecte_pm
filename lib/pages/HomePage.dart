@@ -8,8 +8,8 @@ class HomePage extends StatefulWidget {
   final Function(String id, String type) onItemSelected;
 
   const HomePage({
-    super.key, 
-    required this.userService, 
+    super.key,
+    required this.userService,
     required this.onItemSelected, // Obligatori ara
   });
 
@@ -18,7 +18,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-
   @override
   void initState() {
     super.initState();
@@ -35,22 +34,30 @@ class _HomePageState extends State<HomePage> {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            
             // Opcional: Títol de benvinguda intern (si no el vols al AppBar)
-            
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Text(
                 "Benvingut de nou",
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
               ),
             ),
             const SizedBox(height: 10),
-            
 
             // --- SECCIÓ 1: NOVETATS GLOBALS ---
             FutureBuilder<List<Map<String, dynamic>>>(
-              future: widget.userService.getGlobalNewReleases(),
+              future: widget.userService.getGlobalNewReleases(
+                name: null,
+                readSongs: true,
+                readAlbums: true,
+                readPlaylists: true,
+                readArtists: true,
+                readUsers: false,
+              ),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const SizedBox(
@@ -120,7 +127,9 @@ class _HomePageState extends State<HomePage> {
               },
             ),
 
-            const SizedBox(height: 100), // Espai extra al final perquè no tapi el reproductor
+            const SizedBox(
+              height: 100,
+            ), // Espai extra al final perquè no tapi el reproductor
           ],
         ),
       ),

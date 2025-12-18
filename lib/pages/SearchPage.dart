@@ -17,7 +17,22 @@ class SearchPage extends StatefulWidget {
 
 class _SearchPageState extends State<SearchPage> {
   String query = "";
-  String? type;
+
+  //Map per simplificar
+  final Map<String, bool> filters = {
+    'song': false,
+    'album': false,
+    'playlist': false,
+    'artist': false,
+    'user': false,
+  };
+
+  bool _effectiveFilter(String key) {
+    // Si todos los filtros están en false → devolvemos true para todos
+    final allInactive = filters.values.every((v) => v == false);
+    if (allInactive) return true;
+    return filters[key] ?? false;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,13 +59,12 @@ class _SearchPageState extends State<SearchPage> {
           const SizedBox(height: 16),
           Row(
             spacing: 16,
-
             children: [
-              _widgetTypeName(typeName: 'song'),
-              _widgetTypeName(typeName: 'album'),
-              _widgetTypeName(typeName: 'playlist'),
-              _widgetTypeName(typeName: 'artist'),
-              _widgetTypeName(typeName: 'user'),
+              _filterButton('song'),
+              _filterButton('album'),
+              _filterButton('playlist'),
+              _filterButton('artist'),
+              _filterButton('user'),
             ],
           ),
           const SizedBox(height: 16),
@@ -58,7 +72,11 @@ class _SearchPageState extends State<SearchPage> {
             child: FutureBuilder<List<Map<String, dynamic>>>(
               future: widget.service.getGlobalNewReleases(
                 name: query.isEmpty ? null : query,
-                type: type, // o 'song', 'album', 'playlist'
+                readSongs: _effectiveFilter('song'),
+                readAlbums: _effectiveFilter('album'),
+                readPlaylists: _effectiveFilter('playlist'),
+                readArtists: _effectiveFilter('artist'),
+                readUsers: _effectiveFilter('user'),
               ),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
@@ -103,14 +121,33 @@ class _SearchPageState extends State<SearchPage> {
     );
   }
 
-  Widget _widgetTypeName({required typeName}) {
+  //Botó per filtrar
+  Widget _filterButton(String typeName) {
+    final isActive = filters[typeName] ?? false;
     return ElevatedButton(
+      style: isActive ? activeButtonStyle : inactiveButtonStyle,
       onPressed: () {
         setState(() {
-          type = (type == typeName) ? null : typeName;
+          filters[typeName] = !isActive;
         });
       },
       child: Text(typeName),
     );
   }
+
+  //Estil botó actiu
+  final ButtonStyle activeButtonStyle = ElevatedButton.styleFrom(
+    backgroundColor: Colors.blueAccent,
+    foregroundColor: Colors.white,
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+  );
+
+  //Estil botó inactiu
+  final ButtonStyle inactiveButtonStyle = ElevatedButton.styleFrom(
+    backgroundColor: Colors.grey.shade700,
+    foregroundColor: Colors.grey.shade400,
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+  );
 }

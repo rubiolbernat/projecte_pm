@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // Necessari per als models
 import 'package:projecte_pm/models/song.dart';
 import 'package:projecte_pm/services/ArtistService.dart';
-import 'package:projecte_pm/services/MusicDataService.dart';
+import 'package:projecte_pm/services/AlbumService.dart';
 
 class CreateAlbumPage extends StatefulWidget {
   final ArtistService artistService;
@@ -20,7 +20,7 @@ class CreateAlbumPage extends StatefulWidget {
 
 class _CreateAlbumPageState extends State<CreateAlbumPage> {
   final _formKey = GlobalKey<FormState>();
-  final MusicDataService _dataService = MusicDataService();
+  final AlbumService _dataService = AlbumService();
 
   // Controllers
   final TextEditingController _coverUrlController = TextEditingController();
