@@ -22,3 +22,15 @@ class PlaylistDetailScreen extends StatelessWidget {
     ),
   );
 }
+
+class ArtistDetailScreen extends StatelessWidget {
+  final String artistId;
+  const ArtistDetailScreen({required this.artistId, super.key});
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Text(
+      "Artist Details: $artistId",
+      style: const TextStyle(color: Colors.white),
+    ),
+  );
+}

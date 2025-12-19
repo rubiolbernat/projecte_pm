@@ -6,11 +6,11 @@ import 'package:projecte_pm/auth_gate.dart';
 import 'package:projecte_pm/models/artist.dart';
 import 'package:projecte_pm/pages/CreateAlbum.dart';
 import 'package:projecte_pm/pages/EditArtistProfilePage.dart';
-import 'package:projecte_pm/pages/HomePage.dart';
-import 'package:projecte_pm/pages/LibraryPage.dart';
-import 'package:projecte_pm/pages/SearchPage.dart';
+import 'package:projecte_pm/pages/home_page.dart';
+import 'package:projecte_pm/pages/library_page.dart';
+import 'package:projecte_pm/pages/navigator_pages/search_navigator.dart';
 import 'package:projecte_pm/services/ArtistService.dart';
-import 'package:projecte_pm/pages/EditProfilePage.dart';
+import 'package:projecte_pm/pages/edit_user_profile_page.dart';
 
 class LandingArtistPage extends StatefulWidget {
   final String artistId;

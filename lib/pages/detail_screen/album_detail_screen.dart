@@ -38,35 +38,49 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     if (album == null) {
-      return const Center(
-        child: Text(
-          "Álbum no encontrado",
-          style: TextStyle(color: Colors.white),
+      return const Scaffold(
+        body: Center(
+          child: Text("Álbum no trobat", style: TextStyle(color: Colors.white)),
         ),
       );
     }
 
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            album!.name,
-            style: const TextStyle(color: Colors.white, fontSize: 20),
+    return Scaffold(
+      appBar: AppBar(title: const Text("Inicio")),
+
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              Center(
+                child: Image.network(
+                  album!.coverURL,
+                  fit: BoxFit.cover, // Ajusta cómo se muestra la imagen
+                  width: 200,
+                  height: 200,
+                ),
+              ),
+
+              Text(
+                album!.name,
+                style: const TextStyle(color: Colors.white, fontSize: 20),
+              ),
+              Text(
+                "Artista: ${album!.artistId}",
+                style: const TextStyle(color: Colors.grey),
+              ),
+              Text(
+                "Canciones: ${album!.songCount()}",
+                style: const TextStyle(color: Colors.grey),
+              ),
+            ],
           ),
-          Text(
-            "Artista: ${album!.artistId}",
-            style: const TextStyle(color: Colors.grey),
-          ),
-          Text(
-            "Canciones: ${album!.songCount()}",
-            style: const TextStyle(color: Colors.grey),
-          ),
-        ],
+        ),
       ),
     );
   }
