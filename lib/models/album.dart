@@ -51,6 +51,7 @@ class Album {
   bool get isPublic => _isPublic;
   String get label => _label;
   Timestamp get createdAt => _createdAt;
+  List<AlbumSong> get albumSong => _albumSong;
 
   //Llista de Setters
   set name(String name) => _name = name;
@@ -83,7 +84,14 @@ class Album {
 
   //Metode per afegir una cançó al album
   void addSong(String songId, int trackNumber, String title, double duration) {
-    _albumSong.add(AlbumSong(songId: songId, trackNumber: trackNumber, title: title, duration: duration));
+    _albumSong.add(
+      AlbumSong(
+        songId: songId,
+        trackNumber: trackNumber,
+        title: title,
+        duration: duration,
+      ),
+    );
   }
 
   //Metode per eliminar una cançó de l'album

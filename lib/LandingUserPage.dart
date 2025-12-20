@@ -66,11 +66,20 @@ class _LandingUserPageState extends State<LandingUserPage> {
       body: IndexedStack(
         index: _currentIndex,
         children: [
-          HomeNavigator(key: _navigatorKeys[0], userService: _userService),
-          SearchNavigator(key: _navigatorKeys[1], userService: _userService),
-          LibraryNavigator(key: _navigatorKeys[2], userService: _userService),
+          HomeNavigator(
+            navigatorKey: _navigatorKeys[0],
+            userService: _userService,
+          ),
+          SearchNavigator(
+            navigatorKey: _navigatorKeys[1],
+            userService: _userService,
+          ),
+          LibraryNavigator(
+            navigatorKey: _navigatorKeys[2],
+            userService: _userService,
+          ),
           CreateUserNavigator(
-            key: _navigatorKeys[3],
+            navigatorKey: _navigatorKeys[3],
             userService: _userService,
           ),
         ],

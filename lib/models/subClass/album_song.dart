@@ -34,9 +34,9 @@ class AlbumSong {
   factory AlbumSong.fromMap(Map<String, dynamic> data) {
     return AlbumSong(
       songId: data['songId'] as String,
-      trackNumber: data['trackNumber'] as int,
+      trackNumber: (data['trackNumber'] as num).toInt(),
       title: data['title'] as String,
-      duration: data['duration'] as double,
+      duration: (data['duration'] as num).toDouble(),
       addedAt: data['addedAt'] as Timestamp,
     );
   }

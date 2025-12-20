@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:projecte_pm/services/UserService.dart';
 import 'detail_screen/album_detail_screen.dart';
-import 'temporal_details_screens.dart';
+import 'package:projecte_pm/pages/detail_screen/album_detail_screen.dart';
+import 'package:projecte_pm/pages/detail_screen/song_detail_screen.dart';
+import 'package:projecte_pm/pages/detail_screen/playlist_detail_screen.dart';
+import 'package:projecte_pm/pages/detail_screen/artist_detail_screen.dart';
+import 'package:projecte_pm/pages/detail_screen/user_detail_screen.dart';
+import 'package:projecte_pm/widgets/app_bar_widget.dart';
 
 class SearchPage extends StatefulWidget {
   final UserService userService;
@@ -31,11 +36,7 @@ class _SearchPageState extends State<SearchPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF121212),
-      appBar: AppBar(
-        title: const Text("Buscar"),
-        backgroundColor: const Color(0xFF121212),
-      ),
+      appBar: AppBarWidget(userService: widget.userService),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -57,8 +58,9 @@ class _SearchPageState extends State<SearchPage> {
               onChanged: (value) => setState(() => query = value.trim()),
             ),
             const SizedBox(height: 16),
-            Wrap(
-              spacing: 8,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
               children: filters.keys.map((f) => _filterButton(f)).toList(),
             ),
             const SizedBox(height: 16),
@@ -92,8 +94,16 @@ class _SearchPageState extends State<SearchPage> {
                       final item = results[index];
                       return ListTile(
                         leading: item['imageUrl'] != ''
-                            ? Image.network(item['imageUrl'])
+                            ? SizedBox(
+                                width: 50,
+                                height: 50,
+                                child: Image.network(
+                                  item['imageUrl'],
+                                  fit: BoxFit.cover,
+                                ),
+                              )
                             : const Icon(Icons.music_note, color: Colors.white),
+
                         title: Text(
                           item['title'],
                           style: const TextStyle(color: Colors.white),
@@ -108,7 +118,7 @@ class _SearchPageState extends State<SearchPage> {
                               Navigator.of(context).push(
                                 MaterialPageRoute(
                                   builder: (_) =>
-                                      SongPlayerScreen(songId: item['id']),
+                                      SongDetailScreen(songId: item['id']),
                                 ),
                               );
                               break;
@@ -137,6 +147,14 @@ class _SearchPageState extends State<SearchPage> {
                                 ),
                               );
                               break;
+                            case 'user':
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      UserDetailScreen(userId: item['id']),
+                                ),
+                              );
+                              break;
                           }
                         },
                       );
@@ -151,30 +169,31 @@ class _SearchPageState extends State<SearchPage> {
     );
   }
 
+  //  Widget Boto Filtre  //
   Widget _filterButton(String typeName) {
     final isActive = filters[typeName] ?? false;
+
     return ElevatedButton(
-      style: isActive ? activeButtonStyle : inactiveButtonStyle,
+      style: ElevatedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 10,
+          vertical: 6,
+        ), // ✅ más pequeño
+        minimumSize: const Size(0, 0), // ✅ elimina altura mínima
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap, // ✅ reduce área táctil
+        backgroundColor: isActive ? Colors.blueAccent : Colors.grey.shade700,
+        foregroundColor: isActive ? Colors.white : Colors.grey.shade400,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
       onPressed: () {
         setState(() {
           filters[typeName] = !isActive;
         });
       },
-      child: Text(typeName),
+      child: Text(
+        typeName,
+        style: const TextStyle(fontSize: 13), // ✅ texto más pequeño
+      ),
     );
   }
-
-  final ButtonStyle activeButtonStyle = ElevatedButton.styleFrom(
-    backgroundColor: Colors.blueAccent,
-    foregroundColor: Colors.white,
-    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-  );
-
-  final ButtonStyle inactiveButtonStyle = ElevatedButton.styleFrom(
-    backgroundColor: Colors.grey.shade700,
-    foregroundColor: Colors.grey.shade400,
-    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-  );
 }

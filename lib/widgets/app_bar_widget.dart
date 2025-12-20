@@ -26,7 +26,7 @@ class _AppBarWidgetState extends State<AppBarWidget> {
         padding: EdgeInsets.symmetric(horizontal: 16),
         child: CircleAvatar(
           radius: 16,
-          backgroundImage: AssetImage('icons/SpotyUPC.png'),
+          //backgroundImage: AssetImage('icons/SpotyUPC.png'),
         ),
       ),
       title: Row(

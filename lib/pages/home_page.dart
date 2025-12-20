@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:projecte_pm/services/UserService.dart';
 import 'package:projecte_pm/widgets/history_list.dart';
-import 'package:projecte_pm/pages/temporal_details_screens.dart';
 import 'package:projecte_pm/pages/detail_screen/album_detail_screen.dart';
+import 'package:projecte_pm/pages/detail_screen/song_detail_screen.dart';
+import 'package:projecte_pm/pages/detail_screen/playlist_detail_screen.dart';
+import 'package:projecte_pm/pages/detail_screen/artist_detail_screen.dart';
+import 'package:projecte_pm/pages/detail_screen/user_detail_screen.dart';
 import 'package:projecte_pm/pages/edit_user_profile_page.dart';
 import 'package:projecte_pm/widgets/app_bar_widget.dart';
 
@@ -86,7 +89,7 @@ class _HomePageState extends State<HomePage> {
                         case 'song':
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (_) => SongPlayerScreen(songId: id),
+                              builder: (_) => SongDetailScreen(songId: id),
                             ),
                           );
                           break;

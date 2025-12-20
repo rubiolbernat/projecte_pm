@@ -63,4 +63,30 @@ class ArtistService {
       rethrow; // Llancem l'error perquè la UI sàpiga que ha fallat
     }
   }
+
+  //////////////////////////////////////////////////////////////////////////////
+  //**************************************************************************//
+
+  static Future<Artist?> getArtist(String artistId) async {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('artists')
+          .doc(artistId)
+          .get();
+
+      if (!doc.exists) return null; //Id no valid, retorna null
+
+      final data = doc.data();
+      data!['id'] = doc.id; // añadimos el id del documento
+
+      Artist artist = Artist.fromMap(data);
+
+      return artist; //Id valid, retorna album
+    } catch (e) {
+      throw Exception('Error obtenint artist: $e');
+    }
+  }
+
+  //**************************************************************************//
+  //////////////////////////////////////////////////////////////////////////////
 }
