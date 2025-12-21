@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:projecte_pm/pages/edit_user_profile_page.dart';
 import 'package:projecte_pm/services/UserService.dart';
+import 'package:projecte_pm/auth_gate.dart';
+import 'package:firebase_auth/firebase_auth.dart' as auth;
 
 class AppBarWidget extends StatefulWidget implements PreferredSizeWidget {
   final UserService userService;
@@ -64,7 +66,7 @@ class _AppBarWidgetState extends State<AppBarWidget> {
             if (value == 'edit') {
               _navigateToEditProfile();
             } else if (value == 'logout') {
-              // TODO: Cerrar sesión
+              _signOut();
             }
           },
           itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
@@ -110,6 +112,23 @@ class _AppBarWidgetState extends State<AppBarWidget> {
     if (result == true) {
       await widget.userService.refreshUser();
       setState(() {});
+    }
+  }
+
+  Future<void> _signOut() async {
+    try {
+      // 1. Cerrar sesión en Firebase
+      await auth.FirebaseAuth.instance.signOut();
+
+      // 2. Navegar al login y limpiar el historial
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const AuthGate()),
+          (route) => false, // elimina todas las pantallas anteriores
+        );
+      }
+    } catch (e) {
+      print("Error cerrando sesión: $e");
     }
   }
 }
