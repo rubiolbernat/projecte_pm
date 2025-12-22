@@ -1,32 +1,33 @@
-// lib/widgets/horizontal_card_list.dart
-
 import 'package:flutter/material.dart';
 
-class HorizontalCardList extends StatelessWidget {
-  // Canviem l'estructura: ara esperem una llista d'items genèrics
-  // Cada item ha de tenir: 'title', 'subtitle', 'imageUrl', 'id', 'type'
-  final List<Map<String, dynamic>> items; 
+class HorizontalCardList extends StatefulWidget {
+  final List<Map<String, dynamic>> items;
   final String listName;
-  final Function(String id, String type)? onTap; // Callback per quan es prem un item
+  final Function(String id, String type)? onTap;
 
   const HorizontalCardList({
-    required this.items, 
-    required this.listName, 
+    required this.items,
+    required this.listName,
     this.onTap,
-    super.key
+    super.key,
   });
 
   @override
+  State<HorizontalCardList> createState() => _HorizontalCardListState();
+}
+
+class _HorizontalCardListState extends State<HorizontalCardList> {
+  @override
   Widget build(BuildContext context) {
-    if (items.isEmpty) return const SizedBox.shrink();
+    if (widget.items.isEmpty) return const SizedBox.shrink();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0), // Marge lateral pel títol
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: Text(
-            listName,
+            widget.listName,
             style: const TextStyle(
               fontSize: 22,
               color: Colors.white,
@@ -36,33 +37,35 @@ class HorizontalCardList extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         SizedBox(
-          height: 200, 
+          height: 200,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16.0), // Padding inicial i final de la llista
-            itemCount: items.length,
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            itemCount: widget.items.length,
             itemBuilder: (context, index) {
-              final item = items[index];
-              
-              // Extracció segura de dades
+              final item = widget.items[index];
+
+              // Extracció de dades
               final title = item['title'] ?? 'Sense títol';
-              final subtitle = item['subtitle'] ?? ''; // Pot ser artista o propietari
+              final subtitle = item['subtitle'] ?? '';
               final coverUrl = item['imageUrl'] ?? 'https://via.placeholder.com/200?text=Music';
               final id = item['id'] ?? '';
               final type = item['type'] ?? 'unknown';
 
+              bool isCircular = (type == 'user' || type == 'artist');
+
               return GestureDetector(
-                onTap: () => onTap?.call(id, type),
+                onTap: () => widget.onTap?.call(id, type),
                 child: Padding(
                   padding: const EdgeInsets.only(right: 16.0),
                   child: SizedBox(
-                    width: 140, // Una mica més ample
+                    width: 140,
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: isCircular ? CrossAxisAlignment.center : CrossAxisAlignment.start,
                       children: [
-                        // Imatge
+                        // Contenidor de la Imatge amb forma variable
                         ClipRRect(
-                          borderRadius: BorderRadius.circular(8.0),
+                          borderRadius: BorderRadius.circular(isCircular ? 70.0 : 8.0),
                           child: Image.network(
                             coverUrl,
                             width: 140,
@@ -72,7 +75,11 @@ class HorizontalCardList extends StatelessWidget {
                               width: 140,
                               height: 140,
                               color: Colors.grey.shade800,
-                              child: const Icon(Icons.music_note, color: Colors.white54, size: 50),
+                              child: Icon(
+                                isCircular ? Icons.person : Icons.music_note,
+                                color: Colors.white54,
+                                size: 50,
+                              ),
                             ),
                           ),
                         ),
@@ -87,8 +94,9 @@ class HorizontalCardList extends StatelessWidget {
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
+                          textAlign: isCircular ? TextAlign.center : TextAlign.start,
                         ),
-                        // Subtítol (Artista / Tipus)
+                        // Subtítol
                         if (subtitle.isNotEmpty)
                           Text(
                             subtitle,
@@ -98,6 +106,7 @@ class HorizontalCardList extends StatelessWidget {
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
+                            textAlign: isCircular ? TextAlign.center : TextAlign.start,
                           ),
                       ],
                     ),

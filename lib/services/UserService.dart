@@ -234,8 +234,10 @@ class UserService {
             'id': doc.id,
             'type': type,
             'title': data['name'] ?? 'Sin título',
-            'subtitle': type, //== 'user' ? data['email'] ?? '' : 'subtitle',
-            'imageUrl': data['coverURL'] ?? data['avatarURL'] ?? '',
+            'subtitle': type,
+            'imageUrl': (type == 'user' || type == 'artist')
+                ? data['photoURL']
+                : data['coverURL'],
             'createdAt': getDate(doc),
           });
         }
