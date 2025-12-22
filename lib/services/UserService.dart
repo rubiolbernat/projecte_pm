@@ -2,11 +2,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:projecte_pm/models/subClass/save_id.dart';
 import 'package:projecte_pm/models/user.dart';
 import 'dart:developer';
+import 'package:projecte_pm/services/PlayerService.dart';
 
 class UserService {
   final FirebaseFirestore _firestore;
   final DocumentReference? _currentUserRef;
   User _user;
+  final PlayerService _playerService = PlayerService();
 
   UserService._({
     required FirebaseFirestore firestore,
@@ -35,6 +37,7 @@ class UserService {
 
   // Getters de user
   User get user => _user;
+  PlayerService get player => _playerService;
 
   // Metòdes CRUD
   /*Future<User?> getCurrentUser() async {

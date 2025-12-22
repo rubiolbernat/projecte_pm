@@ -1,74 +1,106 @@
-import 'package:flutter/material.dart';
+import 'dart:async';
+
 import 'package:audioplayers/audioplayers.dart';
 import 'package:projecte_pm/models/song.dart';
 
-class PlayerService extends ChangeNotifier {
+class PlayerService {
   final AudioPlayer _audioPlayer = AudioPlayer();
 
-  List<Song> _queue = [];
+  final List<Song> _queue = [];
   int _currentIndex = -1;
-  bool _isPlaying = false;
+  final StreamController<Song> _songStartedController =
+      StreamController.broadcast();
+
+  PlayerService() {
+    _audioPlayer.onPlayerStateChanged.listen((state) {
+      if (state == PlayerState.playing && currentSong != null) {
+        _songStartedController.add(currentSong!);
+      }
+    });
+  }
+
+  Stream<Song> get onSongStarted => _songStartedController.stream;
+
+  // Estat
+  List<Song> get queue => List.unmodifiable(_queue);
 
   Song? get currentSong => (_currentIndex >= 0 && _currentIndex < _queue.length)
       ? _queue[_currentIndex]
       : null;
 
-  bool get isPlaying => _isPlaying;
+  bool get hasCurrentSong => currentSong != null;
 
-  // Carregar playlist
-  Future<void> setPlaylist(List<Song> songs, {int initialIndex = 0}) async {
-    _queue = songs;
-    _currentIndex = initialIndex;
+  // Streams
+  Stream<PlayerState> get playerStateStream =>
+      _audioPlayer.onPlayerStateChanged;
 
-    if (currentSong == null) return;
+  Stream<void> get onSongComplete => _audioPlayer.onPlayerComplete;
+
+  // Reemplaça tota la cua i reprodueix
+  Future<void> setQueue(List<Song> songs, {int startIndex = 0}) async {
+    _queue
+      ..clear()
+      ..addAll(songs);
+
+    if (_queue.isEmpty) return;
+
+    _currentIndex = startIndex.clamp(0, _queue.length - 1);
 
     await _audioPlayer.play(UrlSource(currentSong!.fileURL));
-
-    _isPlaying = true;
-
-    _audioPlayer.onPlayerComplete.listen((_) {
-      next();
-    });
-
-    notifyListeners();
   }
 
-  // Play / Pause
+  // Controls bàsics
+  Future<void> play() => _audioPlayer.resume();
+
+  Future<void> pause() => _audioPlayer.pause();
+
   Future<void> playPause() async {
-    if (_isPlaying) {
-      await _audioPlayer.pause();
+    if (_audioPlayer.state == PlayerState.playing) {
+      await pause();
     } else {
-      await _audioPlayer.resume();
+      await play();
     }
-    _isPlaying = !_isPlaying;
-    notifyListeners();
   }
 
-  // Next
+  // Navegació
   Future<void> next() async {
     if (_currentIndex < _queue.length - 1) {
       _currentIndex++;
       await _audioPlayer.play(UrlSource(currentSong!.fileURL));
-      _isPlaying = true;
-      notifyListeners();
     }
   }
 
-  // Previous
   Future<void> previous() async {
     if (_currentIndex > 0) {
       _currentIndex--;
       await _audioPlayer.play(UrlSource(currentSong!.fileURL));
-      _isPlaying = true;
-      notifyListeners();
     }
   }
 
-  @override
-  void dispose() {
-    _audioPlayer.dispose();
-    super.dispose();
+  // Cua
+  void addToQueue(Song song) {
+    _queue.add(song);
   }
 
-  bool get hasCurrentSong => currentSong != null;
+  void addAllToQueue(List<Song> songs) {
+    _queue.addAll(songs);
+  }
+
+  // Play immediat (Play next)
+  Future<void> playNow(Song song) async {
+    if (_queue.isEmpty) {
+      await setQueue([song]);
+      return;
+    }
+
+    _queue.insert(_currentIndex + 1, song);
+    _currentIndex++;
+
+    await _audioPlayer.play(UrlSource(song.fileURL));
+  }
+
+  void dispose() {
+    _audioPlayer.dispose();
+    _songStartedController.close();
+  }
 }
