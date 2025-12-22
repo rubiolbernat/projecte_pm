@@ -117,7 +117,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                   crossAxisCount: 2,
                   crossAxisSpacing: 12,
                   mainAxisSpacing: 12,
-                  childAspectRatio: 1, // ✅ cuadrado perfecto
+                  childAspectRatio: 1,
                 ),
                 itemBuilder: (context, index) {
                   final album = albums[index];

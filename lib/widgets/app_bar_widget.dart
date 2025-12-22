@@ -3,6 +3,7 @@ import 'package:projecte_pm/pages/edit_user_profile_page.dart';
 import 'package:projecte_pm/services/UserService.dart';
 import 'package:projecte_pm/auth_gate.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
+import 'package:projecte_pm/pages/profile_page.dart';
 
 class AppBarWidget extends StatefulWidget implements PreferredSizeWidget {
   final UserService userService;
@@ -24,11 +25,20 @@ class _AppBarWidgetState extends State<AppBarWidget> {
       elevation: 0,
       backgroundColor: const Color(0xFF121212),
       titleSpacing: 0,
-      leading: const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 16),
-        child: CircleAvatar(
-          radius: 16,
-          //backgroundImage: AssetImage('icons/SpotyUPC.png'),
+      leading: InkWell(
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => ProfilePage(userId: widget.userService.user.id),
+            ),
+          );
+        },
+        child: const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16),
+          child: CircleAvatar(
+            radius: 16,
+            //backgroundImage: AssetImage('icons/SpotyUPC.png'),
+          ),
         ),
       ),
       title: Row(

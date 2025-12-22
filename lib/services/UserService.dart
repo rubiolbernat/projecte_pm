@@ -306,4 +306,30 @@ class UserService {
       return [];
     }
   }
+
+  //////////////////////////////////////////////////////////////////////////////
+  //**************************************************************************//
+
+  static Future<User?> getUser(String userId) async {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .get();
+
+      if (!doc.exists) return null; //Id no valid, retorna null
+
+      final data = doc.data();
+      data!['id'] = doc.id; // añadimos el id del documento
+
+      User user = User.fromMap(data);
+
+      return user; //Id valid, retorna album
+    } catch (e) {
+      throw Exception('Error obtenint user: $e');
+    }
+  }
+
+  //**************************************************************************//
+  //////////////////////////////////////////////////////////////////////////////
 }

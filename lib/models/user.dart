@@ -52,6 +52,7 @@ class User {
   String get photoURL => _photoURL;
   String get bio => _bio;
   DateTime get createdAt => _createdAt;
+  List<SaveId> get ownedPlaylist => _ownedPlaylist;
 
   //Llista de Setters
   set name(String name) => _name = name;
@@ -162,7 +163,6 @@ class User {
   //Metodes auxiliars per estadistiques
   int followerCount() => _follower.length;
   int followingCount() => _following.length;
-  int ownedPlaylist() => _ownedPlaylist.length;
   int savedPlaylist() => _savedPlaylist.length;
   int savedAlbum() => _savedAlbum.length;
   int playHistory() => _playHistory.length;

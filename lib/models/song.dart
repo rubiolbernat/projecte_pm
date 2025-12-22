@@ -63,6 +63,7 @@ class Song {
   String get id => _id;
   String get name => _name;
   String get artistId => _artistId;
+  List<String> get collaboratorsId => _collaboratorsId;
   double get duration => _duration;
   String get fileURL => _fileURL;
   String get coverURL => _coverURL;
@@ -157,38 +158,42 @@ class Song {
   int playCount() => _play.length;
   int shareCount() => _share.length;
 
-  //Metode que ompleix la clase a partir de un map de Firebase
+  //Metode from Map
   factory Song.fromMap(Map<String, dynamic> data) {
     return Song(
-      id: data['id'] as String,
-      name: data['name'] as String,
-      artistId: data['artistId'] as String,
-      collaboratorsId: data['collaboratorsId'] as List<String>,
-      albumId: data['albumId'] as String,
-      duration: data['duration'] as double,
-      fileURL: data['fileURL'] as String,
-      coverURL: data['coverURL'] as String,
-      genre: data['genre'] as List<String>,
-      isPublic: data['isPublic'] as bool,
-      lyrics: data['lyrics'] as String,
+      id: data['id'] ?? '',
+      name: data['name'] ?? '',
+      artistId: data['artistId'] ?? '',
+      collaboratorsId: List<String>.from(data['collaboratorsId'] ?? []),
+      albumId: data['albumId'] ?? '',
+      duration: (data['duration'] is int)
+          ? (data['duration'] as int).toDouble()
+          : (data['duration'] as num?)?.toDouble() ?? 0.0,
+      fileURL: data['fileURL'] ?? '',
+      coverURL: data['coverURL'] ?? '',
+      genre: List<String>.from(data['genre'] ?? []),
+      isPublic: data['isPublic'] ?? false,
+      lyrics: data['lyrics'] ?? '',
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+
       album: (data['album'] as List<dynamic>? ?? [])
-          .map((albumData) => SaveId.fromMap(albumData as Map<String, dynamic>))
+          .map((e) => SaveId.fromMap(e as Map<String, dynamic>))
           .toList(),
+
       playlist: (data['playlist'] as List<dynamic>? ?? [])
-          .map(
-            (playlistData) =>
-                SaveId.fromMap(playlistData as Map<String, dynamic>),
-          )
+          .map((e) => SaveId.fromMap(e as Map<String, dynamic>))
           .toList(),
+
       share: (data['share'] as List<dynamic>? ?? [])
-          .map((shareData) => SaveId.fromMap(shareData as Map<String, dynamic>))
+          .map((e) => SaveId.fromMap(e as Map<String, dynamic>))
           .toList(),
+
       like: (data['like'] as List<dynamic>? ?? [])
-          .map((likeData) => SaveId.fromMap(likeData as Map<String, dynamic>))
+          .map((e) => SaveId.fromMap(e as Map<String, dynamic>))
           .toList(),
+
       play: (data['play'] as List<dynamic>? ?? [])
-          .map((playData) => SaveId.fromMap(playData as Map<String, dynamic>))
+          .map((e) => SaveId.fromMap(e as Map<String, dynamic>))
           .toList(),
     );
   }

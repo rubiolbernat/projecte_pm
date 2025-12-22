@@ -5,15 +5,15 @@ import 'package:projecte_pm/services/UserService.dart';
 import 'package:projecte_pm/services/playlist_service.dart';
 import 'package:projecte_pm/pages/detail_screen/playlist_detail_screen.dart';
 
-class UserDetailScreen extends StatefulWidget {
+class ProfilePage extends StatefulWidget {
   final String userId;
-  const UserDetailScreen({required this.userId, super.key});
+  const ProfilePage({required this.userId, super.key});
 
   @override
-  State<UserDetailScreen> createState() => _UserDetailScreenState();
+  State<ProfilePage> createState() => _ProfilePageState();
 }
 
-class _UserDetailScreenState extends State<UserDetailScreen> {
+class _ProfilePageState extends State<ProfilePage> {
   User? user;
   List<Playlist> playlists = [];
   bool isLoading = true;
