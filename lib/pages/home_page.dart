@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:projecte_pm/services/PlayerService.dart';
 import 'package:projecte_pm/services/UserService.dart';
 import 'package:projecte_pm/widgets/history_list.dart';
 import 'package:projecte_pm/pages/detail_screen/album_detail_screen.dart';
@@ -11,8 +12,9 @@ import 'package:projecte_pm/widgets/app_bar_widget.dart';
 
 class HomePage extends StatefulWidget {
   final UserService userService;
+  final PlayerService playerService;
 
-  const HomePage({super.key, required this.userService});
+  const HomePage({super.key, required this.userService, required this.playerService});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -87,6 +89,7 @@ class _HomePageState extends State<HomePage> {
                     onTap: (id, type) {
                       switch (type) {
                         case 'song':
+                          widget.playerService.playSongFromId(id);
                           Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (_) => SongDetailScreen(songId: id),

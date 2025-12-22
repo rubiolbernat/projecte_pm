@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:projecte_pm/services/PlayerService.dart';
 import 'package:projecte_pm/services/UserService.dart';
 import 'package:projecte_pm/pages/home_page.dart';
 import 'package:projecte_pm/pages/search_page.dart';
@@ -8,6 +9,7 @@ import 'package:projecte_pm/pages/navigator_pages/home_navigator.dart';
 import 'package:projecte_pm/pages/navigator_pages/search_navigator.dart';
 import 'package:projecte_pm/pages/navigator_pages/create_user_navigator.dart';
 import 'package:projecte_pm/pages/navigator_pages/library_navigator.dart';
+import 'package:projecte_pm/widgets/FloatingPlayButton.dart';
 
 class LandingUserPage extends StatefulWidget {
   final String userId;
@@ -19,6 +21,7 @@ class LandingUserPage extends StatefulWidget {
 
 class _LandingUserPageState extends State<LandingUserPage> {
   late final UserService _userService;
+  late final PlayerService _playerService;
   int _currentIndex = 0;
   bool _isLoading = true;
 
@@ -38,7 +41,9 @@ class _LandingUserPageState extends State<LandingUserPage> {
 
   Future<void> _initUserService() async {
     try {
-      _userService = await UserService.create(userId: widget.userId);
+      UserService myUser = await UserService.create(userId: widget.userId);
+      _playerService = PlayerService(myUser);
+      _userService = _playerService.userService;
     } catch (e) {
       print(e);
     } finally {
@@ -69,6 +74,7 @@ class _LandingUserPageState extends State<LandingUserPage> {
           HomeNavigator(
             navigatorKey: _navigatorKeys[0],
             userService: _userService,
+            playerService: _playerService
           ),
           SearchNavigator(
             navigatorKey: _navigatorKeys[1],
@@ -86,12 +92,8 @@ class _LandingUserPageState extends State<LandingUserPage> {
       ),
 
       // --- BOTÓN FLOTANTE ---
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          print("Botón Play/Pause flotante");
-        },
-        backgroundColor: Colors.blueAccent,
-        child: const Icon(Icons.play_arrow, color: Colors.white),
+      floatingActionButton: FloatingPlayButton(
+        playerService: _playerService,
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
 

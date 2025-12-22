@@ -8,7 +8,6 @@ class UserService {
   final FirebaseFirestore _firestore;
   final DocumentReference? _currentUserRef;
   User _user;
-  final PlayerService _playerService = PlayerService();
 
   UserService._({
     required FirebaseFirestore firestore,
@@ -37,7 +36,6 @@ class UserService {
 
   // Getters de user
   User get user => _user;
-  PlayerService get player => _playerService;
 
   // Metòdes CRUD
   /*Future<User?> getCurrentUser() async {
@@ -103,6 +101,24 @@ class UserService {
     );
 
     await batch.commit();
+  }
+
+  // Metodes de PlayerService
+  Future<void> addToHistory(String songId) async {
+    try {
+      final historyRef = _currentUserRef!.collection('playHistory');
+
+      await historyRef.add({
+        'songId': _firestore.doc('songs/$songId'), // CORRECCIÓ: Usar _firestore
+        'playedAt': FieldValue.serverTimestamp(),
+        'playDuration': 0,
+        'completed': false,
+      });
+      
+      log('Cançó $songId afegida a historial', name: 'UserService');
+    } catch (e) {
+      print("Error guardant historial: $e");
+    }
   }
 
   /////////////////////////////////////////////////////////////////////////////
