@@ -1,8 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:projecte_pm/models/song.dart';
 import 'package:projecte_pm/models/playlist.dart';
 
 class PlaylistService {
+  //////////////////////////////////////////////////////////////////////////////
+
   static Future<Playlist?> getPlaylist(String playlistId) async {
     try {
       final doc = await FirebaseFirestore.instance
@@ -22,4 +23,19 @@ class PlaylistService {
       throw Exception('Error obtenint playlist: $e');
     }
   }
+
+  //////////////////////////////////////////////////////////////////////////////
+
+  static Future<void> updatePlaylist(Playlist playlist) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection("playlists")
+          .doc(playlist.id)
+          .update(playlist.toMap());
+    } catch (e) {
+      throw Exception('Error actualitzant Playlist $e');
+    }
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
 }

@@ -72,7 +72,6 @@ class AlbumService {
   }
 
   //////////////////////////////////////////////////////////////////////////////
-  //**************************************************************************//
 
   static Future<Album?> getAlbum(String albumId) async {
     try {
@@ -84,7 +83,7 @@ class AlbumService {
       if (!doc.exists) return null; //Id no valid, retorna null
 
       final data = doc.data();
-      data!['id'] = doc.id; // añadimos el id del documento
+      data!['id'] = doc.id; // afegim el id del document
 
       Album album = Album.fromMap(data);
 
@@ -94,6 +93,18 @@ class AlbumService {
     }
   }
 
-  //**************************************************************************//
+  //////////////////////////////////////////////////////////////////////////////
+
+  static Future<void> updateAlbum(Album album) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection("albums")
+          .doc(album.id)
+          .update(album.toMap());
+    } catch (e) {
+      throw Exception('Error actualitzant Album $e');
+    }
+  }
+
   //////////////////////////////////////////////////////////////////////////////
 }

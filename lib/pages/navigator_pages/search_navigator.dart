@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:projecte_pm/services/UserService.dart';
 import 'package:projecte_pm/pages/search_page.dart';
+import 'package:projecte_pm/services/PlayerService.dart';
 
 class SearchNavigator extends StatelessWidget {
   final UserService userService;
+  final PlayerService playerService;
   final GlobalKey<NavigatorState> navigatorKey;
 
   const SearchNavigator({
     super.key,
     required this.userService,
+    required this.playerService,
     required this.navigatorKey,
   });
 
@@ -18,7 +21,10 @@ class SearchNavigator extends StatelessWidget {
       key: navigatorKey,
       onGenerateRoute: (settings) {
         return MaterialPageRoute(
-          builder: (_) => SearchPage(userService: userService),
+          builder: (_) => SearchPage(
+            userService: userService,
+            playerService: playerService,
+          ),
         );
       },
     );

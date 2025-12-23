@@ -14,7 +14,11 @@ class HomePage extends StatefulWidget {
   final UserService userService;
   final PlayerService playerService;
 
-  const HomePage({super.key, required this.userService, required this.playerService});
+  const HomePage({
+    super.key,
+    required this.userService,
+    required this.playerService,
+  });
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -62,7 +66,7 @@ class _HomePageState extends State<HomePage> {
                   readPlaylists: true,
                   readArtists: true,
                   readUsers: false,
-                ),
+                ), //No es fa cerca per name i no volem novetats d'usuaris
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const SizedBox(
@@ -99,7 +103,11 @@ class _HomePageState extends State<HomePage> {
                         case 'album':
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (_) => AlbumDetailScreen(albumId: id),
+                              builder: (_) => AlbumDetailScreen(
+                                albumId: id,
+                                userService: widget.userService,
+                                playerService: widget.playerService,
+                              ),
                             ),
                           );
                           break;

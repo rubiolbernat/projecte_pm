@@ -1,28 +1,46 @@
 import 'package:flutter/material.dart';
 import 'package:projecte_pm/services/AlbumService.dart';
 import 'package:projecte_pm/services/ArtistService.dart';
+import 'package:projecte_pm/models/user.dart';
 import 'package:projecte_pm/models/album.dart';
 import 'package:projecte_pm/models/artist.dart';
 import 'package:projecte_pm/pages/detail_screen/song_detail_screen.dart';
 import 'package:projecte_pm/pages/detail_screen/artist_detail_screen.dart';
+import 'package:projecte_pm/services/PlayerService.dart';
+import 'package:projecte_pm/services/UserService.dart';
 
 class AlbumDetailScreen extends StatefulWidget {
   final String albumId;
-  const AlbumDetailScreen({required this.albumId, super.key});
+  final UserService userService;
+  final PlayerService playerService;
+  const AlbumDetailScreen({
+    required this.albumId,
+    required this.userService,
+    required this.playerService,
+    super.key,
+  });
 
   @override
   State<AlbumDetailScreen> createState() => _AlbumDetailScreenState();
 }
 
 class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
+  User? user;
   Album? album;
   Artist? artist;
   bool isLoading = true;
+  bool isFavorite = false;
 
   @override
   void initState() {
     super.initState();
+    user = widget.userService.user;
     _loadAlbumAndArtist();
+    for (final item in widget.userService.user.savedAlbum) {
+      if (item.id == widget.albumId) {
+        isFavorite = true;
+      }
+    }
   }
 
   Future<void> _loadAlbumAndArtist() async {
@@ -112,13 +130,30 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
               ),
               const SizedBox(height: 20),
 
-              Text(
-                "Cançons",
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+              Row(
+                children: [
+                  InkWell(
+                    onTap: () async {
+                      setState(() {
+                        isFavorite = !isFavorite;
+
+                        if (isFavorite) {
+                          user!.addSavedAlbum(widget.albumId);
+                          album!.addFollower(user!.id);
+                        } else {
+                          user!.removeSavedAlbum(widget.albumId);
+                          album!.removeFollower(user!.id);
+                        }
+                      });
+                      await widget.userService.updateUser(user!);
+                      await AlbumService.updateAlbum(album!);
+                    },
+                    child: Icon(
+                      isFavorite ? Icons.favorite : Icons.favorite_border,
+                      color: Colors.red,
+                    ),
+                  ),
+                ],
               ),
 
               const SizedBox(height: 10),
@@ -129,7 +164,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                 itemCount: album!.albumSong.length,
                 itemBuilder: (context, index) {
                   final song = album!.albumSong[index];
-
+                  widget.playerService.playSongFromId(song.songId);
                   return ListTile(
                     contentPadding: EdgeInsets.zero,
                     leading: Text(

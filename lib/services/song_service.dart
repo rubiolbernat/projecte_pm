@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:projecte_pm/models/song.dart';
 
 class SongService {
+  //////////////////////////////////////////////////////////////////////////////
+
   static Future<Song?> getSong(String songId) async {
     try {
       final doc = await FirebaseFirestore.instance
@@ -21,4 +23,19 @@ class SongService {
       throw Exception('Error obtenint song: $e');
     }
   }
+
+  //////////////////////////////////////////////////////////////////////////////
+
+  static Future<void> updateSong(Song song) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection("songs")
+          .doc(song.id)
+          .update(song.toMap());
+    } catch (e) {
+      throw Exception('Error actualitzant Song $e');
+    }
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
 }

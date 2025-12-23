@@ -7,10 +7,16 @@ import 'package:projecte_pm/pages/detail_screen/playlist_detail_screen.dart';
 import 'package:projecte_pm/pages/detail_screen/artist_detail_screen.dart';
 import 'package:projecte_pm/pages/detail_screen/user_detail_screen.dart';
 import 'package:projecte_pm/widgets/app_bar_widget.dart';
+import 'package:projecte_pm/services/PlayerService.dart';
 
 class SearchPage extends StatefulWidget {
   final UserService userService;
-  const SearchPage({super.key, required this.userService});
+  final PlayerService playerService;
+  const SearchPage({
+    super.key,
+    required this.userService,
+    required this.playerService,
+  });
 
   @override
   State<SearchPage> createState() => _SearchPageState();
@@ -115,6 +121,7 @@ class _SearchPageState extends State<SearchPage> {
                         onTap: () {
                           switch (item['type']) {
                             case 'song':
+                              widget.playerService.playSongFromId(item['id']);
                               Navigator.of(context).push(
                                 MaterialPageRoute(
                                   builder: (_) =>
@@ -125,8 +132,11 @@ class _SearchPageState extends State<SearchPage> {
                             case 'album':
                               Navigator.of(context).push(
                                 MaterialPageRoute(
-                                  builder: (_) =>
-                                      AlbumDetailScreen(albumId: item['id']),
+                                  builder: (_) => AlbumDetailScreen(
+                                    albumId: item['id'],
+                                    userService: widget.userService,
+                                    playerService: widget.playerService,
+                                  ),
                                 ),
                               );
                               break;

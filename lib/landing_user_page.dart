@@ -74,11 +74,12 @@ class _LandingUserPageState extends State<LandingUserPage> {
           HomeNavigator(
             navigatorKey: _navigatorKeys[0],
             userService: _userService,
-            playerService: _playerService
+            playerService: _playerService,
           ),
           SearchNavigator(
             navigatorKey: _navigatorKeys[1],
             userService: _userService,
+            playerService: _playerService,
           ),
           LibraryNavigator(
             navigatorKey: _navigatorKeys[2],
@@ -92,9 +93,7 @@ class _LandingUserPageState extends State<LandingUserPage> {
       ),
 
       // --- BOTÓN FLOTANTE ---
-      floatingActionButton: FloatingPlayButton(
-        playerService: _playerService,
-      ),
+      floatingActionButton: FloatingPlayButton(playerService: _playerService),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
 
       // --- BOTTOM NAVIGATION ---

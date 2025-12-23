@@ -53,6 +53,7 @@ class User {
   String get bio => _bio;
   DateTime get createdAt => _createdAt;
   List<SaveId> get ownedPlaylist => _ownedPlaylist;
+  List<SaveId> get savedAlbum => _savedAlbum;
 
   //Llista de Setters
   set name(String name) => _name = name;
@@ -164,7 +165,6 @@ class User {
   int followerCount() => _follower.length;
   int followingCount() => _following.length;
   int savedPlaylist() => _savedPlaylist.length;
-  int savedAlbum() => _savedAlbum.length;
   int playHistory() => _playHistory.length;
 
   //Metode que ompleix la clase a partir de un map de Firebase
