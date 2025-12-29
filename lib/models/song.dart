@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:projecte_pm/models/subClass/album_song.dart';
 
 import 'package:projecte_pm/models/subClass/save_id.dart';
 
@@ -26,12 +27,12 @@ class Song {
   Song({
     String? id,
     required String name,
-    required String artistId,
+    required String? artistId,
     List<String>? collaboratorsId,
     String? albumId,
     required double duration,
-    required String fileURL,
-    required String coverURL,
+    required String? fileURL,
+    required String? coverURL,
     List<String>? genre,
     bool? isPublic,
     String? lyrics,
@@ -43,12 +44,12 @@ class Song {
     List<SaveId>? play,
   }) : _id = id ?? '',
        _name = name,
-       _artistId = artistId,
+       _artistId = artistId ?? '',
        _collaboratorsId = collaboratorsId ?? [],
        _albumId = albumId ?? '',
        _duration = duration,
-       _fileURL = fileURL,
-       _coverURL = coverURL,
+       _fileURL = fileURL?? '',
+       _coverURL = coverURL?? '',
        _genre = genre ?? [],
        _isPublic = isPublic ?? false,
        _lyrics = lyrics ?? '',
@@ -217,5 +218,16 @@ class Song {
       'like': _like.map((like) => like.toMap()).toList(),
       'play': _play.map((play) => play.toMap()).toList(),
     };
+  }
+
+  static Song fromAlbumSong(AlbumSong albumSong) {
+    return Song(
+      id: albumSong.songId, // o albumSong.id
+      name: albumSong.title,
+      duration: albumSong.duration,
+      artistId: null,
+      fileURL: null,
+      coverURL: null,
+    );
   }
 }

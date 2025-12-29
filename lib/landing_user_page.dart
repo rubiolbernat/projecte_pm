@@ -84,6 +84,7 @@ class _LandingUserPageState extends State<LandingUserPage> {
           LibraryNavigator(
             navigatorKey: _navigatorKeys[2],
             userService: _userService,
+            playerService: _playerService,
           ),
           CreateUserNavigator(
             navigatorKey: _navigatorKeys[3],
@@ -117,7 +118,7 @@ class _LandingUserPageState extends State<LandingUserPage> {
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home_filled),
-            label: "Inicio",
+            label: "Inici",
           ),
           BottomNavigationBarItem(icon: Icon(Icons.search), label: "Buscar"),
           BottomNavigationBarItem(

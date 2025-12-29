@@ -4,10 +4,16 @@ import 'package:projecte_pm/models/album.dart';
 import 'package:projecte_pm/services/ArtistService.dart';
 import 'package:projecte_pm/services/AlbumService.dart';
 import 'package:projecte_pm/pages/detail_screen/album_detail_screen.dart';
+import 'package:projecte_pm/services/PlayerService.dart';
 
 class ArtistDetailScreen extends StatefulWidget {
   final String artistId;
-  const ArtistDetailScreen({required this.artistId, super.key});
+  final PlayerService playerService;
+  const ArtistDetailScreen({
+    required this.artistId,
+    required this.playerService,
+    super.key,
+  });
 
   @override
   State<ArtistDetailScreen> createState() => _ArtistDetailScreenState();

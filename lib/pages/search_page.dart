@@ -124,8 +124,10 @@ class _SearchPageState extends State<SearchPage> {
                               widget.playerService.playSongFromId(item['id']);
                               Navigator.of(context).push(
                                 MaterialPageRoute(
-                                  builder: (_) =>
-                                      SongDetailScreen(songId: item['id']),
+                                  builder: (_) => SongDetailScreen(
+                                    songId: item['id'],
+                                    playerService: widget.playerService,
+                                  ),
                                 ),
                               );
                               break;
@@ -145,6 +147,7 @@ class _SearchPageState extends State<SearchPage> {
                                 MaterialPageRoute(
                                   builder: (_) => PlaylistDetailScreen(
                                     playlistId: item['id'],
+                                    playerService: widget.playerService,
                                   ),
                                 ),
                               );
@@ -152,8 +155,10 @@ class _SearchPageState extends State<SearchPage> {
                             case 'artist':
                               Navigator.of(context).push(
                                 MaterialPageRoute(
-                                  builder: (_) =>
-                                      ArtistDetailScreen(artistId: item['id']),
+                                  builder: (_) => ArtistDetailScreen(
+                                    artistId: item['id'],
+                                    playerService: widget.playerService,
+                                  ),
                                 ),
                               );
                               break;

@@ -93,10 +93,12 @@ class _HomePageState extends State<HomePage> {
                     onTap: (id, type) {
                       switch (type) {
                         case 'song':
-                          widget.playerService.playSongFromId(id);
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (_) => SongDetailScreen(songId: id),
+                              builder: (_) => SongDetailScreen(
+                                songId: id,
+                                playerService: widget.playerService,
+                              ),
                             ),
                           );
                           break;
@@ -114,15 +116,20 @@ class _HomePageState extends State<HomePage> {
                         case 'playlist':
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (_) =>
-                                  PlaylistDetailScreen(playlistId: id),
+                              builder: (_) => PlaylistDetailScreen(
+                                playlistId: id,
+                                playerService: widget.playerService,
+                              ),
                             ),
                           );
                           break;
                         case 'artist':
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (_) => ArtistDetailScreen(artistId: id),
+                              builder: (_) => ArtistDetailScreen(
+                                artistId: id,
+                                playerService: widget.playerService,
+                              ),
                             ),
                           );
                           break;

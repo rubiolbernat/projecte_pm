@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:projecte_pm/services/PlayerService.dart';
 import 'package:projecte_pm/services/song_service.dart';
 import 'package:projecte_pm/services/ArtistService.dart';
 import 'package:projecte_pm/models/song.dart';
@@ -7,7 +8,12 @@ import 'package:projecte_pm/pages/detail_screen/artist_detail_screen.dart';
 
 class SongDetailScreen extends StatefulWidget {
   final String songId;
-  const SongDetailScreen({required this.songId, super.key});
+  final PlayerService playerService;
+  const SongDetailScreen({
+    required this.songId,
+    required this.playerService,
+    super.key,
+  });
 
   @override
   State<SongDetailScreen> createState() => _SongDetailScreenState();
@@ -22,6 +28,7 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
   void initState() {
     super.initState();
     _loadSongAndArtist();
+    widget.playerService.playSongFromId(widget.songId);
   }
 
   Future<void> _loadSongAndArtist() async {
@@ -91,8 +98,10 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (_) =>
-                          ArtistDetailScreen(artistId: song!.artistId),
+                      builder: (_) => ArtistDetailScreen(
+                        artistId: song!.artistId,
+                        playerService: widget.playerService,
+                      ),
                     ),
                   );
                 },
@@ -145,8 +154,10 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
                     onTap: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (_) =>
-                              ArtistDetailScreen(artistId: collaborator),
+                          builder: (_) => ArtistDetailScreen(
+                            artistId: collaborator,
+                            playerService: widget.playerService,
+                          ),
                         ),
                       );
                     },

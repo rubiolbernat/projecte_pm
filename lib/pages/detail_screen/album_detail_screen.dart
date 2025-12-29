@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:projecte_pm/models/song.dart';
 import 'package:projecte_pm/services/AlbumService.dart';
 import 'package:projecte_pm/services/ArtistService.dart';
 import 'package:projecte_pm/models/user.dart';
@@ -8,6 +9,7 @@ import 'package:projecte_pm/pages/detail_screen/song_detail_screen.dart';
 import 'package:projecte_pm/pages/detail_screen/artist_detail_screen.dart';
 import 'package:projecte_pm/services/PlayerService.dart';
 import 'package:projecte_pm/services/UserService.dart';
+import 'package:projecte_pm/widgets/SongListItem.dart';
 
 class AlbumDetailScreen extends StatefulWidget {
   final String albumId;
@@ -103,8 +105,10 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (_) =>
-                          ArtistDetailScreen(artistId: album!.artistId),
+                      builder: (_) => ArtistDetailScreen(
+                        artistId: album!.artistId,
+                        playerService: widget.playerService,
+                      ),
                     ),
                   );
                 },
@@ -163,29 +167,13 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: album!.albumSong.length,
                 itemBuilder: (context, index) {
-                  final song = album!.albumSong[index];
-                  widget.playerService.playSongFromId(song.songId);
-                  return ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: Text(
-                      "${song.trackNumber}",
-                      style: const TextStyle(color: Colors.grey),
-                    ),
-                    title: Text(
-                      song.title,
-                      style: const TextStyle(color: Colors.white),
-                    ),
-                    subtitle: Text(
-                      song.duration.toStringAsFixed(2),
-                      style: const TextStyle(color: Colors.grey),
-                    ),
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => SongDetailScreen(songId: song.songId),
-                        ),
-                      );
-                    },
+                  final albumSong = album!.albumSong[index];
+                  final song = Song.fromAlbumSong(albumSong);
+                  song.artistId = artist?.id ?? '';
+                  return SongListItem(
+                    song: song,
+                    index: albumSong.trackNumber,
+                    playerService: widget.playerService,
                   );
                 },
               ),

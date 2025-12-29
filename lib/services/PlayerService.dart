@@ -110,18 +110,30 @@ class PlayerService {
       // 2. Preparem les dades
       // Extreiem el Map de dades
       Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-      
+
       // IMPORTANT: Injectem l'ID del document dins del Map perquè el teu model el trobi
-      data['id'] = doc.id; 
+      data['id'] = doc.id;
 
       // 3. Convertim a objecte Song
       final song = Song.fromMap(data);
 
       // 4. Reproduïm
       await playNow(song);
-      
     } catch (e) {
       print("Error carregant cançó per ID: $e");
+    }
+  }
+
+  void addToQueue(Song song) {
+    _queue.add(song);
+  }
+
+  void addNext(Song song) {
+    if (_queue.isEmpty) {
+      _queue.add(song);
+      currentIndex = 0;
+    } else {
+      _queue.insert(currentIndex + 1, song);
     }
   }
 
