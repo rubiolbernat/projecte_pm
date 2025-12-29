@@ -6,8 +6,8 @@ import 'package:projecte_pm/services/UserService.dart';
 
 class PlayerService {
   final AudioPlayer _audioPlayer = AudioPlayer();
+  AudioPlayer get audioPlayer => _audioPlayer;
   List<Song> _queue = [];
-
   final UserService userService;
   int currentIndex = -1;
 

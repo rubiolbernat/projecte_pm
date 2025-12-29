@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:projecte_pm/services/PlayerService.dart';
 import 'package:projecte_pm/services/UserService.dart';
-import 'package:projecte_pm/pages/home_page.dart';
-import 'package:projecte_pm/pages/search_page.dart';
-import 'package:projecte_pm/pages/create_user_page.dart';
-import 'package:projecte_pm/pages/library_page.dart';
 import 'package:projecte_pm/pages/navigator_pages/home_navigator.dart';
 import 'package:projecte_pm/pages/navigator_pages/search_navigator.dart';
 import 'package:projecte_pm/pages/navigator_pages/create_user_navigator.dart';
@@ -65,39 +61,47 @@ class _LandingUserPageState extends State<LandingUserPage> {
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
 
-      // --- HEADER ---
-
-      // --- BODY con navegadores anidados ---
-      body: IndexedStack(
-        index: _currentIndex,
+      // --- BODY con navegadores anidados Y barra flotante ---
+      body: Stack(
         children: [
-          HomeNavigator(
-            navigatorKey: _navigatorKeys[0],
-            userService: _userService,
-            playerService: _playerService,
+          // Contenido principal (igual que antes)
+          IndexedStack(
+            index: _currentIndex,
+            children: [
+              HomeNavigator(
+                navigatorKey: _navigatorKeys[0],
+                userService: _userService,
+                playerService: _playerService,
+              ),
+              SearchNavigator(
+                navigatorKey: _navigatorKeys[1],
+                userService: _userService,
+                playerService: _playerService,
+              ),
+              LibraryNavigator(
+                navigatorKey: _navigatorKeys[2],
+                userService: _userService,
+                playerService: _playerService,
+              ),
+              CreateUserNavigator(
+                navigatorKey: _navigatorKeys[3],
+                userService: _userService,
+              ),
+            ],
           ),
-          SearchNavigator(
-            navigatorKey: _navigatorKeys[1],
-            userService: _userService,
-            playerService: _playerService,
-          ),
-          LibraryNavigator(
-            navigatorKey: _navigatorKeys[2],
-            userService: _userService,
-            playerService: _playerService,
-          ),
-          CreateUserNavigator(
-            navigatorKey: _navigatorKeys[3],
-            userService: _userService,
+
+          // Barra de reproducción flotante (NUEVO)
+          // Se posiciona justo encima de la BottomNavigationBar
+          Positioned(
+            left: 8,
+            right: 8,
+            bottom: 70, // Ajusta según la altura de tu BottomNavigationBar
+            child: FloatingPlayButton(playerService: _playerService),
           ),
         ],
       ),
 
-      // --- BOTÓN FLOTANTE ---
-      floatingActionButton: FloatingPlayButton(playerService: _playerService),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-
-      // --- BOTTOM NAVIGATION ---
+      // --- BOTTOM NAVIGATION (SIN CAMBIOS) ---
       bottomNavigationBar: BottomNavigationBar(
         selectedItemColor: Colors.blueAccent,
         unselectedItemColor: Colors.grey,
