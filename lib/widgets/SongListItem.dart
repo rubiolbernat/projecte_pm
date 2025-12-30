@@ -97,6 +97,7 @@ class _SongListItemState extends State<SongListItem> {
                         builder: (_) => ArtistDetailScreen(
                           artistId: widget.song.artistId,
                           playerService: widget.playerService,
+                          userService: widget.playerService.userService,
                         ),
                       ),
                     );

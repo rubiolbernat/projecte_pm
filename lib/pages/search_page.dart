@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:projecte_pm/services/UserService.dart';
 import 'detail_screen/album_detail_screen.dart';
-import 'package:projecte_pm/pages/detail_screen/album_detail_screen.dart';
 import 'package:projecte_pm/pages/detail_screen/song_detail_screen.dart';
 import 'package:projecte_pm/pages/detail_screen/playlist_detail_screen.dart';
 import 'package:projecte_pm/pages/detail_screen/artist_detail_screen.dart';
@@ -158,6 +157,7 @@ class _SearchPageState extends State<SearchPage> {
                                   builder: (_) => ArtistDetailScreen(
                                     artistId: item['id'],
                                     playerService: widget.playerService,
+                                    userService: widget.userService,
                                   ),
                                 ),
                               );

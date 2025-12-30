@@ -6,8 +6,6 @@ import 'package:projecte_pm/pages/detail_screen/album_detail_screen.dart';
 import 'package:projecte_pm/pages/detail_screen/song_detail_screen.dart';
 import 'package:projecte_pm/pages/detail_screen/playlist_detail_screen.dart';
 import 'package:projecte_pm/pages/detail_screen/artist_detail_screen.dart';
-import 'package:projecte_pm/pages/detail_screen/user_detail_screen.dart';
-import 'package:projecte_pm/pages/edit_user_profile_page.dart';
 import 'package:projecte_pm/widgets/app_bar_widget.dart';
 
 class HomePage extends StatefulWidget {
@@ -129,6 +127,7 @@ class _HomePageState extends State<HomePage> {
                               builder: (_) => ArtistDetailScreen(
                                 artistId: id,
                                 playerService: widget.playerService,
+                                userService: widget.userService,
                               ),
                             ),
                           );

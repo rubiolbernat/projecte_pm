@@ -48,7 +48,7 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
         });
       }
     } catch (e) {
-      print("Error cargando datos: $e");
+      print("Error carregant dades: $e");
     } finally {
       setState(() {
         isLoading = false;
@@ -101,6 +101,7 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
                       builder: (_) => ArtistDetailScreen(
                         artistId: song!.artistId,
                         playerService: widget.playerService,
+                        userService: widget.playerService.userService,
                       ),
                     ),
                   );
@@ -157,6 +158,7 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
                           builder: (_) => ArtistDetailScreen(
                             artistId: collaborator,
                             playerService: widget.playerService,
+                            userService: widget.playerService.userService,
                           ),
                         ),
                       );

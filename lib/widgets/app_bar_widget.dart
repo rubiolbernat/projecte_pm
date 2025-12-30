@@ -13,7 +13,6 @@ class AppBarWidget extends StatefulWidget implements PreferredSizeWidget {
   @override
   State<AppBarWidget> createState() => _AppBarWidgetState();
 
-  // Esto es obligatorio para que Scaffold sepa la altura del AppBar
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 }
@@ -25,6 +24,7 @@ class _AppBarWidgetState extends State<AppBarWidget> {
       elevation: 0,
       backgroundColor: const Color(0xFF121212),
       titleSpacing: 0,
+      leadingWidth: 56,
       leading: InkWell(
         onTap: () {
           Navigator.of(context).push(
@@ -33,13 +33,7 @@ class _AppBarWidgetState extends State<AppBarWidget> {
             ),
           );
         },
-        child: const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16),
-          child: CircleAvatar(
-            radius: 16,
-            //backgroundImage: AssetImage('icons/SpotyUPC.png'),
-          ),
-        ),
+        child: Center(child: _buildProfileAvatar()),
       ),
       title: Row(
         children: [
@@ -47,7 +41,7 @@ class _AppBarWidgetState extends State<AppBarWidget> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "Hola, ${widget.userService.user.name.isEmpty ? "Error" : widget.userService.user.name}",
+                "Hola, ${widget.userService.user.name.isEmpty ? "Usuario" : widget.userService.user.name}",
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
@@ -110,6 +104,73 @@ class _AppBarWidgetState extends State<AppBarWidget> {
     );
   }
 
+  Widget _buildProfileAvatar() {
+    final user = widget.userService.user;
+    final photoURL = user.photoURL;
+
+    if (photoURL != null && photoURL.isNotEmpty) {
+      return CircleAvatar(
+        radius: 20,
+        backgroundColor: Colors.grey.shade800,
+        backgroundImage: NetworkImage(photoURL),
+      );
+    }
+
+    return CircleAvatar(
+      radius: 20,
+      backgroundColor: Colors.blueAccent,
+      child: Text(
+        _getInitials(user.name),
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  String _getInitials(String name) {
+    if (name.isEmpty) return "U";
+    final parts = name.trim().split(' ');
+    if (parts.length >= 2) {
+      return "${parts[0][0]}${parts[1][0]}".toUpperCase();
+    }
+    return parts[0][0].toUpperCase();
+  }
+
+  Widget _buildInitialsAvatar(String name) {
+    // Obtener las iniciales del nombre
+    String initials = "U";
+    if (name.isNotEmpty) {
+      final nameParts = name.split(' ');
+      if (nameParts.length >= 2) {
+        initials = "${nameParts[0][0]}${nameParts[1][0]}".toUpperCase();
+      } else if (nameParts.isNotEmpty) {
+        initials = nameParts[0][0].toUpperCase();
+      }
+    }
+
+    return Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+        color: Colors.blueAccent, // Color de fondo para las iniciales
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Center(
+        child: Text(
+          initials,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> _navigateToEditProfile() async {
     final result = await Navigator.push(
       context,
@@ -127,14 +188,12 @@ class _AppBarWidgetState extends State<AppBarWidget> {
 
   Future<void> _signOut() async {
     try {
-      // 1. Cerrar sesión en Firebase
       await auth.FirebaseAuth.instance.signOut();
 
-      // 2. Navegar al login y limpiar el historial
       if (mounted) {
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => const AuthGate()),
-          (route) => false, // elimina todas las pantallas anteriores
+          (route) => false,
         );
       }
     } catch (e) {

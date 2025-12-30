@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:projecte_pm/models/subClass/save_id.dart';
 import 'package:projecte_pm/models/user.dart';
 import 'dart:developer';
-import 'package:projecte_pm/services/PlayerService.dart';
 
 class UserService {
   final FirebaseFirestore _firestore;
@@ -38,14 +37,6 @@ class UserService {
   User get user => _user;
 
   // Metòdes CRUD
-  /*Future<User?> getCurrentUser() async {
-    if (_currentUserRef == null) return null;
-    final snap = await _currentUserRef!.get();
-    if (!snap.exists) return null;
-    log('Dades usuari rebudes: ${snap.data()}', name: 'FIREBASE_LOG');
-    return User.fromMap(snap.data() as Map<String, dynamic>);
-  }*/
-
   Future<void> refreshUser() async {
     final snap = await _currentUserRef!.get();
     _user = User.fromMap(snap.data() as Map<String, dynamic>);
@@ -54,45 +45,59 @@ class UserService {
   Future<void> updateUser(User user) async {
     if (_currentUserRef == null) return;
     try {
-      // Actualitzem només els camps necessaris (excepte ID i email que solen ser fixos)
       await _currentUserRef!.update(user.toMap());
     } catch (e) {
       print("Error actualitzant usuari: $e");
-      rethrow; // Llancem l'error perquè la UI sàpiga que ha fallat
+      rethrow;
     }
   }
 
-  // Altres Mètodes
+  // Metode per seguir/desseguir usuaris
   Future<void> followUser(String targetUserId) async {
-    if (_currentUserRef == targetUserId) return;
+    if (_currentUserRef == targetUserId) return; // Evita seguir-se a un mateix
 
-    final batch = _firestore.batch();
+    final batch = _firestore.batch(); // Inicia una operació en lot
 
-    final myFollowingRef = _currentUserRef!
-        .collection('following')
-        .doc(targetUserId);
+    final myFollowingRef =
+        _currentUserRef! // Referència a la col·lecció 'following' de l'usuari actual
+            .collection('following')
+            .doc(targetUserId);
 
     final targetUserRef = _firestore
-        .collection('users')
+        .collection(
+          'users',
+        ) // Referència a la col·lecció 'followers' de l'usuari objectiu
         .doc(targetUserId)
         .collection('followers')
         .doc(_user.id);
 
-    final relation = SaveId(id: targetUserId);
+    final relation = SaveId(
+      id: targetUserId,
+    ); // Crea una instància de SaveId per la relació
+    batch.set(
+      myFollowingRef,
+      relation.toMap(),
+    ); // Afegeix l'operació de seguiment al lot
+    batch.set(
+      targetUserRef,
+      relation.toMap(),
+    ); // Afegeix l'operació de ser seguit al lot
 
-    batch.set(myFollowingRef, relation.toMap());
-    batch.set(targetUserRef, relation.toMap());
-
-    await batch.commit();
+    await batch.commit(); // Executa totes les operacions en lot
   }
 
   Future<void> unfollowUser(String targetUserId) async {
-    if (_currentUserRef == targetUserId || _currentUserRef == null) return;
+    // Metode per deixar de seguir un usuari
+    if (_currentUserRef == targetUserId || _currentUserRef == null)
+      return; // Evita deixar de seguir-se a un mateix
 
-    final batch = _firestore.batch();
+    final batch = _firestore.batch(); // Inicia una operació en lot
 
-    batch.delete(_currentUserRef!.collection('following').doc(targetUserId));
     batch.delete(
+      _currentUserRef!.collection('following').doc(targetUserId),
+    ); // Elimina de la llista de seguints de l'usuari actual
+    batch.delete(
+      // Elimina de la llista de seguidors de l'usuari objectiu
       _firestore
           .collection('users')
           .doc(targetUserId)
@@ -100,23 +105,139 @@ class UserService {
           .doc(_user.id),
     );
 
-    await batch.commit();
+    await batch.commit(); // Executa totes les operacions en lot
+  }
+
+  // Metode per seguir artistes
+  Future<void> followArtist(String artistId) async {
+    // Seguir artista
+    if (_currentUserRef == null) return; // Si no hi ha usuari actual, surt
+
+    final batch = _firestore.batch(); // Inicia una operació en lot
+
+    try {
+      // Fetch del artista i la seva llista de followers
+      final artistRef = _firestore.collection('artists').doc(artistId);
+      final artistDoc = await artistRef.get();
+
+      if (!artistDoc.exists) {
+        // Comprovar si l'artista existeix
+        throw Exception('Artista no trobat');
+      }
+
+      final artistData = artistDoc.data()!; // Obtenir dades de l'artista
+      final currentFollowers = List<Map<String, dynamic>>.from(
+        // Obtenir llista actual de followers
+        artistData['artistFollower'] ?? [],
+      );
+
+      // Comprovar si l'usuari ja segueix a l'artista
+      if (currentFollowers.any((follower) => follower['id'] == _user.id)) {
+        print("L'usuari ja segueixe a aquest artista");
+        return;
+      }
+
+      // Afegir l'usuari a la llista de followers de l'artista
+      currentFollowers.add({'id': _user.id});
+      batch.update(artistRef, {'artistFollower': currentFollowers});
+      // Afegir l'artista a la llista de followingArtists de l'usuari
+      final userFollowingRef = _currentUserRef!
+          .collection('followingArtists')
+          .doc(artistId);
+      // Actualitzar la llista de followers a Firestore
+      batch.set(userFollowingRef, {
+        'artistId': artistId,
+        'followedAt': FieldValue.serverTimestamp(),
+      });
+      // Actualitzar la llista de followers a Firestore
+      await batch.commit();
+      // Print de debug per confirmar que funciona
+      print("Usuari ${_user.id} ara segueix al artista $artistId");
+    } catch (e) {
+      // Capturar errors de Firestore
+      print("Error seguint artista: $e");
+      rethrow;
+    }
+  }
+
+  // Metode per deixar de seguir artistes
+  Future<void> unfollowArtist(String artistId) async {
+    if (_currentUserRef == null) return;
+
+    try {
+      // Fetch del artista i la seva llista de followers
+      final artistRef = _firestore.collection('artists').doc(artistId);
+      final artistDoc = await artistRef.get();
+      // Comprovar si l'artista existeix, igual que abans
+      if (!artistDoc.exists) {
+        throw Exception('Artista no encontrado');
+      }
+      // Obtenim llista de followers actual
+      final artistData = artistDoc.data()!;
+      final currentFollowers = List<Map<String, dynamic>>.from(
+        artistData['artistFollower'] ?? [],
+      );
+      // Fetch del usuari i l'eliminem l'usuari de la llista de followers
+      final updatedFollowers = currentFollowers
+          .where((follower) => follower['id'] != _user.id)
+          .toList();
+      // Eliminar l'artista de la llista de followingArtists de l'usuari
+      final userFollowingRef = _currentUserRef!
+          .collection('followingArtists')
+          .doc(artistId);
+      // Eliminar document
+      await userFollowingRef.delete();
+      // Actualitzar la llista de followers a Firestore
+      await artistRef.update({'artistFollower': updatedFollowers});
+      // Print de debug per confirmar que funciona
+      print("Usuari ${_user.id} ha deixat de seguir al artista $artistId");
+      // Capturar errors de Firestore
+    } catch (e) {
+      print("Error al fer unfollow: $e");
+      rethrow;
+    }
+  }
+
+  // Verificar si l'usuari segueix a un artista
+  Future<bool> isFollowingArtist(String artistId) async {
+    // Si no hi ha usuari actual, retornem false
+    if (_currentUserRef == null) return false;
+    // Fetch del artista i comprovació de si l'usuari el segueix
+    try {
+      final artistDoc = await _currentUserRef!
+          .collection('followingArtists')
+          .doc(artistId)
+          .get();
+      // Comprovació si l'artista existeix
+      return artistDoc.exists;
+    } catch (e) {
+      // Capturar errors de Firestore
+      print("Error verificant follow: $e");
+      return false;
+    }
   }
 
   // Metodes de PlayerService
   Future<void> addToHistory(String songId) async {
     try {
-      final historyRef = _currentUserRef!.collection('playHistory');
+      final historyRef = _currentUserRef!.collection(
+        'playHistory',
+      ); // Referència a l'historial de reproducció
 
       await historyRef.add({
-        'songId': _firestore.doc('songs/$songId'), // CORRECCIÓ: Usar _firestore
-        'playedAt': FieldValue.serverTimestamp(),
-        'playDuration': 0,
-        'completed': false,
+        // Afegeix una nova entrada a l'historial
+        'songId': _firestore.doc('songs/$songId'), // Referència a la cançó
+        'playedAt': FieldValue.serverTimestamp(), // Timestamp de reproducció
+        'playDuration': 0, // Duració de reproducció (inicialment 0)
+        'completed': false, // Estat de completat (inicialment false)
       });
-      
-      log('Cançó $songId afegida a historial', name: 'UserService');
+
+      log(
+        'Cançó $songId afegida a historial',
+        name: 'UserService',
+      ); // Log de confirmació
     } catch (e) {
+      // Captura d'errors
       print("Error guardant historial: $e");
     }
   }
@@ -135,8 +256,6 @@ class UserService {
     try {
       final futures = <Future<QuerySnapshot>>[];
 
-      // 1. SONGS
-      // log('2. Llançant consulta Songs...', name: 'DEBUG_FIREBASE');
       if (readSongs) {
         Query<Map<String, dynamic>> query = _firestore.collection('songs');
         query = (name == null || name.isEmpty)
@@ -149,8 +268,6 @@ class UserService {
         futures.add(query.get());
       }
 
-      // 2. ALBUMS
-      // log('3. Llançant consulta Albums...', name: 'DEBUG_FIREBASE');
       if (readAlbums) {
         Query<Map<String, dynamic>> query = _firestore.collection('albums');
         query = (name == null || name.isEmpty)
@@ -163,8 +280,6 @@ class UserService {
         futures.add(query.get());
       }
 
-      // 3. PLAYLISTS (Aquesta sol fallar per l'índex)
-      //log('4. Llançant consulta Playlists...', name: 'DEBUG_FIREBASE');
       if (readPlaylists) {
         var query = _firestore
             .collection('playlists')
@@ -178,7 +293,6 @@ class UserService {
         futures.add(query.get());
       }
 
-      // 4. ARTISTS
       if (readArtists) {
         Query<Map<String, dynamic>> query = _firestore.collection('artists');
         query = (name == null || name.isEmpty)
@@ -190,7 +304,6 @@ class UserService {
         futures.add(query.get());
       }
 
-      // 5. USERS
       if (readUsers) {
         Query<Map<String, dynamic>> query = _firestore.collection('users');
         query = (name == null || name.isEmpty)
@@ -204,20 +317,14 @@ class UserService {
 
       final results = await Future.wait(futures);
 
-      /* log(
-        '5. Resultats rebuts. Songs: ${results[0].size}, Albums: ${results[1].size}, Playlists: {results[2].size}',
-        name: 'DEBUG_FIREBASE',
-      );*/
-
       final mixedList = <Map<String, dynamic>>[];
 
-      // Funció auxiliar per llegir dates de forma segura
       Timestamp getDate(DocumentSnapshot doc) {
         final data = doc.data() as Map<String, dynamic>?;
         if (data?['createdAt'] is Timestamp) {
           return (data!['createdAt'] as Timestamp);
         }
-        return Timestamp.now(); // fallback seguro
+        return Timestamp.now();
       }
 
       for (var snap in results) {
@@ -225,9 +332,7 @@ class UserService {
         for (var doc in snap.docs) {
           final data = doc.data() as Map<String, dynamic>;
 
-          // Normalizamos el tipo: quitamos la 's' final
-          String parentId =
-              doc.reference.parent.id; // 'songs', 'albums', 'playlists'
+          String parentId = doc.reference.parent.id;
           String type;
           switch (parentId) {
             case 'songs':
@@ -273,79 +378,82 @@ class UserService {
     }
   }
 
-  // Novetats artistes que segueixo
+  // Rebre novetats d'artistes seguits
   Future<List<Map<String, dynamic>>> getFollowedArtistsReleases() async {
+    // Rebre novetats d'artistes seguits
     try {
-      // Pas 1: Obtenir la llista d'artistes que l'usuari segueix
+      // Obtenir IDs d'artistes seguits
       final followingSnapshot = await _firestore
-          .collection('users')
-          .doc(currentUserId)
-          .collection('following')
-          .get();
+          .collection('users') // Col·lecció d'usuaris
+          .doc(currentUserId) // Document de l'usuari actual
+          .collection('followingArtists') // Col·lecció d'artistes seguits
+          .get(); // Obtenir documents
 
-      if (followingSnapshot.docs.isEmpty) return [];
+      if (followingSnapshot.docs.isEmpty)
+        return []; // Si no segueix a ningú, retorna llista buida
 
-      // Obtenir la llista d'IDs
+      // Llista d'IDs d'artistes seguits
       List<String> followedArtistIds = followingSnapshot.docs
-          .map((doc) => doc.id)
-          .toList();
+          .map((doc) => doc.id) // Obtenir ID de cada document
+          .toList(); // Convertir a llista
 
+      // Limitar a 10
       List<String> targetIds = followedArtistIds.take(10).toList();
 
-      // Pas 2: Buscar cançons d'aquests artistes
-      List<DocumentReference> artistRefs = targetIds
-          .map((id) => _firestore.collection('artists').doc(id))
-          .toList();
+      if (targetIds.isEmpty) return []; // Si no hi ha IDs, retorna llista buida
 
+      // Obtenir cançons dels artistes seguits
       final songsSnapshot = await _firestore
-          .collection('songs')
-          .where('artistId', whereIn: artistRefs)
-          .orderBy('createdAt', descending: true)
-          .limit(10)
-          .get();
+          .collection('songs') // Col·lecció de cançons
+          .where('artistId', whereIn: targetIds) // Filtrar per artistes seguits
+          .orderBy('createdAt', descending: true) // Ordenar per data de creació
+          .limit(10) // Limitar a 10 resultats
+          .get(); // Obtenir documents
 
-      List<Map<String, dynamic>> releases = [];
+      List<Map<String, dynamic>> releases =
+          []; // Llista per emmagatzemar resultats
 
       for (var doc in songsSnapshot.docs) {
+        // Iterar sobre documents
         releases.add({
-          'id': doc.id,
-          'type': 'song',
-          'title': doc['title'],
-          'subtitle': doc['artistName'],
-          'imageUrl': doc['coverURL'],
+          // Afegir informació de la cançó a la llista
+          'id': doc.id, // ID de la cançó
+          'type': 'song', // Tipus de contingut
+          'title':
+              doc['name'] ??
+              'Sin título', // Nom de la cançó, o 'Sin título' si no existeix
+          'subtitle': 'Del artista', // Subtítol
+          'imageUrl': doc['coverURL'] ?? '', // URL de la imatge de portada
         });
       }
 
-      return releases;
+      return releases; // Retornar llista de novetats
     } catch (e) {
-      print("Error fetching followed artists releases: $e");
-      return [];
+      print("Error trobant releases dels artistes: $e"); // Fetch d'errors
+      return []; // Retornar llista buida en cas d'error
     }
   }
-
-  //////////////////////////////////////////////////////////////////////////////
-  //**************************************************************************//
 
   static Future<User?> getUser(String userId) async {
+    // Metode estàtic per obtenir un usuari per ID
     try {
+      // Intentar obtenir l'usuari
       final doc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userId)
-          .get();
+          .collection('users') // Col·lecció d'usuaris
+          .doc(userId) // Document de l'usuari
+          .get(); // Obtenir document
 
-      if (!doc.exists) return null; //Id no valid, retorna null
+      if (!doc.exists) return null; // Si no existeix, retorna null
 
-      final data = doc.data();
-      data!['id'] = doc.id; // añadimos el id del documento
+      final data = doc.data(); // Obtenir dades del document
+      data!['id'] = doc.id; // Assignar ID del document a les dades
 
-      User user = User.fromMap(data);
+      User user = User.fromMap(data); // Crear instància d'usuari
 
-      return user; //Id valid, retorna album
+      return user; // Retornar l'usuari
     } catch (e) {
-      throw Exception('Error obtenint user: $e');
+      // Capturar errors
+      throw Exception('Error obtenint usuari: $e'); //
     }
   }
-
-  //**************************************************************************//
-  //////////////////////////////////////////////////////////////////////////////
 }

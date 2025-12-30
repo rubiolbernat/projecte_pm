@@ -5,7 +5,6 @@ import 'package:projecte_pm/services/ArtistService.dart';
 import 'package:projecte_pm/models/user.dart';
 import 'package:projecte_pm/models/album.dart';
 import 'package:projecte_pm/models/artist.dart';
-import 'package:projecte_pm/pages/detail_screen/song_detail_screen.dart';
 import 'package:projecte_pm/pages/detail_screen/artist_detail_screen.dart';
 import 'package:projecte_pm/services/PlayerService.dart';
 import 'package:projecte_pm/services/UserService.dart';
@@ -62,7 +61,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
         });
       }
     } catch (e) {
-      print("Error cargando datos: $e");
+      print("Error carregant dades: $e");
     } finally {
       setState(() {
         isLoading = false;
@@ -108,6 +107,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                       builder: (_) => ArtistDetailScreen(
                         artistId: album!.artistId,
                         playerService: widget.playerService,
+                        userService: widget.userService,
                       ),
                     ),
                   );

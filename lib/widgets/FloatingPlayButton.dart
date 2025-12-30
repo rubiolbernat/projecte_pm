@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:projecte_pm/services/PlayerService.dart';
 import 'package:projecte_pm/models/song.dart';
+import 'package:projecte_pm/pages/player_screen.dart';
 
 class FloatingPlayButton extends StatelessWidget {
-  final PlayerService playerService;
+  // Barra de reproducció flotant
+  final PlayerService playerService; // Servei de reproducció d'àudio
 
   const FloatingPlayButton({super.key, required this.playerService});
 
@@ -21,251 +23,315 @@ class FloatingPlayButton extends StatelessWidget {
           return const SizedBox.shrink();
         }
 
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Barra de progreso de la canción
-            // En FloatingPlayBarExtended.dart, reemplaza la barra de progreso:
+        // ENVUELVE TODO EN GESTUREDETECTOR PARA ABRIR PANTALLA COMPLETA
+        return GestureDetector(
+          onTap: () {
+            Navigator.of(context).push(
+              PageRouteBuilder(
+                pageBuilder: (context, animation, secondaryAnimation) {
+                  return PlayerScreen(playerService: playerService);
+                },
+                transitionsBuilder:
+                    (context, animation, secondaryAnimation, child) {
+                      const begin = Offset(0.0, 1.0);
+                      const end = Offset.zero;
+                      const curve = Curves.easeInOut;
 
-            // Barra de progreso de la canción con punto deslizable
-            StreamBuilder<Duration>(
-              stream: playerService.durationStream,
-              builder: (context, durationSnapshot) {
-                return StreamBuilder<Duration>(
-                  stream: playerService.positionStream,
-                  builder: (context, positionSnapshot) {
-                    final duration = durationSnapshot.data ?? Duration.zero;
-                    final position = positionSnapshot.data ?? Duration.zero;
+                      var tween = Tween(
+                        begin: begin,
+                        end: end,
+                      ).chain(CurveTween(curve: curve));
+                      var offsetAnimation = animation.drive(tween);
 
-                    // Solo mostrar barra si hay duración
-                    if (duration.inSeconds == 0) {
-                      return const SizedBox.shrink();
-                    }
+                      return SlideTransition(
+                        position: offsetAnimation,
+                        child: child,
+                      );
+                    },
+                transitionDuration: const Duration(milliseconds: 300),
+              ),
+            );
+          },
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Barra de progreso de la canción con punto deslizable
+              StreamBuilder<Duration>(
+                // Escucha cambios en la duración
+                stream: playerService
+                    .durationStream, // Duración total de la canción
+                builder: (context, durationSnapshot) {
+                  // Construye la barra
+                  return StreamBuilder<Duration>(
+                    stream: playerService.positionStream, // Posición actual
+                    builder: (context, positionSnapshot) {
+                      final duration =
+                          durationSnapshot.data ??
+                          Duration.zero; // Duración total
+                      final position =
+                          positionSnapshot.data ??
+                          Duration.zero; // Posición actual
 
-                    double progress = 0.0;
-                    if (duration.inSeconds > 0) {
-                      progress = position.inSeconds / duration.inSeconds;
-                    }
+                      // Solo mostrar barra si hay duración
+                      if (duration.inSeconds == 0) {
+                        return const SizedBox.shrink(); // Sin barra
+                      }
 
-                    // Convertir duración a formato mm:ss
-                    String formatDuration(Duration d) {
-                      String twoDigits(int n) => n.toString().padLeft(2, "0");
-                      final minutes = twoDigits(d.inMinutes.remainder(60));
-                      final seconds = twoDigits(d.inSeconds.remainder(60));
-                      return "$minutes:$seconds";
-                    }
+                      double progress = 0.0; // Progreso de la canción
+                      if (duration.inSeconds > 0) {
+                        // Evitar división por cero
+                        progress =
+                            position.inSeconds /
+                            duration.inSeconds; // Calcular progreso
+                      }
 
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Column(
-                        children: [
-                          // Barra de progreso con punto deslizable
-                          GestureDetector(
-                            onTapDown: (details) async {
-                              // Calcular nueva posición basada en el tap
-                              final box =
-                                  context.findRenderObject() as RenderBox?;
-                              if (box != null) {
-                                final localPosition = details.localPosition;
-                                final newProgress =
-                                    localPosition.dx / box.size.width;
-                                final newPosition = Duration(
-                                  seconds: (duration.inSeconds * newProgress)
-                                      .toInt(),
-                                );
-                                await playerService.audioPlayer.seek(
-                                  newPosition,
-                                );
-                              }
-                            },
-                            child: Container(
-                              height:
-                                  20, // Altura suficiente para tocar fácilmente
-                              padding: const EdgeInsets.symmetric(vertical: 8),
-                              child: Stack(
-                                alignment: Alignment.centerLeft,
-                                children: [
-                                  // Barra de fondo (gris)
-                                  Container(
-                                    height: 3,
-                                    decoration: BoxDecoration(
-                                      color: Colors.blueAccent.withOpacity(0.3),
-                                      borderRadius: BorderRadius.circular(1.5),
-                                    ),
-                                  ),
+                      // Convertir duración a formato mm:ss
+                      String formatDuration(Duration d) {
+                        // Función interna
+                        String twoDigits(int n) =>
+                            n.toString().padLeft(2, "0"); // Añadir cero
+                        final minutes = twoDigits(
+                          d.inMinutes.remainder(60),
+                        ); // Minutos
+                        final seconds = twoDigits(
+                          d.inSeconds.remainder(60),
+                        ); // Segundos
+                        return "$minutes:$seconds"; // Formato mm:ss
+                      }
 
-                                  // Barra de progreso (blanca)
-                                  FractionallySizedBox(
-                                    widthFactor: progress,
-                                    child: Container(
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                        ), // Espaciado horizontal
+                        child: Column(
+                          children: [
+                            // Barra de progreso con punto deslizable
+                            GestureDetector(
+                              onTapDown: (details) async {
+                                // Calcular nueva posición basada en el tap
+                                final box =
+                                    context.findRenderObject()
+                                        as RenderBox?; // Obtener caja
+                                if (box != null) {
+                                  final localPosition =
+                                      details.localPosition; // Posición local
+                                  final newProgress =
+                                      localPosition.dx /
+                                      box.size.width; // Nuevo progreso
+                                  final newPosition = Duration(
+                                    seconds:
+                                        (duration.inSeconds *
+                                                newProgress) // Calcular segundos
+                                            .toInt(),
+                                  );
+                                  await playerService.audioPlayer.seek(
+                                    newPosition, // Mover a nueva posición
+                                  );
+                                }
+                              },
+                              child: Container(
+                                // Contenedor de la barra
+                                height: 20,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 8,
+                                ),
+                                child: Stack(
+                                  // Stack para que siempre esté en la pantalla
+                                  alignment: Alignment.centerLeft,
+                                  children: [
+                                    // Barra de fondo (gris)
+                                    Container(
                                       height: 3,
                                       decoration: BoxDecoration(
-                                        color: Colors.white,
+                                        color: Colors.blueAccent.withOpacity(
+                                          0.3,
+                                        ),
                                         borderRadius: BorderRadius.circular(
                                           1.5,
                                         ),
                                       ),
                                     ),
-                                  ),
 
-                                  // Punto deslizable azul
-                                  Positioned(
-                                    left:
-                                        (MediaQuery.of(context).size.width -
-                                                32) *
-                                            progress -
-                                        6,
-                                    child: Container(
-                                      width: 12,
-                                      height: 12,
-                                      decoration: BoxDecoration(
-                                        color: Colors.blueAccent,
-                                        shape: BoxShape.circle,
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.blueAccent
-                                                .withOpacity(0.5),
-                                            blurRadius: 4,
-                                            spreadRadius: 1,
+                                    // Barra de progreso (blanca)
+                                    FractionallySizedBox(
+                                      widthFactor: progress,
+                                      child: Container(
+                                        height: 3,
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(
+                                            1.5,
                                           ),
-                                        ],
+                                        ),
                                       ),
+                                    ),
+
+                                    // Punto deslizable azul
+                                    Positioned(
+                                      left:
+                                          (MediaQuery.of(context).size.width -
+                                                  32) *
+                                              progress -
+                                          6,
+                                      child: Container(
+                                        width: 12,
+                                        height: 12,
+                                        decoration: BoxDecoration(
+                                          color: Colors.blueAccent,
+                                          shape: BoxShape.circle,
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.blueAccent
+                                                  .withOpacity(0.5),
+                                              blurRadius: 4,
+                                              spreadRadius: 1,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+
+                            // Tiempos
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 4,
+                              ),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    formatDuration(position),
+                                    style: const TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                                  Text(
+                                    formatDuration(duration),
+                                    style: const TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 11,
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                          ),
-
-                          // Tiempos (opcional)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  formatDuration(position),
-                                  style: const TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 11,
-                                  ),
-                                ),
-                                Text(
-                                  formatDuration(duration),
-                                  style: const TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 11,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
-
-            // Barra principal con controles
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.blueAccent,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              height: 60,
-              child: Row(
-                children: [
-                  // Botón anterior (skip previous)
-                  IconButton(
-                    onPressed: () async {
-                      await playerService.previous();
+                          ],
+                        ),
+                      );
                     },
-                    icon: const Icon(
-                      Icons.skip_previous,
-                      color: Colors.white,
-                      size: 28,
-                    ),
-                    padding: const EdgeInsets.all(8),
-                    constraints: const BoxConstraints(),
-                  ),
+                  );
+                },
+              ),
 
-                  // Información de la canción actual
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: _buildSongInfo(playerService.currentSong),
+              // Barra principal con controles
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.blueAccent,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
                     ),
-                  ),
-
-                  // Botón play/pause
-                  Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                    child: IconButton(
+                  ],
+                ),
+                height: 60,
+                child: Row(
+                  children: [
+                    // Botón endarrere
+                    IconButton(
                       onPressed: () async {
-                        await playerService.playPause();
+                        await playerService.previous(); // Canción anterior
                       },
-                      icon: Icon(
-                        isPlaying ? Icons.pause : Icons.play_arrow,
+                      icon: const Icon(
+                        Icons.skip_previous,
                         color: Colors.white,
-                        size: 34,
+                        size: 28,
                       ),
-                      padding: const EdgeInsets.all(10),
+                      padding: const EdgeInsets.all(8),
+                      constraints: const BoxConstraints(),
                     ),
-                  ),
 
-                  // Botón siguiente (skip next)
-                  IconButton(
-                    onPressed: () async {
-                      await playerService.next();
-                    },
-                    icon: const Icon(
-                      Icons.skip_next,
-                      color: Colors.white,
-                      size: 28,
+                    // Información de la canción actual
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: _buildSongInfo(playerService.currentSong),
+                      ),
                     ),
-                    padding: const EdgeInsets.all(8),
-                    constraints: const BoxConstraints(),
-                  ),
-                ],
+
+                    // Botón play/pause
+                    Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      child: IconButton(
+                        onPressed: () async {
+                          await playerService.playPause(); // Reproducir/Pausar
+                        },
+                        icon: Icon(
+                          isPlaying
+                              ? Icons.pause
+                              : Icons
+                                    .play_arrow, // Icono dinámico en función del estado
+                          color: Colors.white,
+                          size: 34,
+                        ),
+                        padding: const EdgeInsets.all(10),
+                      ),
+                    ),
+
+                    // Botón siguiente (skip next)
+                    IconButton(
+                      onPressed: () async {
+                        await playerService.next(); // Siguiente canción
+                      },
+                      icon: const Icon(
+                        Icons.skip_next,
+                        color: Colors.white,
+                        size: 28,
+                      ),
+                      padding: const EdgeInsets.all(8),
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         );
       },
     );
   }
 
   Widget _buildSongInfo(Song? currentSong) {
+    // Información de la canción actual
     if (currentSong == null) {
       return const Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center, // Centrar verticalmente
+        crossAxisAlignment: CrossAxisAlignment.start, // Alinear a la izquierda
         children: [
           Text(
-            'Ninguna canción seleccionada',
+            'Ninguna cancó seleccionada', // Título por defecto si no hay canción
             style: TextStyle(
               color: Colors.white,
               fontSize: 14,
               fontWeight: FontWeight.w500,
             ),
             maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+            overflow: TextOverflow.ellipsis, // Evitar desbordamiento de texto
           ),
           Text(
-            'Reproduce algo para empezar',
+            'Reprodueix alguna cançó per començar', // Subtítulo por defecto
             style: TextStyle(color: Colors.white70, fontSize: 12),
             maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+            overflow: TextOverflow.ellipsis, // Evitar desbordamiento de texto
           ),
         ],
       );
@@ -284,16 +350,20 @@ class FloatingPlayButton extends StatelessWidget {
             fontWeight: FontWeight.w600,
           ),
           maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+          overflow: TextOverflow.ellipsis, // Evitar desbordamiento de texto
         ),
         const SizedBox(height: 2),
 
         // Artista
         Text(
-          currentSong.artistId,
+          currentSong
+                  .artistId
+                  .isNotEmpty // Mostrar ID del artista si existe
+              ? "ID: ${currentSong.artistId}" // Mostrar ID del artista
+              : "Artista desconocido", // Texto por defecto si no hay artista
           style: const TextStyle(color: Colors.white70, fontSize: 13),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+          maxLines: 1, // Máximo una línea
+          overflow: TextOverflow.ellipsis, // Evitar desbordamiento de texto
         ),
       ],
     );
