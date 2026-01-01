@@ -99,14 +99,14 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                         onPressed: _isLoading
                             ? null
                             : () => _selectRole('user'),
-                        child: const Text('User'),
+                        child: const Text('Usuari'),
                       ),
                       const SizedBox(width: 50),
                       ElevatedButton(
                         onPressed: _isLoading
                             ? null
                             : () => _selectRole('artist'),
-                        child: const Text('Artist'),
+                        child: const Text('Artista'),
                       ),
                     ],
                   ),

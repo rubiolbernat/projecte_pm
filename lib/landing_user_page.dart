@@ -61,10 +61,8 @@ class _LandingUserPageState extends State<LandingUserPage> {
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
 
-      // --- BODY con navegadores anidados Y barra flotante ---
       body: Stack(
         children: [
-          // Contenido principal (igual que antes)
           IndexedStack(
             index: _currentIndex,
             children: [
@@ -90,18 +88,15 @@ class _LandingUserPageState extends State<LandingUserPage> {
             ],
           ),
 
-          // Barra de reproducción flotante (NUEVO)
-          // Se posiciona justo encima de la BottomNavigationBar
           Positioned(
             left: 8,
             right: 8,
-            bottom: 70, // Ajusta según la altura de tu BottomNavigationBar
+            bottom: 70,
             child: FloatingPlayButton(playerService: _playerService),
           ),
         ],
       ),
 
-      // --- BOTTOM NAVIGATION (SIN CAMBIOS) ---
       bottomNavigationBar: BottomNavigationBar(
         selectedItemColor: Colors.blueAccent,
         unselectedItemColor: Colors.grey,
@@ -109,11 +104,9 @@ class _LandingUserPageState extends State<LandingUserPage> {
         type: BottomNavigationBarType.fixed,
         onTap: (index) {
           if (index == _currentIndex) {
-            //Reiniciar la pila de la pestaña actual
             _navigatorKeys[index] = GlobalKey<NavigatorState>();
             setState(() {});
           } else {
-            //Cambiar de pestaña y resetear la pila de la pestaña destino
             _navigatorKeys[index] = GlobalKey<NavigatorState>();
             setState(() => _currentIndex = index);
           }

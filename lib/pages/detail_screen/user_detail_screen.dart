@@ -4,10 +4,16 @@ import 'package:projecte_pm/models/playlist.dart';
 import 'package:projecte_pm/services/UserService.dart';
 import 'package:projecte_pm/services/playlist_service.dart';
 import 'package:projecte_pm/pages/detail_screen/playlist_detail_screen.dart';
+import 'package:projecte_pm/widgets/FollowUserButton.dart';
 
 class UserDetailScreen extends StatefulWidget {
   final String userId;
-  const UserDetailScreen({required this.userId, super.key});
+  final UserService userService;
+  const UserDetailScreen({
+    required this.userId,
+    required this.userService,
+    super.key,
+  });
 
   @override
   State<UserDetailScreen> createState() => _UserDetailScreenState();
@@ -89,19 +95,45 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                   backgroundImage: NetworkImage(user!.photoURL),
                 ),
                 const SizedBox(width: 16),
-                Text(
-                  user!.name,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      user!.name,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    if (widget.userService.currentUserId != user!.id)
+                      FollowUserButton(
+                        targetUserId: user!.id,
+                        userService: widget.userService,
+                        showText: true,
+                      ),
+                  ],
                 ),
               ],
             ),
 
             const SizedBox(height: 20),
 
+            Row(
+              children: [
+                Text(
+                  "${user!.followerCount()} seguidors",
+                  style: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+                ),
+                const SizedBox(width: 15),
+                Text(
+                  "${user!.followingCount()} seguint",
+                  style: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
             Text(
               "Playlist ${playlists.length}",
               style: TextStyle(

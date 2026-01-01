@@ -165,8 +165,10 @@ class _SearchPageState extends State<SearchPage> {
                             case 'user':
                               Navigator.of(context).push(
                                 MaterialPageRoute(
-                                  builder: (_) =>
-                                      UserDetailScreen(userId: item['id']),
+                                  builder: (_) => UserDetailScreen(
+                                    userId: item['id'],
+                                    userService: widget.userService,
+                                  ),
                                 ),
                               );
                               break;

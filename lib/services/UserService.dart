@@ -54,58 +54,101 @@ class UserService {
 
   // Metode per seguir/desseguir usuaris
   Future<void> followUser(String targetUserId) async {
-    if (_currentUserRef == targetUserId) return; // Evita seguir-se a un mateix
+    if (_currentUserRef == targetUserId) return;
 
-    final batch = _firestore.batch(); // Inicia una operació en lot
+    try {
+      final targetUserRef = _firestore.collection('users').doc(targetUserId);
+      final targetUserDoc = await targetUserRef.get();
 
-    final myFollowingRef =
-        _currentUserRef! // Referència a la col·lecció 'following' de l'usuari actual
-            .collection('following')
-            .doc(targetUserId);
+      if (!targetUserDoc.exists) {
+        throw Exception('Usuari no trobat');
+      }
 
-    final targetUserRef = _firestore
-        .collection(
-          'users',
-        ) // Referència a la col·lecció 'followers' de l'usuari objectiu
-        .doc(targetUserId)
-        .collection('followers')
-        .doc(_user.id);
+      final currentUserDoc = await _currentUserRef!.get();
+      final currentUserData = currentUserDoc.data() as Map<String, dynamic>;
 
-    final relation = SaveId(
-      id: targetUserId,
-    ); // Crea una instància de SaveId per la relació
-    batch.set(
-      myFollowingRef,
-      relation.toMap(),
-    ); // Afegeix l'operació de seguiment al lot
-    batch.set(
-      targetUserRef,
-      relation.toMap(),
-    ); // Afegeix l'operació de ser seguit al lot
+      final targetUserData = targetUserDoc.data() as Map<String, dynamic>;
 
-    await batch.commit(); // Executa totes les operacions en lot
+      final currentFollowers = List<Map<String, dynamic>>.from(
+        targetUserData['follower'] ?? [],
+      );
+
+      final currentFollowing = List<Map<String, dynamic>>.from(
+        currentUserData['following'] ?? [],
+      );
+
+      if (currentFollowing.any(
+        (following) => following['id'] == targetUserId,
+      )) {
+        print("L'usuari ja segueix a aquest usuari");
+        return;
+      }
+
+      final batch = _firestore.batch();
+
+      currentFollowers.add({'id': _user.id});
+      batch.update(targetUserRef, {'follower': currentFollowers});
+
+      currentFollowing.add({'id': targetUserId});
+      batch.update(_currentUserRef!, {'following': currentFollowing});
+
+      await batch.commit();
+      print("Usuari ${_user.id} ara segueix a l'usuari $targetUserId");
+
+      // Actualizar estado local
+      await refreshUser();
+    } catch (e) {
+      print("Error seguint usuari: $e");
+      rethrow;
+    }
   }
 
   Future<void> unfollowUser(String targetUserId) async {
-    // Metode per deixar de seguir un usuari
-    if (_currentUserRef == targetUserId || _currentUserRef == null)
-      return; // Evita deixar de seguir-se a un mateix
+    if (_currentUserRef == targetUserId || _currentUserRef == null) return;
 
-    final batch = _firestore.batch(); // Inicia una operació en lot
+    try {
+      final targetUserRef = _firestore.collection('users').doc(targetUserId);
+      final targetUserDoc = await targetUserRef.get();
+      final currentUserDoc = await _currentUserRef!.get();
+      final currentUserData = currentUserDoc.data() as Map<String, dynamic>;
 
-    batch.delete(
-      _currentUserRef!.collection('following').doc(targetUserId),
-    ); // Elimina de la llista de seguints de l'usuari actual
-    batch.delete(
-      // Elimina de la llista de seguidors de l'usuari objectiu
-      _firestore
-          .collection('users')
-          .doc(targetUserId)
-          .collection('followers')
-          .doc(_user.id),
-    );
+      if (!targetUserDoc.exists) {
+        throw Exception('Usuari no trobat');
+      }
 
-    await batch.commit(); // Executa totes les operacions en lot
+      // Obtener arrays actuales
+      final targetUserData = targetUserDoc.data() as Map<String, dynamic>;
+      final currentFollowers = List<Map<String, dynamic>>.from(
+        targetUserData['follower'] ?? [],
+      );
+
+      final currentFollowing = List<Map<String, dynamic>>.from(
+        currentUserData['following'] ?? [],
+      );
+
+      final batch = _firestore.batch();
+
+      // Eliminar de seguidores del target user
+      final updatedFollowers = currentFollowers
+          .where((follower) => follower['id'] != _user.id)
+          .toList();
+      batch.update(targetUserRef, {'follower': updatedFollowers});
+
+      // Eliminar de seguidos del usuario actual
+      final updatedFollowing = currentFollowing
+          .where((following) => following['id'] != targetUserId)
+          .toList();
+      batch.update(_currentUserRef!, {'following': updatedFollowing});
+
+      await batch.commit();
+      print("Usuari ${_user.id} ha deixat de seguir a l'usuari $targetUserId");
+
+      // Actualizar estado local
+      await refreshUser();
+    } catch (e) {
+      print("Error al deixar de seguir usuari: $e");
+      rethrow;
+    }
   }
 
   // Metode per seguir artistes
@@ -210,6 +253,21 @@ class UserService {
           .get();
       // Comprovació si l'artista existeix
       return artistDoc.exists;
+    } catch (e) {
+      // Capturar errors de Firestore
+      print("Error verificant follow: $e");
+      return false;
+    }
+  }
+
+  // Verificar si l'usuari segueix a un altre usuari artista
+  Future<bool> isFollowingUser(String targetUserId) async {
+    // Si no hi ha usuari actual, retornem false
+    if (_currentUserRef == null || _user.id == targetUserId) return false;
+    // Fetch del artista i comprovació de si l'usuari el segueix
+    try {
+      final currentFollowing = _user.following ?? [];
+      return currentFollowing.any((following) => following.id == targetUserId);
     } catch (e) {
       // Capturar errors de Firestore
       print("Error verificant follow: $e");

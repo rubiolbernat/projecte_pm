@@ -54,6 +54,8 @@ class User {
   DateTime get createdAt => _createdAt;
   List<SaveId> get ownedPlaylist => _ownedPlaylist;
   List<SaveId> get savedAlbum => _savedAlbum;
+  List<SaveId>? get follower => _follower;
+  List<SaveId>? get following => _following;
 
   //Llista de Setters
   set name(String name) => _name = name;
