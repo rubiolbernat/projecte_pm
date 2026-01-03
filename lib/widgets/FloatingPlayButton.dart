@@ -12,6 +12,11 @@ class FloatingPlayButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final route = ModalRoute.of(context); // Ruta actual
+    if (route?.settings.name?.contains('player_screen') == true) {
+      // Si estem a la pantalla de reproducció
+      return const SizedBox.shrink(); // No mostrar la barra
+    }
     return StreamBuilder<PlayerState>(
       stream: playerService.playerStateStream,
       builder: (context, snapshot) {

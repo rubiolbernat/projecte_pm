@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:projecte_pm/models/subClass/save_id.dart';
 import 'package:projecte_pm/models/user.dart';
+import 'package:projecte_pm/services/ArtistService.dart'; // Importa el servei d'artista per seguir artistes
+import 'package:projecte_pm/services/AlbumService.dart'; // Importa el servei d'àlbum per seguir àlbums
 import 'dart:developer';
 
 class UserService {
@@ -421,6 +422,7 @@ class UserService {
                 ? data['photoURL']
                 : data['coverURL'],
             'createdAt': getDate(doc),
+            'ispublic': type == 'playlist' ? data['isPublic'] ?? false : null,
           });
         }
       }
@@ -512,6 +514,253 @@ class UserService {
     } catch (e) {
       // Capturar errors
       throw Exception('Error obtenint usuari: $e'); //
+    }
+  }
+
+  // Obtener estadísticas completas del usuario actual
+  Future<Map<String, dynamic>> getUserStats() async {
+    // Obtindo estadístiques d'usuari
+    if (_currentUserRef == null)
+      return {}; // Si no hi ha usuari actual, retorna mapa buit
+
+    try {
+      // Intentar obtenir estadístiques
+      final ownedPlaylists =
+          await _currentUserRef! // Obtenir playlists propietat de l'usuari
+              .collection('ownedPlaylists') // Col·lecció de playlists propietat
+              .get(); // Obtenir documents
+      final savedPlaylists =
+          await _currentUserRef! // Obtenir playlists guardades per l'usuari
+              .collection('savedPlaylists') // Col·lecció de playlists guardades
+              .get(); // Obtenir documents
+      final savedAlbums =
+          await _currentUserRef! // Obtenir àlbums guardats per l'usuari
+              .collection('savedAlbums') // Col·lecció d'àlbums guardats
+              .get(); // Obtenir documents
+      final playHistory =
+          await _currentUserRef! // Obtenir historial de reproducció de l'usuari
+              .collection(
+                'playHistory',
+              ) // Col·lecció d'historial de reproducció
+              .get(); // Obtenir documents
+
+      int totalListeningTime = 0; // Inicialitzar temps total d'escolta
+      DateTime? lastActive; // Inicialitzar última activitat
+
+      for (final doc in playHistory.docs) {
+        // Iterar sobre documents d'historial
+        final data =
+            doc.data() as Map<String, dynamic>; // Obtenir dades del document
+        totalListeningTime +=
+            (data['playDuration'] as int? ?? 0); // Sumar duració de reproducció
+
+        final playedAt = (data['playedAt'] as Timestamp?)
+            ?.toDate(); // Obtenir data de reproducció
+        if (playedAt != null && // Comprovar si és la última activitat
+            (lastActive == null || playedAt.isAfter(lastActive))) {
+          // Comparar dates
+          lastActive = playedAt; // Actualitzar última activitat
+        }
+      }
+
+      final userData = _user.toMap(); // Obtenir dades de l'usuari
+      final stats =
+          userData['stats'] as Map<String, dynamic>? ??
+          {}; // Obtenir estadístiques
+
+      return {
+        // Retornar mapa d'estadístiques
+        'followers': _user.followerCount(), // Comptar seguidors
+        'following': _user.followingCount(), // Comptar seguidors
+        'ownedPlaylistsCount':
+            ownedPlaylists.docs.length, // Comptar playlists propietat
+        'savedPlaylistsCount':
+            savedPlaylists.docs.length, // Comptar playlists guardades
+        'savedAlbumsCount': savedAlbums.docs.length, // Comptar àlbums guardats
+        'totalListeningTime': totalListeningTime, // Temps total d'escolta
+        'lastActive': lastActive, // Última activitat
+        'playHistoryCount':
+            playHistory.docs.length, // Comptar entrades d'historial
+      };
+    } catch (e) {
+      // Capturar errors
+      print("Error obtenint estadistiques de usuari: $e"); // Print d'error
+      return {}; // Retornar mapa buit en cas d'error
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getTopArtists({int limit = 5}) async {
+    // Obtindre artistes més escoltats
+    if (_currentUserRef == null)
+      return []; // Si no hi ha usuari actual, retorna llista buida
+
+    try {
+      // Intentar obtenir artistes
+      final playHistory =
+          await _currentUserRef! // Obtenir historial de reproducció
+              .collection(
+                'playHistory',
+              ) // Col·lecció d'historial de reproducció
+              .orderBy(
+                'playedAt',
+                descending: true,
+              ) // Ordenar per data de reproducció
+              .limit(100) // Limitar a 100 entrades
+              .get(); // Obtenir documents
+
+      final artistCount = <String, int>{}; // Mapa per comptar artistes
+
+      for (final doc in playHistory.docs) {
+        // Iterar sobre documents d'historial
+        final data =
+            doc.data() as Map<String, dynamic>; // Obtenir dades del document
+        final songRef =
+            data['songId']
+                as DocumentReference?; // Obtenir referència de la cançó
+
+        if (songRef != null) {
+          // Si la referència de la cançó no és nul·la
+          final songDoc = await songRef.get(); // Obtenir document de la cançó
+          if (songDoc.exists) {
+            // Si el document de la cançó existeix
+            final songData =
+                songDoc.data()
+                    as Map<String, dynamic>; // Obtenir dades de la cançó
+            final artistRef =
+                songData['artistId']
+                    as DocumentReference?; // Obtenir referència de l'artista
+
+            if (artistRef != null) {
+              // Si la referència de l'artista no és nul·la
+              final artistId = artistRef.id; // Obtenir ID de l'artista
+              artistCount[artistId] =
+                  (artistCount[artistId] ?? 0) + 1; // Comptar escoltes
+            }
+          }
+        }
+      }
+
+      final topArtists =
+          <
+            Map<String, dynamic>
+          >[]; // Llista per emmagatzemar artistes més escoltats
+      final sortedArtists =
+          artistCount.entries
+              .toList() // Convertir a llista d'entrades
+            ..sort(
+              (a, b) => b.value.compareTo(a.value),
+            ); // Ordenar per nombre d'escoltes
+
+      for (final entry in sortedArtists.take(limit)) {
+        // Iterar sobre els artistes més escoltats
+        final artist = await ArtistService.getArtist(
+          entry.key,
+        ); // Obtenir informació de l'artista
+        if (artist != null) {
+          // Si l'artista existeix
+          topArtists.add({
+            // Afegir informació de l'artista a la llista
+            'id': artist.id, // ID de l'artista
+            'name': artist.name, // Nom de l'artista
+            'photoURL': artist.photoURL, // URL de la foto de l'artista
+            'playCount': entry.value, // Nombre d'escoltes
+          });
+        }
+      }
+
+      return topArtists; // Retornar llista d'artistes més escoltats
+    } catch (e) {
+      // Capturar errors
+      print("Error obtenint top artistas: $e"); // Print d'error
+      return []; // Retornar llista buida en cas d'error
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getTopAlbums({int limit = 5}) async {
+    // Obtindre àlbums més escoltats
+    if (_currentUserRef == null)
+      return []; // Si no hi ha usuari actual, retorna llista buida
+
+    try {
+      // Intentar obtenir àlbums
+      final playHistory =
+          await _currentUserRef! // Obtenir historial de reproducció
+              .collection(
+                'playHistory',
+              ) // Col·lecció d'historial de reproducció
+              .orderBy(
+                'playedAt',
+                descending: true,
+              ) // Ordenar per data de reproducció
+              .limit(100) // Limitar a 100 entrades
+              .get(); // Obtenir documents
+
+      final albumCount = <String, int>{}; // Mapa per comptar àlbums
+
+      for (final doc in playHistory.docs) {
+        // Iterar sobre documents d'historial
+        final data =
+            doc.data() as Map<String, dynamic>; // Obtenir dades del document
+        final songRef =
+            data['songId']
+                as DocumentReference?; // Obtenir referència de la cançó
+
+        if (songRef != null) {
+          // Si la referència de la cançó no és nul·la
+          final songDoc = await songRef.get(); // Obtenir document de la cançó
+          if (songDoc.exists) {
+            // Si el document de la cançó existeix
+            final songData =
+                songDoc.data()
+                    as Map<String, dynamic>; // Obtenir dades de la cançó
+            final albumRef =
+                songData['albumId']
+                    as DocumentReference?; // Obtenir referència de l'àlbum
+
+            if (albumRef != null) {
+              // Si la referència de l'àlbum no és nul·la
+              final albumId = albumRef.id; // Obtenir ID de l'àlbum
+              albumCount[albumId] =
+                  (albumCount[albumId] ?? 0) + 1; // Comptar escoltes
+            }
+          }
+        }
+      }
+
+      final topAlbums =
+          <
+            Map<String, dynamic>
+          >[]; // Llista per emmagatzemar àlbums més escoltats
+      final sortedAlbums =
+          albumCount.entries
+              .toList() // Convertir a llista d'entrades
+            ..sort(
+              (a, b) => b.value.compareTo(a.value),
+            ); // Ordenar per nombre d'escoltes
+
+      for (final entry in sortedAlbums.take(limit)) {
+        // Iterar sobre els àlbums més escoltats
+        final album = await AlbumService.getAlbum(
+          entry.key,
+        ); // Obtenir informació de l'àlbum
+        if (album != null) {
+          // Si l'àlbum existeix
+          topAlbums.add({
+            // Afegir informació de l'àlbum a la llista
+            'id': album.id, // ID de l'àlbum
+            'title': album.name, // Nom de l'àlbum
+            'coverURL': album.coverURL, // URL de la portada de l'àlbum
+            'artistId': album.artistId, // ID de l'artista
+            'playCount': entry.value, // Nombre d'escoltes
+          });
+        }
+      }
+
+      return topAlbums; // Retornar llista d'àlbums més escoltats
+    } catch (e) {
+      // Capturar errors
+      print("Error obtenint top álbumes: $e");
+      return [];
     }
   }
 }

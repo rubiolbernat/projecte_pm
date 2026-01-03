@@ -8,10 +8,13 @@ class SongListItem extends StatefulWidget {
   final Song song;
   final PlayerService playerService;
   final int? index;
+  final VoidCallback?
+  onTap; // Acció personalitzada en tocar l'element, aixo es fa per poder amagar la barra de reprodució quan entrem a la pantalla de reproducció
 
   const SongListItem({
     super.key,
     this.index,
+    this.onTap, // Acció personalitzada en tocar l'element
     required this.song,
     required this.playerService,
   });
@@ -116,16 +119,18 @@ class _SongListItemState extends State<SongListItem> {
           ],
         ),
 
-        onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => SongDetailScreen(
-                songId: widget.song.id,
-                playerService: widget.playerService,
-              ),
-            ),
-          );
-        },
+        onTap:
+            widget.onTap ??
+            () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => SongDetailScreen(
+                    songId: widget.song.id,
+                    playerService: widget.playerService,
+                  ),
+                ),
+              );
+            },
       ),
     );
   }
