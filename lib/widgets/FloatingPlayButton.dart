@@ -8,7 +8,10 @@ class FloatingPlayButton extends StatelessWidget {
   // Barra de reproducció flotant
   final PlayerService playerService; // Servei de reproducció d'àudio
 
-  const FloatingPlayButton({super.key, required this.playerService});
+  const FloatingPlayButton({
+    super.key,
+    required this.playerService,
+  }); // Constructor
 
   @override
   Widget build(BuildContext context) {
@@ -18,119 +21,140 @@ class FloatingPlayButton extends StatelessWidget {
       return const SizedBox.shrink(); // No mostrar la barra
     }
     return StreamBuilder<PlayerState>(
-      stream: playerService.playerStateStream,
+      stream:
+          playerService.playerStateStream, // Escoltar l'estat del reproductor
       builder: (context, snapshot) {
-        final playerState = snapshot.data;
-        final isPlaying = playerState == PlayerState.playing;
+        final playerState = snapshot.data; // Estat actual del reproductor
+        final isPlaying =
+            playerState == PlayerState.playing; // Comprovar si està reproduint
 
-        // Si no hay canción cargada, ocultamos la barra
         if (playerService.queue.isEmpty) {
-          return const SizedBox.shrink();
+          // Si la cua està buida
+          return const SizedBox.shrink(); // No mostrar la barra
         }
-
-        // ENVUELVE TODO EN GESTUREDETECTOR PARA ABRIR PANTALLA COMPLETA
         return GestureDetector(
+          // Detectar tocs
           onTap: () {
+            // Quan es toca la barra
             Navigator.of(context).push(
+              // Navegar a la pantalla de reproducció
               PageRouteBuilder(
                 pageBuilder: (context, animation, secondaryAnimation) {
                   return PlayerScreen(playerService: playerService);
                 },
-                transitionsBuilder:
-                    (context, animation, secondaryAnimation, child) {
-                      const begin = Offset(0.0, 1.0);
-                      const end = Offset.zero;
-                      const curve = Curves.easeInOut;
+                transitionsBuilder: // Animació de transició
+                (context, animation, secondaryAnimation, child) {
+                  // Construir transició
+                  const begin = Offset(0.0, 1.0); // Començar des de baix
+                  const end = Offset.zero; // Acabar a la posició original
+                  const curve = Curves.easeInOut; // Corba d'animació
 
-                      var tween = Tween(
-                        begin: begin,
-                        end: end,
-                      ).chain(CurveTween(curve: curve));
-                      var offsetAnimation = animation.drive(tween);
+                  var tween = Tween(
+                    // Crear tween
+                    begin: begin, // Inici
+                    end: end, // Final
+                  ).chain(CurveTween(curve: curve));
+                  var offsetAnimation = animation.drive(
+                    tween,
+                  ); // Animació d'offset
 
-                      return SlideTransition(
-                        position: offsetAnimation,
-                        child: child,
-                      );
-                    },
-                transitionDuration: const Duration(milliseconds: 300),
+                  return SlideTransition(
+                    // Transició lliscant
+                    position: offsetAnimation, // Posició animada
+                    child: child, // Contingut de la pantalla
+                  );
+                },
+                transitionDuration: const Duration(
+                  milliseconds: 300,
+                ), // Durada de la transició
               ),
             );
           },
           child: Column(
-            mainAxisSize: MainAxisSize.min,
+            // Columna per contenir la barra
+            mainAxisSize: MainAxisSize.min, // Mida mínima
             children: [
-              // Barra de progreso de la canción con punto deslizable
+              // Contingut de la columna
               StreamBuilder<Duration>(
-                // Escucha cambios en la duración
-                stream: playerService
-                    .durationStream, // Duración total de la canción
+                // Escoltar canvis en la durada
+                stream:
+                    playerService // Servei de reproducció
+                        .durationStream,
                 builder: (context, durationSnapshot) {
-                  // Construye la barra
+                  // Construir widget
                   return StreamBuilder<Duration>(
-                    stream: playerService.positionStream, // Posición actual
+                    // Escoltar canvis en la posició
+                    stream:
+                        playerService.positionStream, // Servei de reproducció
                     builder: (context, positionSnapshot) {
-                      final duration =
+                      // Construir widget
+                      final duration = // Durada total de la cançó
                           durationSnapshot.data ??
-                          Duration.zero; // Duración total
+                          Duration
+                              .zero; // Durada per defecte, si no hi ha dades posem zero
                       final position =
-                          positionSnapshot.data ??
-                          Duration.zero; // Posición actual
+                          positionSnapshot.data ?? // Posició actual de la cançó
+                          Duration
+                              .zero; // Posició actual per defecte, si no hi ha dades posem zero
 
-                      // Solo mostrar barra si hay duración
+                      // No mostrar barra si la durada és zero
                       if (duration.inSeconds == 0) {
-                        return const SizedBox.shrink(); // Sin barra
+                        return const SizedBox.shrink(); // Sense barra
                       }
 
-                      double progress = 0.0; // Progreso de la canción
+                      double progress = 0.0; // Progrés de la cançó
                       if (duration.inSeconds > 0) {
-                        // Evitar división por cero
+                        // Evitar divisió per zero
                         progress =
                             position.inSeconds /
-                            duration.inSeconds; // Calcular progreso
+                            duration.inSeconds; // Calcular progrés
                       }
 
-                      // Convertir duración a formato mm:ss
+                      // Convertir durada a format mm:ss
                       String formatDuration(Duration d) {
-                        // Función interna
-                        String twoDigits(int n) =>
-                            n.toString().padLeft(2, "0"); // Añadir cero
+                        String twoDigits(
+                          int n,
+                        ) => // Funció per formatar dos dígits
+                            n.toString().padLeft(2, "0");
                         final minutes = twoDigits(
                           d.inMinutes.remainder(60),
-                        ); // Minutos
+                        ); // Minuts
                         final seconds = twoDigits(
                           d.inSeconds.remainder(60),
-                        ); // Segundos
-                        return "$minutes:$seconds"; // Formato mm:ss
+                        ); // Segons
+                        return "$minutes:$seconds"; // Formatt mm:ss
                       }
 
                       return Padding(
+                        // Espaiat al voltant de la barra
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,
                         ), // Espaciado horizontal
                         child: Column(
                           children: [
-                            // Barra de progreso con punto deslizable
                             GestureDetector(
+                              // Detectar tocs en la barra
                               onTapDown: (details) async {
-                                // Calcular nueva posición basada en el tap
+                                // Quan es toca la barra
                                 final box =
-                                    context.findRenderObject()
-                                        as RenderBox?; // Obtener caja
+                                    context
+                                            .findRenderObject() // Obtenir render box
+                                        as RenderBox?;
                                 if (box != null) {
+                                  // Si el render box és vàlid
                                   final localPosition =
                                       details.localPosition; // Posición local
                                   final newProgress =
                                       localPosition.dx /
-                                      box.size.width; // Nuevo progreso
+                                      box.size.width; // Calcular nou progrés
                                   final newPosition = Duration(
                                     seconds:
                                         (duration.inSeconds *
-                                                newProgress) // Calcular segundos
+                                                newProgress) // Calcular segons nous
                                             .toInt(),
                                   );
                                   await playerService.audioPlayer.seek(
-                                    newPosition, // Mover a nueva posición
+                                    newPosition, // Moure a la nova posició
                                   );
                                 }
                               },
