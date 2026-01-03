@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:projecte_pm/services/PlayerService.dart';
 import 'package:projecte_pm/services/UserService.dart';
-import 'package:projecte_pm/pages/home_page.dart';
-import 'package:projecte_pm/pages/search_page.dart';
-import 'package:projecte_pm/pages/create_user_page.dart';
-import 'package:projecte_pm/pages/library_page.dart';
 import 'package:projecte_pm/pages/navigator_pages/home_navigator.dart';
 import 'package:projecte_pm/pages/navigator_pages/search_navigator.dart';
 import 'package:projecte_pm/pages/navigator_pages/create_user_navigator.dart';
@@ -65,39 +61,42 @@ class _LandingUserPageState extends State<LandingUserPage> {
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
 
-      // --- HEADER ---
-
-      // --- BODY con navegadores anidados ---
-      body: IndexedStack(
-        index: _currentIndex,
+      body: Stack(
         children: [
-          HomeNavigator(
-            navigatorKey: _navigatorKeys[0],
-            userService: _userService,
-            playerService: _playerService,
+          IndexedStack(
+            index: _currentIndex,
+            children: [
+              HomeNavigator(
+                navigatorKey: _navigatorKeys[0],
+                userService: _userService,
+                playerService: _playerService,
+              ),
+              SearchNavigator(
+                navigatorKey: _navigatorKeys[1],
+                userService: _userService,
+                playerService: _playerService,
+              ),
+              LibraryNavigator(
+                navigatorKey: _navigatorKeys[2],
+                userService: _userService,
+                playerService: _playerService,
+              ),
+              CreateUserNavigator(
+                navigatorKey: _navigatorKeys[3],
+                userService: _userService,
+              ),
+            ],
           ),
-          SearchNavigator(
-            navigatorKey: _navigatorKeys[1],
-            userService: _userService,
-            playerService: _playerService,
-          ),
-          LibraryNavigator(
-            navigatorKey: _navigatorKeys[2],
-            userService: _userService,
-            playerService: _playerService,
-          ),
-          CreateUserNavigator(
-            navigatorKey: _navigatorKeys[3],
-            userService: _userService,
+
+          Positioned(
+            left: 8,
+            right: 8,
+            bottom: 70,
+            child: FloatingPlayButton(playerService: _playerService),
           ),
         ],
       ),
 
-      // --- BOTÓN FLOTANTE ---
-      floatingActionButton: FloatingPlayButton(playerService: _playerService),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-
-      // --- BOTTOM NAVIGATION ---
       bottomNavigationBar: BottomNavigationBar(
         selectedItemColor: Colors.blueAccent,
         unselectedItemColor: Colors.grey,
@@ -105,11 +104,9 @@ class _LandingUserPageState extends State<LandingUserPage> {
         type: BottomNavigationBarType.fixed,
         onTap: (index) {
           if (index == _currentIndex) {
-            //Reiniciar la pila de la pestaña actual
             _navigatorKeys[index] = GlobalKey<NavigatorState>();
             setState(() {});
           } else {
-            //Cambiar de pestaña y resetear la pila de la pestaña destino
             _navigatorKeys[index] = GlobalKey<NavigatorState>();
             setState(() => _currentIndex = index);
           }

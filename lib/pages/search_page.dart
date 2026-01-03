@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:projecte_pm/services/UserService.dart';
 import 'detail_screen/album_detail_screen.dart';
-import 'package:projecte_pm/pages/detail_screen/album_detail_screen.dart';
 import 'package:projecte_pm/pages/detail_screen/song_detail_screen.dart';
 import 'package:projecte_pm/pages/detail_screen/playlist_detail_screen.dart';
 import 'package:projecte_pm/pages/detail_screen/artist_detail_screen.dart';
 import 'package:projecte_pm/pages/detail_screen/user_detail_screen.dart';
 import 'package:projecte_pm/widgets/app_bar_widget.dart';
+import 'package:projecte_pm/widgets/add_to_playlist.dart'; // Botó d'afegir a playlist
 import 'package:projecte_pm/services/PlayerService.dart';
+import 'package:projecte_pm/services/playlist_service.dart'; // Per al botó d'afegir a playlist
 
 class SearchPage extends StatefulWidget {
   final UserService userService;
@@ -24,7 +25,6 @@ class SearchPage extends StatefulWidget {
 
 class _SearchPageState extends State<SearchPage> {
   String query = "";
-
   final Map<String, bool> filters = {
     'song': false,
     'album': false,
@@ -32,6 +32,14 @@ class _SearchPageState extends State<SearchPage> {
     'artist': false,
     'user': false,
   };
+  late PlaylistService playlistService; // Per al botó d'afegir a playlist
+
+  @override
+  void initState() {
+    // Inicialització
+    super.initState(); // Crida al constructor pare
+    playlistService = PlaylistService(); // Inicialitzar servei de playlists
+  }
 
   bool _effectiveFilter(String key) {
     final allInactive = filters.values.every((v) => v == false);
@@ -41,6 +49,8 @@ class _SearchPageState extends State<SearchPage> {
 
   @override
   Widget build(BuildContext context) {
+    final currentUserId = widget.userService.currentUserId;
+
     return Scaffold(
       appBar: AppBarWidget(userService: widget.userService),
       body: Padding(
@@ -66,7 +76,6 @@ class _SearchPageState extends State<SearchPage> {
             const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-
               children: filters.keys.map((f) => _filterButton(f)).toList(),
             ),
             const SizedBox(height: 16),
@@ -98,80 +107,86 @@ class _SearchPageState extends State<SearchPage> {
                     itemCount: results.length,
                     itemBuilder: (context, index) {
                       final item = results[index];
-                      return ListTile(
-                        leading: item['imageUrl'] != ''
-                            ? SizedBox(
-                                width: 50,
-                                height: 50,
-                                child: Image.network(
-                                  item['imageUrl'],
-                                  fit: BoxFit.cover,
-                                ),
-                              )
-                            : const Icon(Icons.music_note, color: Colors.white),
 
-                        title: Text(
-                          item['title'],
-                          style: const TextStyle(color: Colors.white),
-                        ),
-                        subtitle: Text(
-                          item['subtitle'],
-                          style: const TextStyle(color: Colors.grey),
-                        ),
-                        onTap: () {
-                          switch (item['type']) {
-                            case 'song':
-                              widget.playerService.playSongFromId(item['id']);
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => SongDetailScreen(
+                      // Determinar si mostrar el botón de añadir a playlist
+                      final showAddButton =
+                          item['type'] == 'song' && currentUserId != null;
+
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        child: ListTile(
+                          leading: Stack(
+                            children: [
+                              // Imagen principal
+                              item['imageUrl'] != ''
+                                  ? SizedBox(
+                                      width: 50,
+                                      height: 50,
+                                      child: Image.network(
+                                        item['imageUrl'],
+                                        fit: BoxFit.cover,
+                                      ),
+                                    )
+                                  : Container(
+                                      width: 50,
+                                      height: 50,
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey[800],
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Icon(
+                                        _getIconForType(item['type']),
+                                        color: Colors.white,
+                                      ),
+                                    ),
+
+                              // Botón para añadir a playlist (solo para canciones y si hay usuario)
+                              if (showAddButton)
+                                Positioned(
+                                  bottom: 0,
+                                  right: 0,
+                                  child: AddToPlaylistButton(
                                     songId: item['id'],
-                                    playerService: widget.playerService,
+                                    userId: currentUserId!,
+                                    playlistService: playlistService,
+                                    size:
+                                        20, // Pequeño para que quede bien en la esquina
                                   ),
                                 ),
-                              );
-                              break;
-                            case 'album':
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => AlbumDetailScreen(
-                                    albumId: item['id'],
-                                    userService: widget.userService,
-                                    playerService: widget.playerService,
+                            ],
+                          ),
+                          title: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  item['title'],
+                                  style: const TextStyle(color: Colors.white),
+                                ),
+                              ),
+                              if (item['type'] == 'playlist' &&
+                                  item['isPublic'] != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(left: 8),
+                                  child: Icon(
+                                    item['isPublic']
+                                        ? Icons.public
+                                        : Icons.lock,
+                                    size: 14,
+                                    color: item['isPublic']
+                                        ? Colors.green
+                                        : Colors.grey,
                                   ),
                                 ),
-                              );
-                              break;
-                            case 'playlist':
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => PlaylistDetailScreen(
-                                    playlistId: item['id'],
-                                    playerService: widget.playerService,
-                                  ),
-                                ),
-                              );
-                              break;
-                            case 'artist':
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => ArtistDetailScreen(
-                                    artistId: item['id'],
-                                    playerService: widget.playerService,
-                                  ),
-                                ),
-                              );
-                              break;
-                            case 'user':
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      UserDetailScreen(userId: item['id']),
-                                ),
-                              );
-                              break;
-                          }
-                        },
+                            ],
+                          ),
+                          subtitle: Text(
+                            _getSubtitle(item),
+                            style: const TextStyle(color: Colors.grey),
+                          ),
+                          onTap: () {
+                            _navigateToDetailScreen(item);
+                          },
+                        ),
                       );
                     },
                   );
@@ -184,18 +199,120 @@ class _SearchPageState extends State<SearchPage> {
     );
   }
 
-  //  Widget Boto Filtre  //
+  // Método para obtener el icono según el tipo
+  IconData _getIconForType(String type) {
+    switch (type) {
+      case 'song':
+        return Icons.music_note;
+      case 'album':
+        return Icons.album;
+      case 'playlist':
+        return Icons.playlist_play;
+      case 'artist':
+        return Icons.person;
+      case 'user':
+        return Icons.account_circle;
+      default:
+        return Icons.music_note;
+    }
+  }
+
+  // Método para formatear el subtítulo
+  String _getSubtitle(Map<String, dynamic> item) {
+    final type = item['type'];
+    final subtitle = item['subtitle'] ?? '';
+
+    // Si ya tiene un subtítulo, usarlo
+    if (subtitle.isNotEmpty && subtitle != type) {
+      return subtitle;
+    }
+
+    // Si no, mostrar el tipo en español
+    switch (type) {
+      case 'song':
+        return 'Cançó';
+      case 'album':
+        return 'Album';
+      case 'playlist':
+        return 'Playlist';
+      case 'artist':
+        return 'Artista';
+      case 'user':
+        return 'Usuari';
+      default:
+        return type;
+    }
+  }
+
+  // Método para navegar a la pantalla de detalle
+  void _navigateToDetailScreen(Map<String, dynamic> item) {
+    switch (item['type']) {
+      case 'song':
+        widget.playerService.playSongFromId(item['id']);
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => SongDetailScreen(
+              songId: item['id'],
+              playerService: widget.playerService,
+            ),
+          ),
+        );
+        break;
+      case 'album':
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => AlbumDetailScreen(
+              albumId: item['id'],
+              userService: widget.userService,
+              playerService: widget.playerService,
+            ),
+          ),
+        );
+        break;
+      case 'playlist':
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => PlaylistDetailScreen(
+              playlistId: item['id'],
+              playerService: widget.playerService,
+              userService: widget.userService,
+            ),
+          ),
+        );
+        break;
+      case 'artist':
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => ArtistDetailScreen(
+              artistId: item['id'],
+              playerService: widget.playerService,
+              userService: widget.userService,
+            ),
+          ),
+        );
+        break;
+      case 'user':
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => UserDetailScreen(
+              userId: item['id'],
+              userService: widget.userService,
+            ),
+          ),
+        );
+        break;
+    }
+  }
+
+  // Widget Botón Filtro
   Widget _filterButton(String typeName) {
     final isActive = filters[typeName] ?? false;
 
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 10,
-          vertical: 6,
-        ), // ✅ más pequeño
-        minimumSize: const Size(0, 0), // ✅ elimina altura mínima
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap, // ✅ reduce área táctil
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        minimumSize: const Size(0, 0),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         backgroundColor: isActive ? Colors.blueAccent : Colors.grey.shade700,
         foregroundColor: isActive ? Colors.white : Colors.grey.shade400,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -205,10 +322,7 @@ class _SearchPageState extends State<SearchPage> {
           filters[typeName] = !isActive;
         });
       },
-      child: Text(
-        typeName,
-        style: const TextStyle(fontSize: 13), // ✅ texto más pequeño
-      ),
+      child: Text(typeName, style: const TextStyle(fontSize: 13)),
     );
   }
 }

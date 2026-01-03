@@ -6,9 +6,8 @@ import 'package:projecte_pm/pages/detail_screen/album_detail_screen.dart';
 import 'package:projecte_pm/pages/detail_screen/song_detail_screen.dart';
 import 'package:projecte_pm/pages/detail_screen/playlist_detail_screen.dart';
 import 'package:projecte_pm/pages/detail_screen/artist_detail_screen.dart';
-import 'package:projecte_pm/pages/detail_screen/user_detail_screen.dart';
-import 'package:projecte_pm/pages/edit_user_profile_page.dart';
 import 'package:projecte_pm/widgets/app_bar_widget.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // Per a Firestore
 
 class HomePage extends StatefulWidget {
   final UserService userService;
@@ -119,6 +118,8 @@ class _HomePageState extends State<HomePage> {
                               builder: (_) => PlaylistDetailScreen(
                                 playlistId: id,
                                 playerService: widget.playerService,
+                                userService: widget
+                                    .userService, // Per a mostrar informació de l'usuari
                               ),
                             ),
                           );
@@ -129,6 +130,7 @@ class _HomePageState extends State<HomePage> {
                               builder: (_) => ArtistDetailScreen(
                                 artistId: id,
                                 playerService: widget.playerService,
+                                userService: widget.userService,
                               ),
                             ),
                           );
@@ -143,7 +145,7 @@ class _HomePageState extends State<HomePage> {
 
               // --- SECCIÓ 2: ARTISTES QUE SEGUEIXO ---
               FutureBuilder<List<Map<String, dynamic>>>(
-                future: widget.userService.getFollowedArtistsReleases(),
+                future: _getFollowedArtistReleases(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const SizedBox(
@@ -155,13 +157,54 @@ class _HomePageState extends State<HomePage> {
                   final data = snapshot.data ?? [];
 
                   if (data.isEmpty) {
+                    // Si no hi ha novetats d'artistes seguits
                     return Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      height: 100,
-                      alignment: Alignment.centerLeft,
-                      child: const Text(
-                        "Segueix artistes per veure les seves novetats aquí.",
-                        style: TextStyle(color: Colors.grey),
+                      // Missatge per seguir artistes
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                      ), // Padding horitzontal
+                      height: 200, // Alçada fixa
+                      child: Column(
+                        // Column per centrar contingut
+                        mainAxisAlignment:
+                            MainAxisAlignment.center, // Centrar verticalment
+                        crossAxisAlignment: CrossAxisAlignment
+                            .center, // Centrar horitzontalment
+                        children: [
+                          // Contingut del missatge
+                          Icon(
+                            // Icona representativa
+                            Icons.people_outline, // Icona d'artistes
+                            size: 60, // Mida gran
+                            color: Colors.grey[600], // Color gris
+                          ),
+                          const SizedBox(
+                            height: 16,
+                          ), // Espai entre icona i text
+                          Text(
+                            // Text del missatge
+                            "Segueix artistes", // Missatge principal
+                            style: TextStyle(
+                              // Estil del text
+                              fontSize: 18, // Mida de lletra
+                              fontWeight: FontWeight.bold, // Negreta
+                              color: Colors.grey[400], // Color gris clar
+                            ),
+                          ),
+                          const SizedBox(
+                            height: 8,
+                          ), // Espai entre títol i descripció
+                          Text(
+                            // Descripció addicional
+                            "Quan segueixis artistes, les seves novetats apareixeran aquí", // Missatge descriptiu
+                            textAlign: TextAlign.center, // Centrat
+                            style: TextStyle(
+                              // Estil del text
+                              fontSize: 14, // Mida de lletra més petita
+                              color: Colors.grey[600], // Color gris
+                            ),
+                          ),
+                        ],
                       ),
                     );
                   }
@@ -170,8 +213,17 @@ class _HomePageState extends State<HomePage> {
                     listName: "Dels teus artistes",
                     items: data,
                     onTap: (id, type) {
-                      // AQUÍ TAMBÉ: Avisem al pare
-                      //widget.onItemSelected(id, type); //*********************/
+                      // Navegar a la canción cuando se toque
+                      if (type == 'song') {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => SongDetailScreen(
+                              songId: id,
+                              playerService: widget.playerService,
+                            ),
+                          ),
+                        );
+                      }
                     },
                   );
                 },
@@ -185,5 +237,58 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
     );
+  }
+
+  Future<List<Map<String, dynamic>>> _getFollowedArtistReleases() async {
+    // Obtenir novetats dels artistes seguits
+    try {
+      // Bloc try-catch per a errors
+      final followingSnapshot = await FirebaseFirestore
+          .instance // Accedir a Firestore
+          .collection('users') // Col·lecció d'usuaris
+          .doc(widget.userService.currentUserId) // Document de l'usuari actual
+          .collection('followingArtists') // Subcol·lecció d'artistes seguits
+          .get(); // Obtenir documents
+
+      if (followingSnapshot.docs.isEmpty)
+        return []; // Si no segueix ningú, retornar buit
+
+      List<String> followedArtistIds = followingSnapshot
+          .docs // Extreure IDs d'artistes seguits
+          .map((doc) => doc.id) // Mapejar cada document a la seva ID
+          .toList(); // Convertir a llista
+
+      List<String> targetIds = followedArtistIds
+          .take(10)
+          .toList(); // Limitar a 10 IDs
+
+      final songsSnapshot = await FirebaseFirestore
+          .instance // Accedir a Firestore
+          .collection('songs') // Col·lecció de cançons
+          .where('artistId', whereIn: targetIds) // Filtrar per artistes seguits
+          .limit(10) // Limitar a 10 resultats per evitar sobrecàrrega
+          .get(); // Obtenir documents
+
+      List<Map<String, dynamic>> releases = []; // Llista per a novetats
+
+      for (var doc in songsSnapshot.docs) {
+        // Iterar sobre documents
+        final data = doc.data() as Map<String, dynamic>; // Dades del document
+        releases.add({
+          // Afegir a la llista de novetats
+          'id': doc.id, // ID de la cançó
+          'type': 'song', // Tipus de contingut
+          'title': data['name'] ?? 'Sin título', // Títol de la cançó
+          'subtitle': 'Del artista', // Subtítol genèric
+          'imageUrl': data['coverURL'] ?? '', // URL de la imatge
+        });
+      }
+
+      return releases; // Retornar novetats
+    } catch (e) {
+      // Capturar errors
+      print("Error a _getFollowedArtistsReleases: $e"); // Missatge d'error
+      return [];
+    }
   }
 }

@@ -37,7 +37,8 @@ class Artist {
     DateTime? createdAt,
     List<SaveId>? artistFollower,
     List<SaveId>? artistSong,
-    List<SaveId>? artistAlbum,
+    List<SaveId>?
+    artistAlbum, // Afegit per poder fer el fetch de albums del artista en el perfil (VICTOR)
   }) : _id = id,
        _name = name ?? 'unnamed',
        _email = email,
@@ -68,6 +69,7 @@ class Artist {
   Map<String, String> get socialLink => _socialLink;
   DateTime get createdAt => _createdAt;
   List<SaveId> get artistAlbum => _artistAlbum;
+  List<SaveId> get artistFollower => _artistFollower;
 
   //Llista de Setters
   set name(String name) => _name = name;

@@ -1,14 +1,14 @@
 COSES A FER:
 
-- Quan l'artista fagi un créate àlbum mira de fer que guardi l'id de l'album en la llista artistAlbum dins del model artista i si pot ser les cançons en artistSong
+- Quan l'artista fagi un créate àlbum mira de fer que guardi l'id de l'album en la llista artistAlbum dins del model artista i si pot ser les cançons en artistSong (CHECK! -- Victor)
 
-- User details
+- User details (CHECK! -- Victor)
 
-- Pantalla afegir a playlist
+- Pantalla afegir a playlist (CHECK! -- Victor)
 
-- Pantalla de play
+- Pantalla de play (CHECK! -- Victor)
 
-- canviar el boto de play de sota per una barra horitzontal
+- canviar el boto de play de sota per una barra horitzontal (CHECK! -- Victor)
 
 - al PopupMenuButton del songList afegir les opcions que falten
 

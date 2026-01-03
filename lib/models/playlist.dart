@@ -56,6 +56,11 @@ class Playlist {
   bool get isCollaborative => _isCollaborative;
   DateTime get updatedAt => _updatedAt;
   DateTime get createdAt => _createdAt;
+  List<String> get songIds =>
+      _song // Afegida per obtenir llista de IDs de cançons (VICTOR)
+          .map((playlistSong) => playlistSong.songId)
+          .toList(); // Llista de IDs de cançons
+  int get totalSongCount => _song.length;
 
   //Llista de Setters
   set name(String name) => _name = name;

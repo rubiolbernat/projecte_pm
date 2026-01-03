@@ -31,12 +31,17 @@ class AlbumService {
         createdAt: createdTime,
       );
 
+      List<String> songsIds = [];
+
       for (int i = 0; i < songs.length; i++) {
         final songRef = FirebaseFirestore.instance.collection('songs').doc();
+        final songId = songRef.id;
+        songsIds.add(songId);
+
         final Song songData = songs[i];
 
         final Song finalSong = Song(
-          id: songRef.id,
+          id: songId,
           albumId: albumId,
           name: songData.name,
           artistId: artistId,
@@ -49,7 +54,7 @@ class AlbumService {
         );
 
         // Track number comença a 1
-        newAlbum.addSong(songRef.id, i + 1, songData.name, songData.duration);
+        newAlbum.addSong(songId, i + 1, songData.name, songData.duration);
 
         batch.set(songRef, finalSong.toMap());
       }
@@ -63,8 +68,13 @@ class AlbumService {
       batch.update(artistRef, {
         'stats.totalAlbums': FieldValue.increment(1),
         'stats.totalTracks': FieldValue.increment(songs.length),
+        'artistAlbum': FieldValue.arrayUnion([
+          {'id': albumId},
+        ]),
+        'artistSong': FieldValue.arrayUnion(
+          songsIds.map((id) => {'id': id}).toList(),
+        ),
       });
-
       await batch.commit();
     } catch (e) {
       throw Exception('Error creant l’àlbum: $e');
