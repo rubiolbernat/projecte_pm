@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:projecte_pm/pages/detail_screen/user_detail_screen.dart';
 import 'package:projecte_pm/services/PlayerService.dart';
 import 'package:projecte_pm/services/UserService.dart';
 import 'package:projecte_pm/widgets/history_list.dart';
@@ -60,7 +61,7 @@ class _HomePageState extends State<HomePage> {
               FutureBuilder<List<Map<String, dynamic>>>(
                 future: widget.userService.getGlobalNewReleases(
                   name: null,
-                  readSongs: true,
+                  readSongs: false,
                   readAlbums: true,
                   readPlaylists: true,
                   readArtists: true,
@@ -118,8 +119,6 @@ class _HomePageState extends State<HomePage> {
                               builder: (_) => PlaylistDetailScreen(
                                 playlistId: id,
                                 playerService: widget.playerService,
-                                userService: widget
-                                    .userService, // Per a mostrar informació de l'usuari
                               ),
                             ),
                           );
@@ -229,6 +228,64 @@ class _HomePageState extends State<HomePage> {
                 },
               ),
 
+              const SizedBox(height: 30),
+              // --- SECCIÓ 3: NOVETATS GENT ---
+              FutureBuilder<List<Map<String, dynamic>>>(
+                future: widget.userService.getGlobalNewReleases(
+                  readUsers: true,
+                  name: null,
+                ), //No es fa cerca per name i no volem novetats d'usuaris
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const SizedBox(
+                      height: 200,
+                      child: Center(child: CircularProgressIndicator()),
+                    );
+                  }
+                  if (snapshot.hasError) {
+                    return const Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: Text(
+                        "Error carregant novetats",
+                        style: TextStyle(color: Colors.red),
+                      ),
+                    );
+                  }
+
+                  final data = snapshot.data ?? [];
+                  if (data.isEmpty) return const SizedBox.shrink();
+
+                  return HorizontalCardList(
+                    listName: "Nous usuaris",
+                    items: data,
+                    onTap: (id, type) {
+                      switch (type) {
+                        case 'artist':
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => ArtistDetailScreen(
+                                artistId: id,
+                                playerService: widget.playerService,
+                                userService: widget.userService,
+                              ),
+                            ),
+                          );
+                          break;
+                        case 'user':
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => UserDetailScreen(
+                                userId: id,
+                                playerService: widget.playerService,
+                              ),
+                            ),
+                          );
+                          break;
+                      }
+                    },
+                  );
+                },
+              ),
               const SizedBox(
                 height: 100,
               ), // Espai extra al final perquè no tapi el reproductor

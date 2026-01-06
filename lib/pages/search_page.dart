@@ -44,7 +44,7 @@ class _SearchPageState extends State<SearchPage> {
   bool _effectiveFilter(String key) {
     final allInactive = filters.values.every((v) => v == false);
     if (allInactive) return true;
-    return filters[key] ?? false;
+    return filters[key.toLowerCase()] ?? false;
   }
 
   @override
@@ -71,7 +71,7 @@ class _SearchPageState extends State<SearchPage> {
                   borderSide: BorderSide.none,
                 ),
               ),
-              onChanged: (value) => setState(() => query = value.trim()),
+              onChanged: (value) => setState(() => query = value.trim().toLowerCase()),
             ),
             const SizedBox(height: 16),
             Row(
@@ -147,7 +147,7 @@ class _SearchPageState extends State<SearchPage> {
                                   right: 0,
                                   child: AddToPlaylistButton(
                                     songId: item['id'],
-                                    userId: currentUserId!,
+                                    playerService: widget.playerService,
                                     playlistService: playlistService,
                                     size:
                                         20, // Pequeño para que quede bien en la esquina
@@ -275,7 +275,6 @@ class _SearchPageState extends State<SearchPage> {
             builder: (_) => PlaylistDetailScreen(
               playlistId: item['id'],
               playerService: widget.playerService,
-              userService: widget.userService,
             ),
           ),
         );
@@ -296,7 +295,7 @@ class _SearchPageState extends State<SearchPage> {
           MaterialPageRoute(
             builder: (_) => UserDetailScreen(
               userId: item['id'],
-              userService: widget.userService,
+              playerService: widget.playerService,
             ),
           ),
         );

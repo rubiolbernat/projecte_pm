@@ -3,6 +3,7 @@ import 'package:projecte_pm/models/song.dart';
 import 'package:projecte_pm/pages/detail_screen/artist_detail_screen.dart';
 import 'package:projecte_pm/pages/detail_screen/song_detail_screen.dart';
 import 'package:projecte_pm/services/PlayerService.dart';
+import 'package:projecte_pm/widgets/add_to_playlist.dart';
 
 class SongListItem extends StatefulWidget {
   final Song song;
@@ -67,6 +68,14 @@ class _SongListItemState extends State<SongListItem> {
               tooltip: 'Afegir a la playlist',
               onPressed: () {
                 // afegir a playlist
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => AddToPlaylistButton(
+                      songId: widget.song.id,
+                      playerService: widget.playerService,
+                    ),
+                  ),
+                );
               },
             ),
           ],

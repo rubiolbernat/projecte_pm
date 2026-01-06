@@ -70,269 +70,120 @@ class FloatingPlayButton extends StatelessWidget {
               ),
             );
           },
-          child: Column(
-            // Columna per contenir la barra
-            mainAxisSize: MainAxisSize.min, // Mida mínima
-            children: [
-              // Contingut de la columna
-              StreamBuilder<Duration>(
-                // Escoltar canvis en la durada
-                stream:
-                    playerService // Servei de reproducció
-                        .durationStream,
-                builder: (context, durationSnapshot) {
-                  // Construir widget
-                  return StreamBuilder<Duration>(
-                    // Escoltar canvis en la posició
-                    stream:
-                        playerService.positionStream, // Servei de reproducció
-                    builder: (context, positionSnapshot) {
-                      // Construir widget
-                      final duration = // Durada total de la cançó
-                          durationSnapshot.data ??
-                          Duration
-                              .zero; // Durada per defecte, si no hi ha dades posem zero
-                      final position =
-                          positionSnapshot.data ?? // Posició actual de la cançó
-                          Duration
-                              .zero; // Posició actual per defecte, si no hi ha dades posem zero
-
-                      // No mostrar barra si la durada és zero
-                      if (duration.inSeconds == 0) {
-                        return const SizedBox.shrink(); // Sense barra
-                      }
-
-                      double progress = 0.0; // Progrés de la cançó
-                      if (duration.inSeconds > 0) {
-                        // Evitar divisió per zero
-                        progress =
-                            position.inSeconds /
-                            duration.inSeconds; // Calcular progrés
-                      }
-
-                      // Convertir durada a format mm:ss
-                      String formatDuration(Duration d) {
-                        String twoDigits(
-                          int n,
-                        ) => // Funció per formatar dos dígits
-                            n.toString().padLeft(2, "0");
-                        final minutes = twoDigits(
-                          d.inMinutes.remainder(60),
-                        ); // Minuts
-                        final seconds = twoDigits(
-                          d.inSeconds.remainder(60),
-                        ); // Segons
-                        return "$minutes:$seconds"; // Formatt mm:ss
-                      }
-
-                      return Padding(
-                        // Espaiat al voltant de la barra
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                        ), // Espaciado horizontal
-                        child: Column(
-                          children: [
-                            GestureDetector(
-                              // Detectar tocs en la barra
-                              onTapDown: (details) async {
-                                // Quan es toca la barra
-                                final box =
-                                    context
-                                            .findRenderObject() // Obtenir render box
-                                        as RenderBox?;
-                                if (box != null) {
-                                  // Si el render box és vàlid
-                                  final localPosition =
-                                      details.localPosition; // Posición local
-                                  final newProgress =
-                                      localPosition.dx /
-                                      box.size.width; // Calcular nou progrés
-                                  final newPosition = Duration(
-                                    seconds:
-                                        (duration.inSeconds *
-                                                newProgress) // Calcular segons nous
-                                            .toInt(),
-                                  );
-                                  await playerService.audioPlayer.seek(
-                                    newPosition, // Moure a la nova posició
-                                  );
-                                }
-                              },
-                              child: Container(
-                                // Contenedor de la barra
-                                height: 20,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 8,
-                                ),
-                                child: Stack(
-                                  // Stack para que siempre esté en la pantalla
-                                  alignment: Alignment.centerLeft,
-                                  children: [
-                                    // Barra de fondo (gris)
-                                    Container(
-                                      height: 3,
-                                      decoration: BoxDecoration(
-                                        color: Colors.blueAccent.withOpacity(
-                                          0.3,
-                                        ),
-                                        borderRadius: BorderRadius.circular(
-                                          1.5,
-                                        ),
-                                      ),
-                                    ),
-
-                                    // Barra de progreso (blanca)
-                                    FractionallySizedBox(
-                                      widthFactor: progress,
-                                      child: Container(
-                                        height: 3,
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius: BorderRadius.circular(
-                                            1.5,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-
-                                    // Punto deslizable azul
-                                    Positioned(
-                                      left:
-                                          (MediaQuery.of(context).size.width -
-                                                  32) *
-                                              progress -
-                                          6,
-                                      child: Container(
-                                        width: 12,
-                                        height: 12,
-                                        decoration: BoxDecoration(
-                                          color: Colors.blueAccent,
-                                          shape: BoxShape.circle,
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: Colors.blueAccent
-                                                  .withOpacity(0.5),
-                                              blurRadius: 4,
-                                              spreadRadius: 1,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-
-                            // Tiempos
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 4,
-                              ),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    formatDuration(position),
-                                    style: const TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 11,
-                                    ),
-                                  ),
-                                  Text(
-                                    formatDuration(duration),
-                                    style: const TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 11,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
-
-              // Barra principal con controles
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.blueAccent,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            height: 60,
+            decoration: BoxDecoration(
+              color: const Color.fromARGB(116, 68, 137, 255),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
                 ),
-                height: 60,
-                child: Row(
+              ],
+            ),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Row(
                   children: [
-                    // Botón endarrere
-                    IconButton(
-                      onPressed: () async {
-                        await playerService.previous(); // Canción anterior
-                      },
-                      icon: const Icon(
-                        Icons.skip_previous,
-                        color: Colors.white,
-                        size: 28,
+                    if (playerService.currentSong?.coverURL?.isNotEmpty == true)
+                      Container(
+                        height: 60,
+                        width: 60,
+                        decoration: BoxDecoration(
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(12),
+                            bottomLeft: Radius.circular(12),
+                          ),
+                          image: DecorationImage(
+                            image: NetworkImage(
+                              playerService.currentSong!.coverURL!,
+                            ),
+                            fit: BoxFit.cover,
+                          ),
+                        ),
                       ),
-                      padding: const EdgeInsets.all(8),
-                      constraints: const BoxConstraints(),
-                    ),
-
-                    // Información de la canción actual
                     Expanded(
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         child: _buildSongInfo(playerService.currentSong),
                       ),
                     ),
-
-                    // Botón play/pause
-                    Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 4),
-                      child: IconButton(
-                        onPressed: () async {
-                          await playerService.playPause(); // Reproducir/Pausar
-                        },
-                        icon: Icon(
-                          isPlaying
-                              ? Icons.pause
-                              : Icons
-                                    .play_arrow, // Icono dinámico en función del estado
-                          color: Colors.white,
-                          size: 34,
-                        ),
-                        padding: const EdgeInsets.all(10),
+                    IconButton(
+                      onPressed: playerService.previous,
+                      icon: const Icon(
+                        Icons.skip_previous,
+                        color: Colors.white,
                       ),
                     ),
-
-                    // Botón siguiente (skip next)
                     IconButton(
-                      onPressed: () async {
-                        await playerService.next(); // Siguiente canción
-                      },
-                      icon: const Icon(
-                        Icons.skip_next,
+                      onPressed: playerService.playPause,
+                      icon: Icon(
+                        isPlaying ? Icons.pause : Icons.play_arrow,
                         color: Colors.white,
-                        size: 28,
+                        size: 34,
                       ),
-                      padding: const EdgeInsets.all(8),
-                      constraints: const BoxConstraints(),
+                    ),
+                    IconButton(
+                      onPressed: playerService.next,
+                      icon: const Icon(Icons.skip_next, color: Colors.white),
                     ),
                   ],
                 ),
-              ),
-            ],
+                Positioned(
+                  left: 8,
+                  right: 8,
+                  bottom: 4, // just al límit interior
+                  child: StreamBuilder<Duration>(
+                    stream: playerService.durationStream,
+                    builder: (context, durationSnapshot) {
+                      return StreamBuilder<Duration>(
+                        stream: playerService.positionStream,
+                        builder: (context, positionSnapshot) {
+                          final duration =
+                              durationSnapshot.data ?? Duration.zero;
+                          final position =
+                              positionSnapshot.data ?? Duration.zero;
+
+                          if (duration.inSeconds == 0) {
+                            return const SizedBox.shrink();
+                          }
+
+                          final progress =
+                              position.inSeconds / duration.inSeconds;
+
+                          return Stack(
+                            alignment: Alignment.centerLeft,
+                            children: [
+                              Container(
+                                height: 3,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.3),
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
+                              ),
+                              FractionallySizedBox(
+                                widthFactor: progress.clamp(0.0, 1.0),
+                                child: Container(
+                                  height: 3,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(2),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -384,6 +235,9 @@ class FloatingPlayButton extends StatelessWidget {
         const SizedBox(height: 2),
 
         // Artista
+        /* 
+        // Ho trec de moment perque no mostra el nom de l'artista sino l'ID
+        // també hauria de mostrar els col·laboradors
         Text(
           currentSong
                   .artistId
@@ -394,6 +248,7 @@ class FloatingPlayButton extends StatelessWidget {
           maxLines: 1, // Máximo una línea
           overflow: TextOverflow.ellipsis, // Evitar desbordamiento de texto
         ),
+        */
       ],
     );
   }

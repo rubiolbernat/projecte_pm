@@ -10,10 +10,11 @@ import 'package:projecte_pm/pages/profile_page.dart'; // Per redirigir al perfil
 
 class UserDetailScreen extends StatefulWidget {
   final String userId;
-  final UserService userService;
+  //final UserService userService;
+  final PlayerService playerService;
   const UserDetailScreen({
     required this.userId,
-    required this.userService,
+    required this.playerService,
     super.key,
   });
 
@@ -25,7 +26,6 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
   User? user;
   List<Playlist> playlists = [];
   bool isLoading = true;
-  late PlayerService playerService = PlayerService(widget.userService);
   @override
   void initState() {
     super.initState();
@@ -78,7 +78,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
   @override
   Widget build(BuildContext context) {
     // Construcció de la interfície d'usuari
-    if (widget.userService.currentUserId == widget.userId) {
+    if (widget.playerService.currentUserId == widget.userId) {
       // Si és el propi usuari
       Navigator.pushReplacement(
         // Reemplaçar la pantalla actual
@@ -157,12 +157,12 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                           ),
                         ],
                       ),
-                      if (widget.userService.currentUserId != user!.id)
+                      if (widget.playerService.currentUserId != user!.id)
                         Padding(
                           padding: const EdgeInsets.only(top: 8),
                           child: FollowUserButton(
                             targetUserId: user!.id,
-                            userService: widget.userService,
+                            userService: widget.playerService.userService,
                             showText: true,
                           ),
                         ),
@@ -222,9 +222,8 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                         MaterialPageRoute(
                           builder: (context) => PlaylistDetailScreen(
                             playlistId: playlist.id,
-                            userService: widget.userService,
-                            playerService:
-                                playerService, // O crea uno si es necesario
+                            playerService: widget
+                                .playerService, // O crea uno si es necesario
                           ),
                         ),
                       );
@@ -264,7 +263,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                           overflow: TextOverflow.ellipsis,
                         ),
                         Text(
-                          "${playlist.songCount()} canciones",
+                          "${playlist.songCount()} cançons",
                           style: TextStyle(
                             color: Colors.grey[400],
                             fontSize: 12,

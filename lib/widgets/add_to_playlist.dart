@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:projecte_pm/models/playlist.dart';
+import 'package:projecte_pm/services/PlayerService.dart';
 import 'package:projecte_pm/services/playlist_service.dart';
 
 class AddToPlaylistButton extends StatefulWidget {
   final String songId;
-  final String userId;
-  final PlaylistService playlistService;
+  final PlayerService playerService;
+  final PlaylistService? playlistService;
   final double size;
 
   const AddToPlaylistButton({
     Key? key,
+    required this.playerService,
     required this.songId,
-    required this.userId,
-    required this.playlistService,
+    this.playlistService,
     this.size = 30,
   }) : super(key: key);
 
@@ -37,26 +38,28 @@ class _AddToPlaylistButtonState extends State<AddToPlaylistButton> {
 
     try {
       // Solo obtener playlists del usuario - SIN lógica de recientes
-      final createdPlaylists = await widget.playlistService.getUserPlaylists(
-        widget.userId,
+      final createdPlaylists = await widget.playlistService?.getUserPlaylists(
+        widget.playerService.currentUserId,
       );
 
       // Ordenar por nombre (opcional)
-      createdPlaylists.sort(
-        (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
-      );
+      if (createdPlaylists != null) {
+        createdPlaylists.sort(
+          (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+        );
 
-      if (mounted) {
-        setState(() {
-          _userPlaylists = createdPlaylists;
-        });
+        if (mounted) {
+          setState(() {
+            _userPlaylists = createdPlaylists;
+          });
+        }
       }
     } catch (e) {
-      print("Error cargando playlists: $e");
+      print("Error carregant playlists: $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error cargando playlists: ${e.toString()}'),
+            content: Text('Error carregant playlists: ${e.toString()}'),
             backgroundColor: Colors.red,
           ),
         );
@@ -104,7 +107,7 @@ class _AddToPlaylistButtonState extends State<AddToPlaylistButton> {
               ),
               const SizedBox(height: 16),
               const Text(
-                'Añadir a playlist',
+                'Afegir a playlist',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 22,
@@ -113,7 +116,7 @@ class _AddToPlaylistButtonState extends State<AddToPlaylistButton> {
               ),
               const SizedBox(height: 8),
               const Text(
-                'Selecciona una playlist o crea una nueva',
+                "Selecciona una playlist o crea'n una de nova",
                 style: TextStyle(color: Colors.grey, fontSize: 14),
               ),
               const SizedBox(height: 20),
@@ -123,7 +126,7 @@ class _AddToPlaylistButtonState extends State<AddToPlaylistButton> {
 
               const SizedBox(height: 20),
               const Text(
-                'Tus playlists',
+                'Les teves playlists',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 18,
@@ -155,7 +158,7 @@ class _AddToPlaylistButtonState extends State<AddToPlaylistButton> {
         children: [
           Icon(Icons.add, size: 20),
           SizedBox(width: 8),
-          Text('Crear nueva playlist'),
+          Text('Crear una nova playlist'),
         ],
       ),
     );
@@ -174,12 +177,12 @@ class _AddToPlaylistButtonState extends State<AddToPlaylistButton> {
             Icon(Icons.playlist_add, size: 60, color: Colors.grey[600]),
             const SizedBox(height: 16),
             Text(
-              'No tienes playlists',
+              'No tens cap playlist',
               style: TextStyle(color: Colors.grey[400], fontSize: 16),
             ),
             const SizedBox(height: 8),
             Text(
-              'Crea tu primera playlist',
+              'Crea la teva primera playlist',
               style: TextStyle(color: Colors.grey[600], fontSize: 14),
             ),
           ],
@@ -221,7 +224,7 @@ class _AddToPlaylistButtonState extends State<AddToPlaylistButton> {
       ),
       title: Text(playlist.name, style: const TextStyle(color: Colors.white)),
       subtitle: Text(
-        '${playlist.songCount()} canciones',
+        '${playlist.songCount()} cançons',
         style: TextStyle(color: Colors.grey[400]),
       ),
       trailing: IconButton(
@@ -233,16 +236,16 @@ class _AddToPlaylistButtonState extends State<AddToPlaylistButton> {
 
   Future<void> _addSongToPlaylist(String playlistId) async {
     try {
-      await widget.playlistService.addSongToPlaylist(
+      await widget.playlistService?.addSongToPlaylist(
         playlistId: playlistId,
         songId: widget.songId,
-        userId: widget.userId,
+        userId: widget.playerService.currentUserId,
       );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Canción añadida a la playlist'),
+            content: const Text('Cançó afegida a la playlist'),
             backgroundColor: Colors.green,
             duration: const Duration(seconds: 2),
           ),
@@ -276,7 +279,7 @@ class _AddToPlaylistButtonState extends State<AddToPlaylistButton> {
             return AlertDialog(
               backgroundColor: Colors.grey[900],
               title: const Text(
-                'Crear nueva playlist',
+                'Crear una nova playlist',
                 style: TextStyle(color: Colors.white),
               ),
               content: SingleChildScrollView(
@@ -286,7 +289,7 @@ class _AddToPlaylistButtonState extends State<AddToPlaylistButton> {
                     TextField(
                       style: const TextStyle(color: Colors.white),
                       decoration: InputDecoration(
-                        labelText: 'Nombre*',
+                        labelText: 'Nom*',
                         labelStyle: TextStyle(color: Colors.grey[400]),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
@@ -302,7 +305,7 @@ class _AddToPlaylistButtonState extends State<AddToPlaylistButton> {
                     TextField(
                       style: const TextStyle(color: Colors.white),
                       decoration: InputDecoration(
-                        labelText: 'Descripción (opcional)',
+                        labelText: 'Descripció (opcional)',
                         labelStyle: TextStyle(color: Colors.grey[400]),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
@@ -319,7 +322,7 @@ class _AddToPlaylistButtonState extends State<AddToPlaylistButton> {
                     TextField(
                       style: const TextStyle(color: Colors.white),
                       decoration: InputDecoration(
-                        labelText: 'URL de la imagen (opcional)',
+                        labelText: 'URL de la imatge (opcional)',
                         labelStyle: TextStyle(color: Colors.grey[400]),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
@@ -367,8 +370,8 @@ class _AddToPlaylistButtonState extends State<AddToPlaylistButton> {
                                 const SizedBox(height: 4),
                                 Text(
                                   isPublic
-                                      ? 'Todos pueden ver esta playlist'
-                                      : 'Solo tú puedes ver esta playlist',
+                                      ? 'Tothom pot veure aquesta playlist'
+                                      : 'Només tu pots veure aquesta playlist',
                                   style: TextStyle(
                                     color: Colors.grey[400],
                                     fontSize: 12,
@@ -423,7 +426,7 @@ class _AddToPlaylistButtonState extends State<AddToPlaylistButton> {
                 TextButton(
                   onPressed: () => Navigator.pop(context),
                   child: const Text(
-                    'Cancelar',
+                    'Cancel·lar',
                     style: TextStyle(color: Colors.grey),
                   ),
                 ),
@@ -432,7 +435,7 @@ class _AddToPlaylistButtonState extends State<AddToPlaylistButton> {
                     if (name.isEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('El nombre es obligatorio'),
+                          content: Text('El nom és obligatori'),
                           backgroundColor: Colors.red,
                         ),
                       );
@@ -448,9 +451,8 @@ class _AddToPlaylistButtonState extends State<AddToPlaylistButton> {
                             Center(child: CircularProgressIndicator()),
                       );
 
-                      final playlistId = await widget.playlistService
-                          .createPlaylist(
-                            userId: widget.userId,
+                      final playlistId = await widget.playlistService?.createPlaylist(
+                            userId: widget.playerService.currentUserId,
                             name: name,
                             description: description,
                             coverURL: coverURL,
@@ -464,10 +466,10 @@ class _AddToPlaylistButtonState extends State<AddToPlaylistButton> {
                       Navigator.pop(context);
 
                       // Añadir la canción a la nueva playlist
-                      await widget.playlistService.addSongToPlaylist(
-                        playlistId: playlistId,
+                      await widget.playlistService?.addSongToPlaylist(
+                        playlistId: playlistId!,
                         songId: widget.songId,
-                        userId: widget.userId,
+                        userId: widget.playerService.currentUserId,
                       );
 
                       // Cerrar el bottom sheet principal
@@ -477,7 +479,7 @@ class _AddToPlaylistButtonState extends State<AddToPlaylistButton> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(
-                              '✅ Playlist "${name}" creada y canción añadida',
+                              'Playlist "${name}" creada i cançó afegida',
                             ),
                             backgroundColor: Colors.green,
                             duration: const Duration(seconds: 3),

@@ -14,12 +14,10 @@ import 'package:projecte_pm/widgets/SongListItem.dart';
 // Pantalla de detall de una playlist
 class PlaylistDetailScreen extends StatefulWidget {
   final String playlistId; // ID de la playlist a mostrar
-  final UserService userService; // Servei d'usuari
   final PlayerService playerService; // Servei de reproductor
   const PlaylistDetailScreen({
     // Constructor
     required this.playlistId, // ID de la playlist
-    required this.userService, // Servei d'usuari
     required this.playerService, // Servei de reproductor
     super.key, // Clau de widget
   });

@@ -120,7 +120,7 @@ class _ProfilePageState extends State<ProfilePage> {
         SizedBox(height: 20), // Espai vertical
         Text(
           // Títol
-          "Estadísticas",
+          "Estadístiques",
           style: TextStyle(
             color: Colors.white,
             fontSize: 20,
@@ -197,8 +197,8 @@ class _ProfilePageState extends State<ProfilePage> {
     final hours = seconds ~/ 3600; // Calcular hores
     final minutes = (seconds % 3600) ~/ 60; // Calcular minuts
     if (hours > 0)
-      return '${hours}h ${minutes}m'; // Retornar format hores i minuts
-    return '${minutes}m'; // Retornar format només minuts
+      return '${hours} h : ${minutes} m'; // Retornar format hores i minuts
+    return '${minutes} m'; // Retornar format només minuts
   }
 
   @override
@@ -308,7 +308,6 @@ class _ProfilePageState extends State<ProfilePage> {
                       MaterialPageRoute(
                         builder: (context) => PlaylistDetailScreen(
                           playlistId: playlist.id,
-                          userService: _userService,
                           playerService: playerService,
                         ),
                       ),

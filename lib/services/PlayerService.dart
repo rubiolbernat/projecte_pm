@@ -31,6 +31,7 @@ class PlayerService {
 
   bool get isPlaying => _audioPlayer.state == PlayerState.playing;
   List<Song> get queue => _queue;
+  String get currentUserId => userService.currentUserId?? '';
 
   // Streams directes del AudioPlayer (per saber si està tocant o la durada)
   Stream<PlayerState> get playerStateStream =>
