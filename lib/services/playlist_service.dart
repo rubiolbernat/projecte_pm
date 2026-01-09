@@ -247,4 +247,38 @@ class PlaylistService {
       rethrow; // Propagar l'error
     }
   }
+
+  Future<void> savePlaylist({
+    // Metode per guardar playlist
+    required String userId,
+    required String playlistId,
+  }) async {
+    try {
+      await FirebaseFirestore.instance.collection('users').doc(userId).update({
+        'savedPlaylist': FieldValue.arrayUnion([
+          {'id': playlistId},
+        ]),
+      });
+    } catch (e) {
+      print("Error en savePlaylist: $e");
+      rethrow;
+    }
+  }
+
+  Future<void> removePlaylistFromSaved({
+    // Metode per treure playlist de guardats
+    required String userId,
+    required String playlistId,
+  }) async {
+    try {
+      await FirebaseFirestore.instance.collection('users').doc(userId).update({
+        'savedPlaylist': FieldValue.arrayRemove([
+          {'id': playlistId},
+        ]),
+      });
+    } catch (e) {
+      print("Error en removePlaylistFromSaved: $e");
+      rethrow;
+    }
+  }
 }

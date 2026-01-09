@@ -17,11 +17,287 @@ class AddToPlaylistButton extends StatefulWidget {
     this.size = 30,
   }) : super(key: key);
 
+  static void createEmptyPlaylist({
+    //Metode per crear playlist buida
+    required BuildContext context,
+    required PlayerService playerService,
+    PlaylistService? playlistService,
+  }) {
+    String name = '';
+    String description = '';
+    String coverURL = '';
+    bool isPublic = true;
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (dialogContext, setState) {
+            return AlertDialog(
+              backgroundColor: Colors.grey[900],
+              title: const Text(
+                'Crear una nova playlist',
+                style: TextStyle(color: Colors.white),
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        labelText: 'Nom*',
+                        labelStyle: TextStyle(color: Colors.grey[400]),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: const BorderSide(color: Colors.blue),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      onChanged: (value) => name = value,
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        labelText: 'Descripció (opcional)',
+                        labelStyle: TextStyle(color: Colors.grey[400]),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: const BorderSide(color: Colors.blue),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      onChanged: (value) => description = value,
+                      maxLines: 3,
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        labelText: 'URL de la imatge (opcional)',
+                        labelStyle: TextStyle(color: Colors.grey[400]),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: const BorderSide(color: Colors.blue),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      onChanged: (value) => coverURL = value,
+                    ),
+                    const SizedBox(height: 16),
+
+                    GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          isPublic = !isPublic;
+                        });
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.grey[800]!.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: isPublic ? Colors.blue : Colors.grey,
+                            width: 1,
+                          ),
+                        ),
+                        padding: const EdgeInsets.all(12),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Playlist pública',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  isPublic
+                                      ? 'Tothom pot veure aquesta playlist'
+                                      : 'Només tu pots veure aquesta playlist',
+                                  style: TextStyle(
+                                    color: Colors.grey[400],
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Container(
+                              width: 50,
+                              height: 30,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(15),
+                                color: isPublic
+                                    ? Colors.blue
+                                    : Colors.grey[700],
+                              ),
+                              child: Row(
+                                mainAxisAlignment: isPublic
+                                    ? MainAxisAlignment.end
+                                    : MainAxisAlignment.start,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.all(3),
+                                    child: Container(
+                                      width: 24,
+                                      height: 24,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Icon(
+                                        isPublic ? Icons.check : Icons.close,
+                                        color: isPublic
+                                            ? Colors.blue
+                                            : Colors.grey[700],
+                                        size: 16,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text(
+                    'Cancel·lar',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (name.isEmpty) {
+                      ScaffoldMessenger.of(dialogContext).showSnackBar(
+                        const SnackBar(
+                          content: Text('El nom és obligatori'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      return;
+                    }
+
+                    try {
+                      showDialog(
+                        context: dialogContext,
+                        barrierDismissible: false,
+                        builder: (context) =>
+                            const Center(child: CircularProgressIndicator()),
+                      );
+
+                      final service = playlistService ?? PlaylistService();
+                      await service.createPlaylist(
+                        userId: playerService.currentUserId,
+                        name: name,
+                        description: description,
+                        coverURL: coverURL,
+                        isPublic: isPublic,
+                      );
+
+                      Navigator.pop(dialogContext);
+                      Navigator.pop(dialogContext);
+
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Playlist "$name" creada'),
+                            backgroundColor: Colors.blue,
+                            duration: const Duration(seconds: 3),
+                          ),
+                        );
+                      }
+                    } catch (e) {
+                      if (Navigator.canPop(dialogContext)) {
+                        Navigator.pop(dialogContext);
+                      }
+
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Error: ${e.toString()}'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+                  child: const Text('Crear'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  static void showAddToPlaylistDialog({
+    // Metode per mostrar dialeg directament sense botó, per poder utilitzar-ho directament desde ontaps
+    required BuildContext context,
+    required String songId,
+    required PlayerService playerService,
+    PlaylistService? playlistService,
+  }) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.grey[900],
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      isScrollControlled: true,
+      builder: (context) => AddToPlaylistDialogContent(
+        songId: songId,
+        playerService: playerService,
+        playlistService: playlistService,
+      ),
+    );
+  }
+
   @override
   State<AddToPlaylistButton> createState() => _AddToPlaylistButtonState();
 }
 
-class _AddToPlaylistButtonState extends State<AddToPlaylistButton> {
+// Widget separat per no utilitzar el botó
+class AddToPlaylistDialogContent extends StatefulWidget {
+  final String songId;
+  final PlayerService playerService;
+  final PlaylistService? playlistService;
+
+  const AddToPlaylistDialogContent({
+    Key? key,
+    required this.songId,
+    required this.playerService,
+    this.playlistService,
+  }) : super(key: key);
+
+  @override
+  State<AddToPlaylistDialogContent> createState() =>
+      _AddToPlaylistDialogContentState();
+}
+
+class _AddToPlaylistDialogContentState
+    extends State<AddToPlaylistDialogContent> {
   bool _isLoading = false;
   List<Playlist> _userPlaylists = [];
 
@@ -37,12 +313,10 @@ class _AddToPlaylistButtonState extends State<AddToPlaylistButton> {
     }
 
     try {
-      // Solo obtener playlists del usuario - SIN lógica de recientes
       final createdPlaylists = await widget.playlistService?.getUserPlaylists(
         widget.playerService.currentUserId,
       );
 
-      // Ordenar por nombre (opcional)
       if (createdPlaylists != null) {
         createdPlaylists.sort(
           (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
@@ -71,16 +345,9 @@ class _AddToPlaylistButtonState extends State<AddToPlaylistButton> {
     }
   }
 
-  void _showAddToPlaylistDialog() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.grey[900],
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      isScrollControlled: true,
-      builder: (context) => _buildPlaylistSelectionSheet(),
-    );
+  @override
+  Widget build(BuildContext context) {
+    return _buildPlaylistSelectionSheet();
   }
 
   Widget _buildPlaylistSelectionSheet() {
@@ -121,7 +388,6 @@ class _AddToPlaylistButtonState extends State<AddToPlaylistButton> {
               ),
               const SizedBox(height: 20),
 
-              // Botón para crear nueva playlist
               _buildCreatePlaylistButton(),
 
               const SizedBox(height: 20),
@@ -135,7 +401,6 @@ class _AddToPlaylistButtonState extends State<AddToPlaylistButton> {
               ),
               const SizedBox(height: 12),
 
-              // Lista de playlists
               Expanded(child: _buildPlaylistsList(scrollController)),
             ],
           ),
@@ -269,7 +534,7 @@ class _AddToPlaylistButtonState extends State<AddToPlaylistButton> {
     String name = '';
     String description = '';
     String coverURL = '';
-    bool isPublic = true; // Valor por defecto
+    bool isPublic = true;
 
     showDialog(
       context: context,
@@ -336,7 +601,6 @@ class _AddToPlaylistButtonState extends State<AddToPlaylistButton> {
                     ),
                     const SizedBox(height: 16),
 
-                    // SWITCH PÚBLICA/PRIVADA - FUNCIONA CORRECTAMENTE
                     GestureDetector(
                       onTap: () {
                         setState(() {
@@ -379,7 +643,6 @@ class _AddToPlaylistButtonState extends State<AddToPlaylistButton> {
                                 ),
                               ],
                             ),
-                            // Switch personalizado para mejor visibilidad
                             Container(
                               width: 50,
                               height: 30,
@@ -443,15 +706,15 @@ class _AddToPlaylistButtonState extends State<AddToPlaylistButton> {
                     }
 
                     try {
-                      // Muestra indicador de carga
                       showDialog(
                         context: context,
                         barrierDismissible: false,
                         builder: (context) =>
-                            Center(child: CircularProgressIndicator()),
+                            const Center(child: CircularProgressIndicator()),
                       );
 
-                      final playlistId = await widget.playlistService?.createPlaylist(
+                      final playlistId = await widget.playlistService
+                          ?.createPlaylist(
                             userId: widget.playerService.currentUserId,
                             name: name,
                             description: description,
@@ -459,20 +722,15 @@ class _AddToPlaylistButtonState extends State<AddToPlaylistButton> {
                             isPublic: isPublic,
                           );
 
-                      // Cerrar diálogo de carga
+                      Navigator.pop(context);
                       Navigator.pop(context);
 
-                      // Cerrar diálogo de creación
-                      Navigator.pop(context);
-
-                      // Añadir la canción a la nueva playlist
                       await widget.playlistService?.addSongToPlaylist(
                         playlistId: playlistId!,
                         songId: widget.songId,
                         userId: widget.playerService.currentUserId,
                       );
 
-                      // Cerrar el bottom sheet principal
                       if (mounted) {
                         Navigator.pop(context);
 
@@ -486,11 +744,9 @@ class _AddToPlaylistButtonState extends State<AddToPlaylistButton> {
                           ),
                         );
 
-                        // Recargar lista de playlists
                         await _loadUserPlaylists();
                       }
                     } catch (e) {
-                      // Cerrar diálogo de carga si existe
                       if (Navigator.canPop(context)) {
                         Navigator.pop(context);
                       }
@@ -513,6 +769,17 @@ class _AddToPlaylistButtonState extends State<AddToPlaylistButton> {
           },
         );
       },
+    );
+  }
+}
+
+class _AddToPlaylistButtonState extends State<AddToPlaylistButton> {
+  void _showAddToPlaylistDialog() {
+    AddToPlaylistButton.showAddToPlaylistDialog(
+      context: context,
+      songId: widget.songId,
+      playerService: widget.playerService,
+      playlistService: widget.playlistService,
     );
   }
 

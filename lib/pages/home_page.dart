@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:projecte_pm/pages/detail_screen/user_detail_screen.dart';
 import 'package:projecte_pm/services/PlayerService.dart';
 import 'package:projecte_pm/services/UserService.dart';
+import 'package:projecte_pm/services/playlist_service.dart';
 import 'package:projecte_pm/widgets/history_list.dart';
 import 'package:projecte_pm/pages/detail_screen/album_detail_screen.dart';
 import 'package:projecte_pm/pages/detail_screen/song_detail_screen.dart';
@@ -9,6 +10,7 @@ import 'package:projecte_pm/pages/detail_screen/playlist_detail_screen.dart';
 import 'package:projecte_pm/pages/detail_screen/artist_detail_screen.dart';
 import 'package:projecte_pm/widgets/app_bar_widget.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // Per a Firestore
+import 'package:projecte_pm/services/AlbumService.dart';
 
 class HomePage extends StatefulWidget {
   final UserService userService;
@@ -26,9 +28,11 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   @override
+  late AlbumService albumService;
   void initState() {
     super.initState();
     print("Iniciant HomePage per a: ${widget.userService.user.name}");
+    albumService = AlbumService();
   }
 
   @override
@@ -109,6 +113,7 @@ class _HomePageState extends State<HomePage> {
                                 albumId: id,
                                 userService: widget.userService,
                                 playerService: widget.playerService,
+                                playlistService: PlaylistService(),
                               ),
                             ),
                           );
@@ -136,6 +141,10 @@ class _HomePageState extends State<HomePage> {
                           break;
                       }
                     },
+                    userService: widget.userService,
+                    playlistService: PlaylistService(),
+                    albumService: albumService,
+                    showSaveButton: true,
                   );
                 },
               ),
@@ -224,6 +233,10 @@ class _HomePageState extends State<HomePage> {
                         );
                       }
                     },
+                    userService: widget.userService,
+                    playlistService: PlaylistService(),
+                    albumService: albumService,
+                    showSaveButton: true,
                   );
                 },
               ),
@@ -283,6 +296,10 @@ class _HomePageState extends State<HomePage> {
                           break;
                       }
                     },
+                    userService: widget.userService,
+                    playlistService: PlaylistService(),
+                    albumService: albumService,
+                    showSaveButton: false,
                   );
                 },
               ),

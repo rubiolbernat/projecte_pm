@@ -117,4 +117,40 @@ class AlbumService {
   }
 
   //////////////////////////////////////////////////////////////////////////////
+
+  Future<void> saveAlbum({
+    // Metode per guardar album
+    required String userId,
+    required String albumId,
+  }) async {
+    try {
+      await FirebaseFirestore.instance.collection('users').doc(userId).update({
+        'savedAlbum': FieldValue.arrayUnion([
+          {'id': albumId},
+        ]),
+      });
+      print("Álbum $albumId guardat per usuari $userId");
+    } catch (e) {
+      print("Error en saveAlbum: $e");
+      rethrow;
+    }
+  }
+
+  // Método per treure album del usuari
+  Future<void> removeAlbumFromSaved({
+    required String userId,
+    required String albumId,
+  }) async {
+    try {
+      await FirebaseFirestore.instance.collection('users').doc(userId).update({
+        'savedAlbum': FieldValue.arrayRemove([
+          {'id': albumId},
+        ]),
+      });
+      print("Álbum $albumId eliminado de guardados para usuario $userId");
+    } catch (e) {
+      print("Error en removeAlbumFromSaved: $e");
+      rethrow;
+    }
+  }
 }

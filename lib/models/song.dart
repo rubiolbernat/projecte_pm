@@ -48,8 +48,8 @@ class Song {
        _collaboratorsId = collaboratorsId ?? [],
        _albumId = albumId ?? '',
        _duration = duration,
-       _fileURL = fileURL?? '',
-       _coverURL = coverURL?? '',
+       _fileURL = fileURL ?? '',
+       _coverURL = coverURL ?? '',
        _genre = genre ?? [],
        _isPublic = isPublic ?? false,
        _lyrics = lyrics ?? '',
@@ -71,6 +71,8 @@ class Song {
   bool get isPublic => _isPublic;
   String get lyrics => _lyrics;
   DateTime get createdAt => _createdAt;
+  List<SaveId> get likes =>
+      _like; // Afegit getter per fer fetch de cançons liked per usuari
 
   //Llista de Setters
   set name(String name) => _name = name;
