@@ -8,7 +8,6 @@ import 'package:projecte_pm/pages/player_screen.dart';
 import 'package:projecte_pm/services/PlayerService.dart';
 import 'package:projecte_pm/services/playlist_service.dart';
 import 'package:projecte_pm/services/song_service.dart';
-import 'package:projecte_pm/services/UserService.dart';
 import 'package:projecte_pm/widgets/SongListItem.dart';
 
 // Pantalla de detall de una playlist
@@ -381,6 +380,8 @@ class _PlaylistDetailScreenState extends State<PlaylistDetailScreen> {
                           ),
                         );
                       },
+                      playlistService:
+                          PlaylistService(), //Afegit per enrecordar playlists
                     );
                   },
                 ),

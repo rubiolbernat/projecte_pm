@@ -3,11 +3,13 @@ import 'package:projecte_pm/models/song.dart';
 import 'package:projecte_pm/pages/detail_screen/artist_detail_screen.dart';
 import 'package:projecte_pm/pages/detail_screen/song_detail_screen.dart';
 import 'package:projecte_pm/services/PlayerService.dart';
+import 'package:projecte_pm/services/playlist_service.dart';
 import 'package:projecte_pm/widgets/add_to_playlist.dart';
 
 class SongListItem extends StatefulWidget {
   final Song song;
   final PlayerService playerService;
+  final PlaylistService playlistService;
   final int? index;
   final VoidCallback?
   onTap; // Acció personalitzada en tocar l'element, aixo es fa per poder amagar la barra de reprodució quan entrem a la pantalla de reproducció
@@ -18,6 +20,7 @@ class SongListItem extends StatefulWidget {
     this.onTap, // Acció personalitzada en tocar l'element
     required this.song,
     required this.playerService,
+    required this.playlistService,
   });
 
   @override
@@ -67,14 +70,11 @@ class _SongListItemState extends State<SongListItem> {
               icon: const Icon(Icons.add_circle_outline, color: Colors.grey),
               tooltip: 'Afegir a la playlist',
               onPressed: () {
-                // afegir a playlist
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => AddToPlaylistButton(
-                      songId: widget.song.id,
-                      playerService: widget.playerService,
-                    ),
-                  ),
+                AddToPlaylistButton.showAddToPlaylistDialog(
+                  context: context,
+                  songId: widget.song.id,
+                  playerService: widget.playerService,
+                  playlistService: widget.playlistService,
                 );
               },
             ),
@@ -101,7 +101,13 @@ class _SongListItemState extends State<SongListItem> {
                     widget.playerService.addToQueue(widget.song);
                     break;
                   case 'playlist':
-                    // afegir a playlist
+                    // Mostrar el diálogo para añadir a playlist
+                    AddToPlaylistButton.showAddToPlaylistDialog(
+                      context: context,
+                      songId: widget.song.id,
+                      playerService: widget.playerService,
+                      playlistService: widget.playlistService,
+                    );
                     break;
                   case 'artist':
                     Navigator.of(context).push(

@@ -1,10 +1,10 @@
 COSES A FER:
 
-- Library view amb les playlist i albums guardats de cada usuari
+- Library view amb les playlist i albums guardats de cada usuari (CHECK - Victor)
 
 - Create view, per a crear playlist o eliminar aquesta finestra
 
-- A cada boto de afegir a playlist de album o playlist li falta la funcionalitat de poder afegir a una playlist
+- A cada boto de afegir a playlist de album o playlist li falta la funcionalitat de poder afegir a una playlist (CHECK - Víctor)
 
 - al PopupMenuButton del songList afegir les opcions que falten
 

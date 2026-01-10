@@ -8,16 +8,21 @@ import 'package:projecte_pm/models/artist.dart';
 import 'package:projecte_pm/pages/detail_screen/artist_detail_screen.dart';
 import 'package:projecte_pm/services/PlayerService.dart';
 import 'package:projecte_pm/services/UserService.dart';
+import 'package:projecte_pm/services/playlist_service.dart'; // Afegit
 import 'package:projecte_pm/widgets/SongListItem.dart';
 
 class AlbumDetailScreen extends StatefulWidget {
   final String albumId;
   final UserService userService;
   final PlayerService playerService;
+  final PlaylistService
+  playlistService; // Afegit per recordar playlists en el widget
+
   const AlbumDetailScreen({
     required this.albumId,
     required this.userService,
     required this.playerService,
+    required this.playlistService, // Afegit per recordar playlists en el widget
     super.key,
   });
 
@@ -174,6 +179,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                     song: song,
                     index: albumSong.trackNumber,
                     playerService: widget.playerService,
+                    playlistService: widget.playlistService,
                   );
                 },
               ),

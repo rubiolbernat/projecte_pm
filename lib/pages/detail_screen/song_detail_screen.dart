@@ -219,49 +219,10 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
 
               const SizedBox(height: 10),
               Text(
-                "Album ${song!.createdAt.day}/${song!.createdAt.month}/${song!.createdAt.year}",
+                "Song ${song!.createdAt.day}/${song!.createdAt.month}/${song!.createdAt.year}",
                 style: const TextStyle(color: Colors.white, fontSize: 15),
               ),
               const SizedBox(height: 20),
-
-              Text(
-                "Cançons",
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-
-              const SizedBox(height: 10),
-
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: song!.collaboratorsId.length,
-                itemBuilder: (context, index) {
-                  final collaborator = song!.collaboratorsId[index];
-
-                  return ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(
-                      collaborator,
-                      style: const TextStyle(color: Colors.white),
-                    ),
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => ArtistDetailScreen(
-                            artistId: collaborator,
-                            playerService: widget.playerService,
-                            userService: widget.playerService.userService,
-                          ),
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
             ],
           ),
         ),

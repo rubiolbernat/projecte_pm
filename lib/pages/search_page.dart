@@ -9,6 +9,8 @@ import 'package:projecte_pm/widgets/app_bar_widget.dart';
 import 'package:projecte_pm/widgets/add_to_playlist.dart'; // Botó d'afegir a playlist
 import 'package:projecte_pm/services/PlayerService.dart';
 import 'package:projecte_pm/services/playlist_service.dart'; // Per al botó d'afegir a playlist
+import 'package:projecte_pm/widgets/save_content.dart';
+import 'package:projecte_pm/services/AlbumService.dart';
 
 class SearchPage extends StatefulWidget {
   final UserService userService;
@@ -33,12 +35,14 @@ class _SearchPageState extends State<SearchPage> {
     'user': false,
   };
   late PlaylistService playlistService; // Per al botó d'afegir a playlist
+  late AlbumService albumService;
 
   @override
   void initState() {
     // Inicialització
     super.initState(); // Crida al constructor pare
     playlistService = PlaylistService(); // Inicialitzar servei de playlists
+    albumService = AlbumService(); // Inicialitzar servei d'albums
   }
 
   bool _effectiveFilter(String key) {
@@ -71,7 +75,8 @@ class _SearchPageState extends State<SearchPage> {
                   borderSide: BorderSide.none,
                 ),
               ),
-              onChanged: (value) => setState(() => query = value.trim().toLowerCase()),
+              onChanged: (value) =>
+                  setState(() => query = value.trim().toLowerCase()),
             ),
             const SizedBox(height: 16),
             Row(
@@ -108,9 +113,15 @@ class _SearchPageState extends State<SearchPage> {
                     itemBuilder: (context, index) {
                       final item = results[index];
 
-                      // Determinar si mostrar el botón de añadir a playlist
+                      // Determinar quin botó afegir
                       final showAddButton =
                           item['type'] == 'song' && currentUserId != null;
+
+                      final type = item['type'];
+
+                      final showSaveButton =
+                          (type == 'playlist' || type == 'album') &&
+                          currentUserId != null;
 
                       return Container(
                         margin: const EdgeInsets.only(bottom: 8),
@@ -153,6 +164,22 @@ class _SearchPageState extends State<SearchPage> {
                                         20, // Pequeño para que quede bien en la esquina
                                   ),
                                 ),
+                              if (showSaveButton) // Botó per guardar album o playlist
+                                Positioned(
+                                  bottom: 0,
+                                  right: 0,
+                                  child: SaveContentButton(
+                                    contentId: item['id'],
+                                    type: type == 'playlist'
+                                        ? SaveType.playlist
+                                        : SaveType.album,
+                                    userService: widget.userService,
+                                    contentService: type == 'playlist'
+                                        ? playlistService
+                                        : albumService,
+                                    size: 20,
+                                  ),
+                                ),
                             ],
                           ),
                           title: Row(
@@ -163,7 +190,7 @@ class _SearchPageState extends State<SearchPage> {
                                   style: const TextStyle(color: Colors.white),
                                 ),
                               ),
-                              if (item['type'] == 'playlist' &&
+                              if (type == 'playlist' &&
                                   item['isPublic'] != null)
                                 Padding(
                                   padding: const EdgeInsets.only(left: 8),
@@ -173,7 +200,7 @@ class _SearchPageState extends State<SearchPage> {
                                         : Icons.lock,
                                     size: 14,
                                     color: item['isPublic']
-                                        ? Colors.green
+                                        ? Colors.blue
                                         : Colors.grey,
                                   ),
                                 ),
@@ -227,7 +254,7 @@ class _SearchPageState extends State<SearchPage> {
       return subtitle;
     }
 
-    // Si no, mostrar el tipo en español
+    // Si no, mostrar el tipo en catalan
     switch (type) {
       case 'song':
         return 'Cançó';
@@ -265,6 +292,8 @@ class _SearchPageState extends State<SearchPage> {
               albumId: item['id'],
               userService: widget.userService,
               playerService: widget.playerService,
+              playlistService:
+                  PlaylistService(), // Afegit perque el albumdetailscreen ara necessita playlistservice
             ),
           ),
         );

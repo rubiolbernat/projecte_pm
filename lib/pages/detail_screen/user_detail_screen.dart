@@ -29,7 +29,19 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _loadUserAndPlaylists();
+
+    if (widget.playerService.currentUserId == widget.userId) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ProfilePage(userId: widget.userId),
+          ),
+        );
+      });
+    } else {
+      _loadUserAndPlaylists();
+    }
   }
 
   Future<void> _loadUserAndPlaylists() async {
@@ -78,18 +90,6 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
   @override
   Widget build(BuildContext context) {
     // Construcció de la interfície d'usuari
-    if (widget.playerService.currentUserId == widget.userId) {
-      // Si és el propi usuari
-      Navigator.pushReplacement(
-        // Reemplaçar la pantalla actual
-        context, // Context actual
-        MaterialPageRoute(
-          // Crear una nova ruta
-          builder: (context) =>
-              ProfilePage(userId: widget.userId), // Perfil propi
-        ),
-      );
-    }
 
     if (isLoading) {
       return Scaffold(

@@ -251,4 +251,54 @@ class ArtistService {
       return [];
     }
   }
+
+  Future<void> saveAlbum({
+    // Metode per guardar album
+    required String userId,
+    required String albumId,
+  }) async {
+    try {
+      await FirebaseFirestore.instance.collection('users').doc(userId).update({
+        'savedAlbum': FieldValue.arrayUnion([
+          {'id': albumId},
+        ]),
+      });
+    } catch (e) {
+      print("Error en saveAlbum: $e");
+      rethrow;
+    }
+  }
+
+  Future<void> removeAlbumFromSaved({
+    // Metode per treure album del guardat
+    required String userId,
+    required String albumId,
+  }) async {
+    try {
+      await FirebaseFirestore.instance.collection('users').doc(userId).update({
+        'savedAlbum': FieldValue.arrayRemove([
+          {'id': albumId},
+        ]),
+      });
+    } catch (e) {
+      print("Error en removeAlbumFromSaved: $e");
+      rethrow;
+    }
+  }
+
+  static Future<dynamic> getAlbum(String albumId) async {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('albums')
+          .doc(albumId)
+          .get();
+
+      if (!doc.exists) return null;
+
+      final data = doc.data();
+      return data;
+    } catch (e) {
+      throw Exception('Error obteniendo álbum: $e');
+    }
+  }
 }
