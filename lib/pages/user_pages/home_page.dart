@@ -8,7 +8,7 @@ import 'package:projecte_pm/pages/detail_screen/album_detail_screen.dart';
 import 'package:projecte_pm/pages/detail_screen/song_detail_screen.dart';
 import 'package:projecte_pm/pages/detail_screen/playlist_detail_screen.dart';
 import 'package:projecte_pm/pages/detail_screen/artist_detail_screen.dart';
-import 'package:projecte_pm/widgets/app_bar_widget.dart';
+import 'package:projecte_pm/widgets/user_app_bar_widget.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // Per a Firestore
 import 'package:projecte_pm/services/AlbumService.dart';
 

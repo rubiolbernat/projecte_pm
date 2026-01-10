@@ -6,13 +6,9 @@ import 'package:projecte_pm/services/AlbumService.dart';
 
 class CreateAlbumPage extends StatefulWidget {
   final ArtistService artistService;
-  final VoidCallback onCreated;
 
-  const CreateAlbumPage({
-    Key? key,
-    required this.artistService,
-    required this.onCreated,
-  }) : super(key: key);
+  const CreateAlbumPage({Key? key, required this.artistService})
+    : super(key: key);
 
   @override
   _CreateAlbumPageState createState() => _CreateAlbumPageState();
@@ -209,7 +205,7 @@ class _CreateAlbumPageState extends State<CreateAlbumPage> {
         coverUrl: _coverUrlController.text,
         songs: _songsToUpload,
       );
-      if (mounted) widget.onCreated();
+      //if (mounted) widget.onCreated();
     } catch (e) {
       if (mounted)
         ScaffoldMessenger.of(

@@ -4,7 +4,7 @@
 import 'package:flutter/material.dart';
 import 'package:projecte_pm/models/song.dart';
 import 'package:projecte_pm/models/playlist.dart';
-import 'package:projecte_pm/pages/player_screen.dart';
+import 'package:projecte_pm/pages/user_pages/player_screen.dart';
 import 'package:projecte_pm/services/PlayerService.dart';
 import 'package:projecte_pm/services/playlist_service.dart';
 import 'package:projecte_pm/services/song_service.dart';

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:projecte_pm/services/UserService.dart';
-import 'detail_screen/album_detail_screen.dart';
+import '../detail_screen/album_detail_screen.dart';
 import 'package:projecte_pm/pages/detail_screen/song_detail_screen.dart';
 import 'package:projecte_pm/pages/detail_screen/playlist_detail_screen.dart';
 import 'package:projecte_pm/pages/detail_screen/artist_detail_screen.dart';
 import 'package:projecte_pm/pages/detail_screen/user_detail_screen.dart';
-import 'package:projecte_pm/widgets/app_bar_widget.dart';
+import 'package:projecte_pm/widgets/user_app_bar_widget.dart';
 import 'package:projecte_pm/widgets/add_to_playlist.dart'; // Botó d'afegir a playlist
 import 'package:projecte_pm/services/PlayerService.dart';
 import 'package:projecte_pm/services/playlist_service.dart'; // Per al botó d'afegir a playlist

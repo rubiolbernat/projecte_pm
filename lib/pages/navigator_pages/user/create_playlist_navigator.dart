@@ -1,16 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:projecte_pm/services/PlayerService.dart';
 import 'package:projecte_pm/services/UserService.dart';
-import 'package:projecte_pm/pages/library_page.dart';
+import 'package:projecte_pm/pages/user_pages/create_playlist_page.dart';
 
-class LibraryNavigator extends StatelessWidget {
+class CreatePlaylistNavigator extends StatelessWidget {
   final UserService userService;
-  final PlayerService playerService;
   final GlobalKey<NavigatorState> navigatorKey;
 
-  const LibraryNavigator({
+  const CreatePlaylistNavigator({
     super.key,
-    required this.playerService,
     required this.userService,
     required this.navigatorKey,
   });
@@ -21,10 +18,7 @@ class LibraryNavigator extends StatelessWidget {
       key: navigatorKey,
       onGenerateRoute: (settings) {
         return MaterialPageRoute(
-          builder: (_) => LibraryPage(
-            userService: userService,
-            playerService: playerService,
-          ),
+          builder: (_) => CreatePlaylistPage(userService: userService),
         );
       },
     );
