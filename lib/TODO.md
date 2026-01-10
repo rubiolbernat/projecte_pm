@@ -1,12 +1,20 @@
 COSES A FER:
 
-- Library view amb les playlist i albums guardats de cada usuari (CHECK - Victor)
+- Fer pantalla Library de Artist només pot veure els seus albums, la seva musica etc.
 
-- Create view, per a crear playlist o eliminar aquesta finestra
+- Fer pantalla Profile de Artist, aqui veura les seves estadistiques.
 
-- A cada boto de afegir a playlist de album o playlist li falta la funcionalitat de poder afegir a una playlist (CHECK - Víctor)
+- Fer que el artista pugui editar la informació dels seus albums i de les seves cançons.
 
-- al PopupMenuButton del songList afegir les opcions que falten
+- Quan s'inicia l'app surt durant un instant un misatge d'error, solucionar-ho.
+
+- Al movil, la pantalla de create album fa overflow, soluciona-ho.
+
+- Tenim una icona de notificacions al appBar que no fa res.
+
+
+
+- al PopupMenuButton del songList afegir les opcions que falten //Quines???
 
 -----------------------------------------------------------------
 
