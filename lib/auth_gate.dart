@@ -66,15 +66,15 @@ class AuthGate extends StatelessWidget {
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
                 child: action == AuthAction.signIn
-                    ? const Text('Welcome to FlutterFire, please sign in!')
-                    : const Text('Welcome to Flutterfire, please sign up!'),
+                    ? const Text('Benvingut a SpotyUPC, identifica-t!')
+                    : const Text('Benvingut a SpotyUPC, enregistra-t!'),
               );
             },
             footerBuilder: (context, action) {
               return const Padding(
                 padding: EdgeInsets.only(top: 16),
                 child: Text(
-                  'By signing in, you agree to our terms and conditions.',
+                  'Al enregistrar-te, acceptes els nostres termes i condicions.',
                   style: TextStyle(color: Colors.grey),
                 ),
               );
