@@ -12,6 +12,12 @@ COSES A FER:
 
 - Tenim una icona de notificacions al appBar que no fa res.
 
+- Fer que l'artista no pugui reproduir musica o afeir la barra de reproducció, ara pot reproduir pero no surt la barra. El mes sencill jo crec que es que no pugui reproduir.
+
+- Quan es fa que un album sigui privat es continua mostrant de forma publica
+
+- Les playlist es creen pero no s'asocien be amb el user, he creat varies playlist i no les puc editar/eliminar.
+
 
 
 - al PopupMenuButton del songList afegir les opcions que falten //Quines???
