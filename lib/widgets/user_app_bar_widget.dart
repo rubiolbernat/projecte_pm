@@ -59,10 +59,6 @@ class _AppBarWidgetState extends State<AppBarWidget> {
         ],
       ),
       actions: [
-        IconButton(
-          onPressed: () {},
-          icon: const Icon(Icons.notifications_none, color: Colors.white),
-        ),
         PopupMenuButton<String>(
           icon: const Icon(Icons.settings_outlined, color: Colors.white),
           color: Colors.grey.shade900,

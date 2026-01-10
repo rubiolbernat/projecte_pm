@@ -97,14 +97,14 @@ class AuthGate extends StatelessWidget {
           future: LoginRegisterService.getUserRole(userId),
           builder: (context, roleSnapshot) {
             // 1. Carregant
-            /*if (roleSnapshot.connectionState == ConnectionState.waiting) {
+            if (roleSnapshot.connectionState == ConnectionState.waiting) {
               return const Scaffold(
                 backgroundColor: Color(0xFF121212),
                 body: Center(
                   child: CircularProgressIndicator(color: Colors.blueAccent),
                 ),
               );
-            } */
+            }
 
             // 2. Tenim el rol
             if (roleSnapshot.hasData) {
