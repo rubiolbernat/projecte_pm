@@ -4,78 +4,130 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:projecte_pm/models/song.dart';
 import 'package:projecte_pm/services/UserService.dart';
 
+enum LoopMode { off, one, all }
+
 class PlayerService {
   final AudioPlayer _audioPlayer = AudioPlayer();
-  AudioPlayer get audioPlayer => _audioPlayer;
-  List<Song> _queue = [];
   final UserService userService;
+
+  List<Song> _queue = [];
+  List<Song> _originalQueue = [];
+
   int currentIndex = -1;
-  List<Song>? _currentPlaylist; // Si està tocant una playlist, la guardem aquí
-  String? _currentPlaylistId; // ID de la playlist actual
+
+  List<Song>? _currentPlaylist;
+  String? _currentPlaylistId;
+
+  bool _shuffleEnabled = false;
+  LoopMode _loopMode = LoopMode.off;
 
   PlayerService(this.userService) {
-    _audioPlayer.onPlayerComplete.listen((_) {
-      next();
+    _audioPlayer.onPlayerComplete.listen((_) async {
+      if (_loopMode == LoopMode.one) {
+        await _playCurrent();
+        return;
+      }
+
+      if (currentIndex < _queue.length - 1) {
+        currentIndex++;
+        await _playCurrent();
+      } else {
+        if (_loopMode == LoopMode.all) {
+          currentIndex = 0;
+          await _playCurrent();
+        }
+      }
     });
   }
 
-  // Getters útils
+  // --- Getters ---
+  AudioPlayer get audioPlayer => _audioPlayer;
+
   Song? get currentSong => (currentIndex >= 0 && currentIndex < _queue.length)
       ? _queue[currentIndex]
       : null;
-  bool get isPlayingPlaylist =>
-      _currentPlaylist !=
-      null; // Estem tocant una playlist? Si no, és una cançó aïllada
-  String? get currentPlaylistId =>
-      _currentPlaylistId; // ID de la playlist actual
 
   bool get isPlaying => _audioPlayer.state == PlayerState.playing;
-  List<Song> get queue => _queue;
-  String get currentUserId => userService.currentUserId?? '';
+  bool get isShuffleEnabled => _shuffleEnabled;
+  LoopMode get loopMode => _loopMode;
 
-  // Streams directes del AudioPlayer (per saber si està tocant o la durada)
+  List<Song> get queue => _queue;
+
+  String get currentUserId => userService.currentUserId ?? '';
+  List<Song>? get currentPlaylist => _currentPlaylist;
+  String? get currentPlaylistId => _currentPlaylistId;
+
   Stream<PlayerState> get playerStateStream =>
       _audioPlayer.onPlayerStateChanged;
   Stream<Duration> get positionStream => _audioPlayer.onPositionChanged;
   Stream<Duration> get durationStream => _audioPlayer.onDurationChanged;
 
-  // --- Funcions Principals ---
+  // --- Configuració ---
+  void toggleShuffle() {
+    _shuffleEnabled = !_shuffleEnabled;
 
+    final song = currentSong;
+
+    if (_shuffleEnabled) {
+      _queue.shuffle();
+    } else {
+      _queue = List.from(_originalQueue);
+    }
+
+    if (song != null) {
+      currentIndex = _queue.indexWhere((s) => s.id == song.id);
+    }
+  }
+
+  void setLoopMode(LoopMode mode) {
+    _loopMode = mode;
+  }
+
+  // --- Càrrega de cues ---
   Future<void> setQueue(List<Song> songs, {int startIndex = 0}) async {
-    _queue = List.from(songs); // Copiem la llista
-    currentIndex = startIndex; // Iniciem a l'índex donat
-    _currentPlaylist = null; // Nullejar la playlist actual
-    _currentPlaylistId = null; // Nullejar l'ID de la playlist actual
+    _queue = List.from(songs);
+    _originalQueue = List.from(songs);
+    currentIndex = startIndex;
+
+    _currentPlaylist = null;
+    _currentPlaylistId = null;
+
     if (_queue.isNotEmpty) {
-      // Si hi ha cançons a la cua
-      await _playCurrent(); // Reproduir la cançó actual
+      await _playCurrent();
     }
   }
 
   Future<void> playPlaylist(
-    // Reproduir una playlist sencera
-    List<Song> songs, // Llista de cançons de la playlist
-    String playlistId, { // ID de la playlist
-    int startIndex = 0, // Índex per començar a reproduir
+    List<Song> songs,
+    String playlistId, {
+    int startIndex = 0,
   }) async {
-    // Reproduir una playlist sencera
-    _queue = List.from(songs); // Copiem la llista de cançons
-    currentIndex = startIndex; // Iniciem a l'índex donat
+    _queue = List.from(songs);
+    _originalQueue = List.from(songs);
+    currentIndex = startIndex;
 
-    _currentPlaylist = List.from(songs); // Guardem la playlist actual
-    _currentPlaylistId = playlistId; // Guardem l'ID de la playlist actual
+    _currentPlaylist = List.from(songs);
+    _currentPlaylistId = playlistId;
 
     if (_queue.isNotEmpty) {
-      // Si hi ha cançons a la cua
-      await _playCurrent(); // Reproduir la cançó actual
+      await _playCurrent();
     }
   }
 
+  Future<void> playAlbum(
+    List<Song> songs,
+    String albumId, {
+    int startIndex = 0,
+  }) async {
+    await playPlaylist(songs, albumId, startIndex: startIndex);
+  }
+
+  // --- Controls ---
   Future<void> play() => _audioPlayer.resume();
   Future<void> pause() => _audioPlayer.pause();
 
   Future<void> playPause() async {
-    if (_audioPlayer.state == PlayerState.playing) {
+    if (isPlaying) {
       await pause();
     } else {
       await play();
@@ -83,142 +135,138 @@ class PlayerService {
   }
 
   Future<void> next() async {
-    if (_currentPlaylist != null && _currentPlaylistId != null) {
-      if (currentIndex < _queue.length - 1) {
-        currentIndex++;
-        await _playCurrent();
-      } else {
-        currentIndex = 0;
-        await _playCurrent();
-      }
-    } else if (currentIndex < _queue.length - 1) {
+    if (currentIndex < _queue.length - 1) {
       currentIndex++;
+      await _playCurrent();
+    } else if (_loopMode == LoopMode.all) {
+      currentIndex = 0;
       await _playCurrent();
     }
   }
 
   Future<void> previous() async {
-    if (_currentPlaylist != null && _currentPlaylistId != null) {
-      if (currentIndex > 0) {
-        currentIndex--;
-        await _playCurrent();
-      } else {
-        // Si es la primera canción de la playlist, ir a la última
-        currentIndex = _queue.length - 1;
-        await _playCurrent();
-      }
-    } else if (currentIndex > 0) {
+    if (currentIndex > 0) {
       currentIndex--;
+      await _playCurrent();
+    } else if (_loopMode == LoopMode.all) {
+      currentIndex = _queue.length - 1;
       await _playCurrent();
     }
   }
 
   Future<void> playNow(Song song) async {
-    // Reproduir una cançó ara mateix
-    _currentPlaylist = null; // Nul·lem la playlist actual
-    _currentPlaylistId = null; // Nul·lem l'ID de la playlist actual
+    _currentPlaylist = null;
+    _currentPlaylistId = null;
 
     if (_queue.isEmpty) {
-      // Si la cua està buida
-      _queue.add(song); // Afegim la cançó
-      currentIndex = 0; // I posem l'índex a 0
+      _queue.add(song);
+      _originalQueue.add(song);
+      currentIndex = 0;
     } else {
-      // Si no està buida
-      _queue.insert(
-        currentIndex + 1,
-        song,
-      ); // La insertem just després de la cançó actual
-      currentIndex++; // I avancem l'índex a aquesta nova cançó
+      _queue.insert(currentIndex + 1, song);
+      _originalQueue.insert(currentIndex + 1, song);
+      currentIndex++;
     }
+
     await _playCurrent();
   }
 
-  // Funció auxiliar privada per no repetir codi
-  // Funció auxiliar privada
-  Future<void> _playCurrent() async {
-    // 1. Comprovem si existeix la cançó
-    if (currentSong != null) {
-      try {
-        // 2. Intentem reproduir l'àudio
-        await _audioPlayer.play(UrlSource(currentSong!.fileURL));
-        userService.addToHistory(currentSong!.id);
-      } catch (e) {
-        print("Error reproduint la cançó: $e");
-      }
+  Future<void> playSongFromPlaylist(int index) async {
+    if (index >= 0 && index < _queue.length) {
+      currentIndex = index;
+      await _playCurrent();
     }
   }
 
   Future<void> playSongFromId(String songId) async {
-    // Reproduir cançó per ID
     try {
-      // Nul·lem la playlist actual
       _currentPlaylist = null;
       _currentPlaylistId = null;
-      // 1. Busquem la cançó a Firestore
+
       final doc = await FirebaseFirestore.instance
           .collection('songs')
           .doc(songId)
           .get();
 
-      if (!doc.exists || doc.data() == null) {
-        print("Error: La cançó amb id $songId no existeix.");
-        return;
-      }
+      if (!doc.exists || doc.data() == null) return;
 
-      // 2. Preparem les dades
-      // Extreiem el Map de dades
-      Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-
-      // IMPORTANT: Injectem l'ID del document dins del Map perquè el teu model el trobi
-      data['id'] = doc.id;
-
-      // 3. Convertim a objecte Song
+      final data = doc.data()!..['id'] = doc.id;
       final song = Song.fromMap(data);
 
-      // 4. Reproduïm
       await playNow(song);
     } catch (e) {
-      print("Error carregant cançó per ID: $e");
+      print("Error carregant cançó: $e");
     }
   }
 
-  Future<void> playSongFromPlaylist(int index) async {
-    // Reproduir cançó d'una playlist ja carregada
-    if (_currentPlaylist != null &&
-        _currentPlaylistId != null &&
-        index >= 0 &&
-        index < _currentPlaylist!.length) {
-      // Si la playlist existeix i l'índex és vàlid
-      currentIndex = index; // Actualitzem l'índex
-      await _playCurrent(); // Reproduïm la cançó
+  // --- Intern ---
+  Future<Song?> _ensureFullSong(Song song) async {
+    if (song.fileURL.isNotEmpty) {
+      return song; // Ja està completa
+    }
+
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('songs')
+          .doc(song.id)
+          .get();
+
+      if (!doc.exists || doc.data() == null) return null;
+
+      final data = doc.data()!..['id'] = doc.id;
+      return Song.fromMap(data);
+    } catch (e) {
+      print("Error carregant info completa de la cançó: $e");
+      return null;
+    }
+  }
+
+  Future<void> _playCurrent() async {
+    if (currentSong == null) return;
+
+    try {
+      // com que podem tenir cançons incompletes perque no hem guardat el fileurl a tot arreu del firebase
+      final fullSong = await _ensureFullSong(currentSong!);
+      if (fullSong == null) return;
+
+      // IMPORTANT: actualitzem la cua amb la versió completa
+      _queue[currentIndex] = fullSong;
+
+      // I també l’original (per shuffle off)
+      final originalIndex = _originalQueue.indexWhere(
+        (s) => s.id == fullSong.id,
+      );
+      if (originalIndex != -1) {
+        _originalQueue[originalIndex] = fullSong;
+      }
+
+      await _audioPlayer.play(UrlSource(fullSong.fileURL));
+
+      userService.addToHistory(fullSong.id);
+    } catch (e) {
+      print("Error reproduint la cançó: $e");
     }
   }
 
   void addToQueue(Song song) {
-    // Afegir cançó a la cua
-    _queue.add(song); // Afegim la cançó
-    if (song != _queue.firstWhere((s) => s.id == song.id, orElse: () => song)) {
-      // Si la cançó no és la primera de la cua
-      _currentPlaylist = null; // Nullejar la playlist actual
-      _currentPlaylistId = null; // Nullejar l'ID de la playlist actual
-    }
+    _queue.add(song);
+    _originalQueue.add(song);
   }
 
   void addNext(Song song) {
-    // Afegir cançó a continuació
     if (_queue.isEmpty) {
-      // Si la cua està buida
-      _queue.add(song); // Afegim la cançó
-      currentIndex = 0; // I posem l'índex a 0
+      _queue.add(song);
+      _originalQueue.add(song);
+      currentIndex = 0;
     } else {
-      // Si no està buida
-      _queue.insert(
-        currentIndex + 1,
-        song,
-      ); // La insertem just després de la cançó actual
+      _queue.insert(currentIndex + 1, song);
+      _originalQueue.insert(currentIndex + 1, song);
     }
-    _currentPlaylist = null; // Nullejar la playlist actual
-    _currentPlaylistId = null; // Nullejar l'ID de la playlist actual
+  }
+
+  void addListToQueue(List<Song> songs) {
+    _queue.addAll(songs);
+    _originalQueue.addAll(songs);
   }
 
   void dispose() {

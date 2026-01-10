@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:projecte_pm/pages/QueueScreen.dart';
 import 'package:projecte_pm/services/PlayerService.dart';
 
 class PlayerScreen extends StatefulWidget {
@@ -19,6 +20,24 @@ class _PlayerScreenState extends State<PlayerScreen> {
   double _dragValue = 0.0; // Valor de la posició d'arrossegament
   Duration? _currentDuration; // Duració actual de la cançó
 
+  void _cycleLoopMode() {
+    final service = widget.playerService;
+
+    setState(() {
+      switch (service.loopMode) {
+        case LoopMode.off:
+          service.setLoopMode(LoopMode.all);
+          break;
+        case LoopMode.all:
+          service.setLoopMode(LoopMode.one);
+          break;
+        case LoopMode.one:
+          service.setLoopMode(LoopMode.off);
+          break;
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -37,6 +56,20 @@ class _PlayerScreenState extends State<PlayerScreen> {
           onPressed: () =>
               Navigator.pop(context), // Tornar a la pantalla anterior
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.queue_music, color: Colors.white, size: 28),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>
+                      QueueScreen(playerService: widget.playerService),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: StreamBuilder<PlayerState>(
         // Escoltar l'estat del reproductor
@@ -94,7 +127,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                           : const DecorationImage(
                               // Imatge per defecte si no hi ha URL
                               image: AssetImage(
-                                'assets/default_cover.png',
+                                'assets/default_cover.jpg',
                               ), // Imatge per defecte
                               fit: BoxFit
                                   .cover, // Ajustar la imatge al contenidor
@@ -371,12 +404,17 @@ class _PlayerScreenState extends State<PlayerScreen> {
                   children: [
                     // Shuffle
                     IconButton(
-                      // Botó de reproducció aleatòria
-                      onPressed: () {}, // ENCARA NO IMPLEMENTAT
-                      icon: const Icon(
+                      onPressed: () {
+                        setState(() {
+                          widget.playerService.toggleShuffle();
+                        });
+                      },
+                      icon: Icon(
                         Icons.shuffle,
-                        color: Colors.white,
                         size: 28,
+                        color: widget.playerService.isShuffleEnabled
+                            ? Colors.blueAccent
+                            : Colors.white,
                       ),
                     ),
 
@@ -430,11 +468,15 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
                     // Repetir
                     IconButton(
-                      onPressed: () {}, // ENCARA NO IMPLEMENTAT
-                      icon: const Icon(
-                        Icons.repeat,
-                        color: Colors.white,
+                      onPressed: _cycleLoopMode,
+                      icon: Icon(
+                        widget.playerService.loopMode == LoopMode.one
+                            ? Icons.repeat_one
+                            : Icons.repeat,
                         size: 28,
+                        color: widget.playerService.loopMode == LoopMode.off
+                            ? Colors.white
+                            : Colors.blueAccent,
                       ),
                     ),
                   ],

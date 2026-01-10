@@ -76,6 +76,9 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isThisAlbum = widget.playerService.currentPlaylistId == album!.id;
+    final isPlayingThisAlbum = isThisAlbum && widget.playerService.isPlaying;
+
     if (isLoading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
@@ -105,6 +108,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                 ),
               ),
               const SizedBox(height: 16),
+              // Artista
               InkWell(
                 onTap: () {
                   Navigator.of(context).push(
@@ -120,27 +124,125 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                 child: Row(
                   children: [
                     CircleAvatar(
-                      radius: 10,
+                      radius: 12,
                       backgroundImage: NetworkImage(artist!.photoURL),
                     ),
                     const SizedBox(width: 10),
                     Text(
                       artist!.name,
-                      style: const TextStyle(color: Colors.white, fontSize: 15),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ],
                 ),
               ),
 
-              const SizedBox(height: 10),
-              Text(
-                "Album ${album!.createdAt.day}/${album!.createdAt.month}/${album!.createdAt.year}",
-                style: const TextStyle(color: Colors.white, fontSize: 15),
-              ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 8),
 
+              // Data i durada
               Row(
                 children: [
+                  // Data de l'àlbum
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.calendar_today,
+                        size: 14,
+                        color: Colors.white54,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        "${album!.createdAt.day}/${album!.createdAt.month}/${album!.createdAt.year}",
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(width: 12),
+
+                  // Durada total de l'àlbum
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.access_time,
+                        size: 14,
+                        color: Colors.white54,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        "${_getAlbumDurationInMinutes().toStringAsFixed(1)} min",
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 16),
+
+              // BOTONS PLAY / SHUFFLE
+              Row(
+                children: [
+                  // PLAY / PAUSE
+                  ElevatedButton(
+                    onPressed: () async {
+                      if (isThisAlbum) {
+                        await widget.playerService.playPause();
+                      } else {
+                        await widget.playerService.playAlbum(
+                          album!.albumSong
+                              .map((s) => Song.fromAlbumSong(s))
+                              .toList(),
+                          album!.id,
+                        );
+                      }
+                      setState(() {});
+                    },
+                    style: ElevatedButton.styleFrom(
+                      shape: const CircleBorder(),
+                      padding: const EdgeInsets.all(20),
+                      backgroundColor: Colors.blueAccent,
+                    ),
+                    child: Icon(
+                      isPlayingThisAlbum ? Icons.pause : Icons.play_arrow,
+                      color: Colors.white,
+                      size: 30,
+                    ),
+                  ),
+
+                  const SizedBox(width: 16),
+
+                  // SHUFFLE
+                  IconButton(
+                    onPressed: () async {
+                      if (!isThisAlbum) {
+                        final songs = album!.albumSong
+                            .map((s) => Song.fromAlbumSong(s))
+                            .toList();
+                        await widget.playerService.playAlbum(songs, album!.id);
+                      }
+                      widget.playerService.toggleShuffle();
+                      setState(() {});
+                    },
+                    icon: Icon(
+                      Icons.shuffle,
+                      size: 28,
+                      color: widget.playerService.isShuffleEnabled
+                          ? Colors.blueAccent
+                          : Colors.white,
+                    ),
+                  ),
+
+                  const SizedBox(width: 20),
                   InkWell(
                     onTap: () async {
                       setState(() {
@@ -179,7 +281,6 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                     song: song,
                     index: albumSong.trackNumber,
                     playerService: widget.playerService,
-                    playlistService: widget.playlistService,
                   );
                 },
               ),
@@ -188,5 +289,19 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
         ),
       ),
     );
+  }
+
+  _getAlbumDurationInMinutes() {
+    try {
+      int totalDurationInSeconds = 0;
+
+      for (var song in album!.albumSong) {
+        totalDurationInSeconds += song.duration.toInt();
+      }
+
+      return totalDurationInSeconds / 60;
+    } catch (e) {
+      rethrow;
+    }
   }
 }

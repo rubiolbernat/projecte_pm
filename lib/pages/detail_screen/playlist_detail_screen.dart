@@ -126,6 +126,22 @@ class _PlaylistDetailScreenState extends State<PlaylistDetailScreen> {
     }
   }
 
+  double _getPlaylistDurationInMinutes() {
+    // Obtenir la durada total de la playlist en minuts
+    try {
+      int totalDurationInSeconds = 0; // Durada total en segons
+
+      for (var song in songs) {
+        totalDurationInSeconds += song.duration
+            .toInt(); // Sumar la durada de cada cançó
+      }
+
+      return totalDurationInSeconds / 60; // Retornar la durada en minuts
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // Construir la interfície d'usuari
@@ -239,55 +255,116 @@ class _PlaylistDetailScreenState extends State<PlaylistDetailScreen> {
               Row(
                 // Fila d'informació addicional
                 children: [
+                  // BOTONS DE PLAY I SHUFFLE
+                  Row(
+                    children: [
+                      ElevatedButton(
+                        onPressed: () async {
+                          final isCurrentPlaylist =
+                              widget.playerService.currentPlaylistId ==
+                              widget.playlistId;
+                          final isPlaying =
+                              widget.playerService.isPlaying &&
+                              isCurrentPlaylist;
+
+                          if (isPlaying) {
+                            // Si ja està reproduint aquesta playlist → pause
+                            await widget.playerService.pause();
+                          } else {
+                            // Si no → reproduir la playlist des del principi
+                            await widget.playerService.playPlaylist(
+                              songs,
+                              widget.playlistId,
+                              startIndex: 0,
+                            );
+                          }
+
+                          setState(() {}); // Actualitzar la UI
+                        },
+                        style: ElevatedButton.styleFrom(
+                          shape: CircleBorder(),
+                          padding: EdgeInsets.all(20),
+                          backgroundColor: Colors.blueAccent,
+                        ),
+                        child: Icon(
+                          widget.playerService.isPlaying &&
+                                  widget.playerService.currentPlaylistId ==
+                                      widget.playlistId
+                              ? Icons.pause
+                              : Icons.play_arrow,
+                          color: Colors.white,
+                          size: 30,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      IconButton(
+                        onPressed: () {
+                          widget.playerService.toggleShuffle();
+                          setState(
+                            () {},
+                          ); // Actualitzar la UI per mostrar l'estat del shuffle
+                        },
+                        icon: Icon(
+                          Icons.shuffle,
+                          size: 30,
+                          color: widget.playerService.isShuffleEnabled
+                              ? Colors.blueAccent
+                              : Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 60),
+
                   // Elements de la fila
-                  Icon(
-                    playlist!.isPublic
-                        ? Icons.public
-                        : Icons.lock, // Icona de públic o privat
-                    color: playlist!.isPublic
-                        ? Colors.blue
-                        : Colors.orange, // Color segons la visibilitat
-                    size: 16, // Mida de la icona
-                  ),
-                  const SizedBox(width: 4), // Espaiat entre icona i text
-                  Text(
-                    // Text de públic o privat
-                    playlist!.isPublic
-                        ? "Pública"
-                        : "Privada", // Text segons la visibilitat
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 15,
-                    ), // Estil del text
-                  ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Nombre de cançons + durada
+                        Text(
+                          "${_getSongCount()} cançons • ${_getPlaylistDurationInMinutes().toStringAsFixed(1)} min",
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
 
-                  const SizedBox(width: 16), // Espaiat entre elements
-
-                  Icon(
-                    Icons.music_note,
-                    color: Colors.green,
-                    size: 16,
-                  ), // Icona de cançons
-                  const SizedBox(width: 4), // Espaiat entre icona i text
-                  Text(
-                    // Text del nombre de cançons
-                    "${_getSongCount()} canciones", // Nombre de cançons
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 15,
-                    ), // Estil del text
+                        // Públic / Privat
+                        Row(
+                          children: [
+                            Icon(
+                              playlist!.isPublic ? Icons.public : Icons.lock,
+                              color: playlist!.isPublic
+                                  ? Colors.blue
+                                  : Colors.orange,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              playlist!.isPublic ? "Pública" : "Privada",
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            if (playlist!.createdAt != null)
+                              Text(
+                                "Creada: ${playlist!.createdAt.day}/${playlist!.createdAt.month}/${playlist!.createdAt.year}",
+                                style: const TextStyle(
+                                  color: Colors.white54,
+                                  fontSize: 12,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
-
-              if (playlist!.createdAt != null) ...[
-                // Si hi ha data de creació
-                const SizedBox(height: 8),
-                Text(
-                  "Creada ${playlist!.createdAt.day}/${playlist!.createdAt.month}/${playlist!.createdAt.year}", // Data de creació
-                  style: const TextStyle(color: Colors.white, fontSize: 15),
-                ),
-              ],
 
               const SizedBox(height: 20),
 
@@ -351,37 +428,22 @@ class _PlaylistDetailScreenState extends State<PlaylistDetailScreen> {
                       index: index + 1, // Índex de la cançó
                       playerService:
                           widget.playerService, // Servei de reproductor
-                      onTap: () {
-                        // Acció en tocar la cançó
-                        if (widget.playerService.currentPlaylistId ==
-                            widget.playlistId) {
-                          // Si ja s'està reproduint aquesta playlist
-                          widget.playerService.playSongFromPlaylist(
-                            index,
-                          ); // Reproduir la cançó des de la playlist
-                        } else {
-                          // Si no s'està reproduint aquesta playlist
-                          widget.playerService.playPlaylist(
-                            // Reproduir la playlist
-                            songs,
-                            widget.playlistId,
-                            startIndex: index,
-                          );
-                        }
+                      onTap: () async {
+                        await widget.playerService.playPlaylist(
+                          songs,
+                          widget.playlistId,
+                          startIndex: index,
+                        );
+
                         Navigator.push(
-                          // Anar a la pantalla del reproductor
                           context,
                           MaterialPageRoute(
-                            // Crear la ruta
                             builder: (context) => PlayerScreen(
-                              playerService:
-                                  widget.playerService, // Servei de reproductor
+                              playerService: widget.playerService,
                             ),
                           ),
                         );
                       },
-                      playlistService:
-                          PlaylistService(), //Afegit per enrecordar playlists
                     );
                   },
                 ),
