@@ -91,7 +91,7 @@ class _LandingUserPageState extends State<LandingUserPage> {
           Positioned(
             left: 8,
             right: 8,
-            bottom: 70,
+            bottom: 0,
             child: FloatingPlayButton(playerService: _playerService),
           ),
         ],

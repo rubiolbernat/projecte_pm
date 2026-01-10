@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:projecte_pm/pages/detail_screen/artist_detail_screen.dart';
 import 'package:projecte_pm/services/PlayerService.dart';
 import 'package:projecte_pm/models/song.dart';
 
@@ -41,29 +42,36 @@ class QueueScreen extends StatelessWidget {
 
                 return ListTile(
                   leading: isCurrent
-                      ? const Icon(
-                          Icons.equalizer,
-                          color: Colors.blueAccent,
-                        )
-                      : const Icon(
-                          Icons.music_note,
-                          color: Colors.grey,
-                        ),
+                      ? const Icon(Icons.equalizer, color: Colors.blueAccent)
+                      : const Icon(Icons.music_note, color: Colors.grey),
                   title: Text(
                     song.name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: isCurrent ? Colors.blueAccent : Colors.white,
-                      fontWeight:
-                          isCurrent ? FontWeight.bold : FontWeight.normal,
+                      fontWeight: isCurrent
+                          ? FontWeight.bold
+                          : FontWeight.normal,
                     ),
                   ),
-                  subtitle: Text(
-                    song.artistId.isNotEmpty
-                        ? song.artistId
-                        : 'Artista desconegut',
-                    style: const TextStyle(color: Colors.grey),
+                  subtitle: InkWell(
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => ArtistDetailScreen(
+                            artistId: song!.artistId,
+                            playerService: playerService,
+                          ),
+                        ),
+                      );
+                    },
+                    splashColor: Colors.transparent,
+                    highlightColor: Colors.transparent,
+                    child: Text(
+                      "Go to Artist",
+                      style: const TextStyle(color: Colors.white, fontSize: 15),
+                    ),
                   ),
                   onTap: () async {
                     await playerService.playSongFromPlaylist(index);

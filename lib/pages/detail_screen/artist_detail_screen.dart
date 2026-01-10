@@ -12,12 +12,10 @@ import 'package:projecte_pm/widgets/FollowArtistButton.dart';
 class ArtistDetailScreen extends StatefulWidget {
   final String artistId;
   final PlayerService playerService;
-  final UserService userService;
 
   const ArtistDetailScreen({
     required this.artistId,
     required this.playerService,
-    required this.userService,
     super.key,
   });
 
@@ -206,7 +204,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                         // Botó de seguir artista
                         FollowArtistButton(
                           artistId: artist!.id,
-                          userService: widget.userService,
+                          userService: widget.playerService.userService,
                           showText: true,
                         ),
                       ],
@@ -332,7 +330,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                             builder: (_) => AlbumDetailScreen(
                               albumId: album.id,
                               playerService: widget.playerService,
-                              userService: widget.userService,
+                              userService: widget.playerService.userService,
                               playlistService:
                                   PlaylistService(), // Afegit per enrecordar playlists anteriors
                             ),

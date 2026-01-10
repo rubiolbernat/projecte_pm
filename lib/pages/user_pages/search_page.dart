@@ -314,7 +314,6 @@ class _SearchPageState extends State<SearchPage> {
             builder: (_) => ArtistDetailScreen(
               artistId: item['id'],
               playerService: widget.playerService,
-              userService: widget.userService,
             ),
           ),
         );

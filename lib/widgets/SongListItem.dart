@@ -136,7 +136,6 @@ Widget build(BuildContext context) {
                       builder: (_) => ArtistDetailScreen(
                         artistId: widget.song.artistId,
                         playerService: widget.playerService,
-                        userService: widget.playerService.userService,
                       ),
                     ),
                   );

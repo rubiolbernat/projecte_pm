@@ -624,7 +624,6 @@ class _LibraryPageState extends State<LibraryPage> {
         builder: (_) => ArtistDetailScreen(
           artistId: artist.id,
           playerService: widget.playerService,
-          userService: widget.userService,
         ),
       ),
     );

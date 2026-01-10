@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
-import 'package:projecte_pm/pages/QueueScreen.dart';
+import 'package:projecte_pm/pages/detail_screen/QueueScreen.dart';
+import 'package:projecte_pm/pages/detail_screen/artist_detail_screen.dart';
 import 'package:projecte_pm/services/PlayerService.dart';
 
 class PlayerScreen extends StatefulWidget {
@@ -157,19 +158,25 @@ class _PlayerScreenState extends State<PlayerScreen> {
                           .ellipsis, // Afegir "..." si és massa llarg
                     ),
                     const SizedBox(height: 8),
-
-                    Text(
-                      // Nom de l'artista
-                      currentSong
-                              .artistId
-                              .isNotEmpty // Comprovar si hi ha ID d'artista
-                          ? currentSong
-                                .artistId // Mostrar nom de l'artista
-                          : "Artista desconegut", // Text per defecte si no hi ha artista
-                      style: const TextStyle(
-                        color: Colors.grey,
-                        fontSize: 18,
-                      ), // Estil del text
+                    InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ArtistDetailScreen(
+                              artistId: currentSong.artistId,
+                              playerService: widget.playerService,
+                            ),
+                          ),
+                        );
+                      },
+                      child: Text(
+                        "Anar a l'artista",
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 18,
+                        ), // Estil del text
+                      ),
                     ),
                   ],
                 ),

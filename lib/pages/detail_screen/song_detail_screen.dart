@@ -194,7 +194,6 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
                         builder: (_) => ArtistDetailScreen(
                           artistId: song!.artistId,
                           playerService: widget.playerService,
-                          userService: widget.playerService.userService,
                         ),
                       ),
                     );

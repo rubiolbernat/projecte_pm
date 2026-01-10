@@ -134,7 +134,6 @@ class _HomePageState extends State<HomePage> {
                               builder: (_) => ArtistDetailScreen(
                                 artistId: id,
                                 playerService: widget.playerService,
-                                userService: widget.userService,
                               ),
                             ),
                           );
@@ -279,7 +278,6 @@ class _HomePageState extends State<HomePage> {
                               builder: (_) => ArtistDetailScreen(
                                 artistId: id,
                                 playerService: widget.playerService,
-                                userService: widget.userService,
                               ),
                             ),
                           );

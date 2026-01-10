@@ -198,7 +198,7 @@ class FloatingPlayButton extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start, // Alinear a la izquierda
         children: [
           Text(
-            'Ninguna cancó seleccionada', // Título por defecto si no hay canción
+            'Cap cancó seleccionada', // Título por defecto si no hay canción
             style: TextStyle(
               color: Colors.white,
               fontSize: 14,
