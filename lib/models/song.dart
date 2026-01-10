@@ -169,7 +169,7 @@ class Song {
       artistId: data['artistId'] as String,
       collaboratorsId: List<String>.from(data['collaboratorsId'] ?? []),
       albumId: data['albumId'] as String,
-      duration: data['duration'] as double,
+      duration: (data['duration'] as num).toDouble(),
       fileURL: data['fileURL'] as String,
       coverURL: data['coverURL'] as String,
       genre: List<String>.from(data['genre'] ?? []),
