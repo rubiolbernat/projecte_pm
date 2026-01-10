@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:projecte_pm/models/artist.dart';
+import 'package:projecte_pm/models/song.dart';
 import 'dart:developer';
 
 class ArtistService {
@@ -38,6 +39,7 @@ class ArtistService {
 
   // Getters de artist
   Artist get artist => _artist;
+  String get artistId => _artist.id;
 
   // Metòdes CRUD
   Future<Artist?> getCurrentArtist() async {
@@ -104,10 +106,7 @@ class ArtistService {
       final songs =
           await _firestore // Obtenir cançons de l'artista
               .collection('songs') // Col·lecció de cançons
-              .where(
-                'artistId',
-                isEqualTo: _currentArtistRef,
-              ) // Filtrar per artista
+              .where('artistId', isEqualTo: _artist.id) // Filtrar per artista
               .get(); // Obtenir documents
 
       int totalPlays = 0; // Comptador de reproduccions
@@ -125,10 +124,7 @@ class ArtistService {
       final albums =
           await _firestore // Obtenir àlbums de l'artista
               .collection('albums') // Col·lecció d'àlbums
-              .where(
-                'artistId',
-                isEqualTo: _currentArtistRef,
-              ) // Filtrar per artista
+              .where('artistId', isEqualTo: _artist.id) // Filtrar per artista
               .get(); // Obtenir documents
 
       return {
@@ -159,10 +155,7 @@ class ArtistService {
       final songs =
           await _firestore // Obtenir cançons
               .collection('songs') // Col·lecció de cançons
-              .where(
-                'artistId',
-                isEqualTo: _currentArtistRef,
-              ) // Filtrar per artista
+              .where('artistId', isEqualTo: _artist.id) // Filtrar per artista
               .orderBy(
                 'stats.playCount',
                 descending: true,
@@ -210,10 +203,7 @@ class ArtistService {
       final albums =
           await _firestore // Obtenir àlbums
               .collection('albums') // Col·lecció d'àlbums
-              .where(
-                'artistId',
-                isEqualTo: _currentArtistRef,
-              ) // Filtrar per artista
+              .where('artistId', isEqualTo: _artist.id) // Filtrar per artista
               .orderBy(
                 'stats.playCount',
                 descending: true,
@@ -299,6 +289,42 @@ class ArtistService {
       return data;
     } catch (e) {
       throw Exception('Error obteniendo álbum: $e');
+    }
+  }
+
+  Future<void> addSongToArtist(Song song) async {
+    // Metode afegir per poder editar albums
+    try {
+      final artistDoc = FirebaseFirestore.instance
+          .collection('artists')
+          .doc(artist.id);
+
+      await artistDoc.update({
+        'artistSong': FieldValue.arrayUnion([
+          {'id': song.id},
+        ]),
+      });
+    } catch (e) {
+      print("Error añadiendo canción al artista: $e");
+      throw e;
+    }
+  }
+
+  Future<void> removeSongFromArtist(String songId) async {
+    // Metode afegir per poder editar albums
+    try {
+      final artistDoc = FirebaseFirestore.instance
+          .collection('artists')
+          .doc(artist.id);
+
+      await artistDoc.update({
+        'artistSong': FieldValue.arrayRemove([
+          {'id': songId},
+        ]),
+      });
+    } catch (e) {
+      print("Error eliminando canción del artista: $e");
+      throw e;
     }
   }
 }

@@ -52,12 +52,15 @@ class Album {
   String get label => _label;
   DateTime get createdAt => _createdAt;
   List<AlbumSong> get albumSong => _albumSong;
+  List<String> get genre => List.from(_genre);
+  List<String> get collaboratorId => List.from(_collaboratorId);
 
   //Llista de Setters
   set name(String name) => _name = name;
   set coverURL(String coverURL) => _coverURL = coverURL;
   set isPublic(bool isPublic) => _isPublic = isPublic;
   set label(String label) => _label = label;
+  set genre(List<String> genre) => _genre = List.from(genre);
 
   //Metode per colaboratorsId
   void addCollaboratorId(String id) => _collaboratorId.add(id);

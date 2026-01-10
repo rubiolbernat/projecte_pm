@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:projecte_pm/services/PlayerService.dart';
 import 'package:projecte_pm/models/song.dart';
-import 'package:projecte_pm/pages/player_screen.dart';
+import 'package:projecte_pm/pages/user_pages/player_screen.dart';
 
 class FloatingPlayButton extends StatelessWidget {
   // Barra de reproducció flotant

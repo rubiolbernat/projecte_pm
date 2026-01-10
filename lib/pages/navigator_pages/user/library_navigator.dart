@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:projecte_pm/services/UserService.dart';
-import 'package:projecte_pm/pages/search_page.dart';
 import 'package:projecte_pm/services/PlayerService.dart';
+import 'package:projecte_pm/services/UserService.dart';
+import 'package:projecte_pm/pages/user_pages/library_page.dart';
 
-class SearchNavigator extends StatelessWidget {
+class LibraryNavigator extends StatelessWidget {
   final UserService userService;
   final PlayerService playerService;
   final GlobalKey<NavigatorState> navigatorKey;
 
-  const SearchNavigator({
+  const LibraryNavigator({
     super.key,
-    required this.userService,
     required this.playerService,
+    required this.userService,
     required this.navigatorKey,
   });
 
@@ -21,7 +21,7 @@ class SearchNavigator extends StatelessWidget {
       key: navigatorKey,
       onGenerateRoute: (settings) {
         return MaterialPageRoute(
-          builder: (_) => SearchPage(
+          builder: (_) => LibraryPage(
             userService: userService,
             playerService: playerService,
           ),

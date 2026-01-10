@@ -763,4 +763,40 @@ class UserService {
       return [];
     }
   }
+
+  static Future<UserService> createForArtist({required String artistId}) async {
+    final firestore = FirebaseFirestore.instance;
+
+    final artistRef = firestore.collection('artists').doc(artistId);
+    final artistSnap = await artistRef.get();
+
+    if (!artistSnap.exists) {
+      throw Exception('Artista no trobat');
+    }
+
+    final artistData = artistSnap.data() as Map<String, dynamic>;
+
+    // Crear un mockup de usuari per artista. No em pregunteu com va aixo perque es magia negra. Sino no et deixa tirar els editors de albums (VICTOR)
+    final user = User(
+      id: artistId,
+      name: artistData['name'] ?? 'Artista',
+      email: artistData['email'] ?? '${artistId}@artist.com',
+      photoURL: artistData['photoURL'] ?? '',
+      bio: artistData['bio'] ?? '',
+      createdAt:
+          (artistData['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      follower: [],
+      following: [],
+      ownedPlaylist: [],
+      savedPlaylist: [],
+      savedAlbum: [],
+      playHistory: [],
+    );
+
+    return UserService._(
+      firestore: firestore,
+      currentUserRef: artistRef,
+      user: user,
+    );
+  }
 }

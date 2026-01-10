@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:projecte_pm/pages/edit_user_profile_page.dart';
-import 'package:projecte_pm/services/UserService.dart';
+import 'package:projecte_pm/pages/artist_pages/edit_profile_page.dart';
+import 'package:projecte_pm/services/ArtistService.dart';
 import 'package:projecte_pm/auth_gate.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
-import 'package:projecte_pm/pages/profile_page.dart';
+import 'package:projecte_pm/pages/artist_pages/profile_page.dart';
 
 class AppBarWidget extends StatefulWidget implements PreferredSizeWidget {
-  final UserService userService;
+  final ArtistService artistService;
 
-  const AppBarWidget({super.key, required this.userService});
+  const AppBarWidget({super.key, required this.artistService});
 
   @override
   State<AppBarWidget> createState() => _AppBarWidgetState();
@@ -29,7 +29,8 @@ class _AppBarWidgetState extends State<AppBarWidget> {
         onTap: () {
           Navigator.of(context).push(
             MaterialPageRoute(
-              builder: (_) => ProfilePage(userId: widget.userService.user.id),
+              builder: (_) =>
+                  ProfilePage(artistId: widget.artistService.artist.id),
             ),
           );
         },
@@ -41,7 +42,7 @@ class _AppBarWidgetState extends State<AppBarWidget> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "Hola, ${widget.userService.user.name.isEmpty ? "Usuario" : widget.userService.user.name}",
+                "Hola, ${widget.artistService.artist.name.isEmpty ? "Usuario" : widget.artistService.artist.name}",
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
@@ -49,8 +50,8 @@ class _AppBarWidgetState extends State<AppBarWidget> {
                 ),
               ),
               Text(
-                widget.userService.user.bio.isNotEmpty
-                    ? widget.userService.user.bio
+                widget.artistService.artist.bio.isNotEmpty
+                    ? widget.artistService.artist.bio
                     : "Sin biografía",
                 style: TextStyle(color: Colors.grey.shade400, fontSize: 10),
               ),
@@ -59,10 +60,6 @@ class _AppBarWidgetState extends State<AppBarWidget> {
         ],
       ),
       actions: [
-        IconButton(
-          onPressed: () {},
-          icon: const Icon(Icons.notifications_none, color: Colors.white),
-        ),
         PopupMenuButton<String>(
           icon: const Icon(Icons.settings_outlined, color: Colors.white),
           color: Colors.grey.shade900,
@@ -105,8 +102,8 @@ class _AppBarWidgetState extends State<AppBarWidget> {
   }
 
   Widget _buildProfileAvatar() {
-    final user = widget.userService.user;
-    final photoURL = user.photoURL;
+    final artist = widget.artistService.artist;
+    final photoURL = artist.photoURL;
 
     if (photoURL != null && photoURL.isNotEmpty) {
       return CircleAvatar(
@@ -120,7 +117,7 @@ class _AppBarWidgetState extends State<AppBarWidget> {
       radius: 20,
       backgroundColor: Colors.blueAccent,
       child: Text(
-        _getInitials(user.name),
+        _getInitials(artist.name),
         style: const TextStyle(
           color: Colors.white,
           fontSize: 16,
@@ -176,12 +173,12 @@ class _AppBarWidgetState extends State<AppBarWidget> {
       context,
       MaterialPageRoute(
         builder: (context) =>
-            EditUserProfilePage(userService: widget.userService),
+            EditProfilePage(artistService: widget.artistService),
       ),
     );
 
     if (result == true) {
-      await widget.userService.refreshUser();
+      await widget.artistService.refreshArtist();
       setState(() {});
     }
   }

@@ -1,12 +1,24 @@
 COSES A FER:
 
-- Library view amb les playlist i albums guardats de cada usuari (CHECK - Victor)
+- Fer pantalla Profile de Artist, aqui veura les seves estadistiques.
 
-- Create view, per a crear playlist o eliminar aquesta finestra
+- Fer que l'artista no pugui reproduir musica o afeir la barra de reproducció, ara pot reproduir pero no surt la barra. El mes sencill jo crec que es que no pugui reproduir.
 
-- A cada boto de afegir a playlist de album o playlist li falta la funcionalitat de poder afegir a una playlist (CHECK - Víctor)
+- Quan es fa que un album sigui privat es continua mostrant de forma publica, segurament tambe pasa amb les playlist, no ho he pogut provar.
 
-- al PopupMenuButton del songList afegir les opcions que falten
+- Les playlist es creen pero no s'asocien be amb el user, he creat varies playlist i no les puc editar/eliminar.
+
+- En web es veu be la icona a l'hora d'iniciar sesió de spotyupc pero en android no carrega. Si dema no esta corregit fare que agafi l'icona desde una url.
+
+COSES A MILLORAR:
+
+- Fer que seguidors i seguint siguin dos butons, quan es premin que s'obri una llista de les persones que segueixes o les que et segueixen com a una xarxa social.
+
+- Fer que s'arroseguin les pistes en editar album només desde la icona.
+
+
+
+- al PopupMenuButton del songList afegir les opcions que falten //Quines???
 
 -----------------------------------------------------------------
 

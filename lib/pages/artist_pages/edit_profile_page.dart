@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:projecte_pm/models/artist.dart';
 import 'package:projecte_pm/services/ArtistService.dart';
 
-class EditArtistProfilePage extends StatefulWidget {
+class EditProfilePage extends StatefulWidget {
   final ArtistService artistService;
 
-  const EditArtistProfilePage({super.key, required this.artistService});
+  const EditProfilePage({super.key, required this.artistService});
 
   @override
-  State<EditArtistProfilePage> createState() => _EditArtistProfilePageState();
+  State<EditProfilePage> createState() => _EditProfilePageState();
 }
 
-class _EditArtistProfilePageState extends State<EditArtistProfilePage> {
+class _EditProfilePageState extends State<EditProfilePage> {
   late TextEditingController nameController;
   late TextEditingController bioController;
   late TextEditingController photoURLController;

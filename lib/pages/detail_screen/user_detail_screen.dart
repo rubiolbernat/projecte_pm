@@ -6,7 +6,7 @@ import 'package:projecte_pm/services/playlist_service.dart';
 import 'package:projecte_pm/pages/detail_screen/playlist_detail_screen.dart';
 import 'package:projecte_pm/widgets/FollowUserButton.dart';
 import 'package:projecte_pm/services/PlayerService.dart'; // Per a gestionar la música
-import 'package:projecte_pm/pages/profile_page.dart'; // Per redirigir al perfil propi
+import 'package:projecte_pm/pages/user_pages/profile_page.dart'; // Per redirigir al perfil propi
 
 class UserDetailScreen extends StatefulWidget {
   final String userId;

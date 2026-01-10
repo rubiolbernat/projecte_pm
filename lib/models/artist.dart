@@ -70,6 +70,7 @@ class Artist {
   DateTime get createdAt => _createdAt;
   List<SaveId> get artistAlbum => _artistAlbum;
   List<SaveId> get artistFollower => _artistFollower;
+  List<SaveId> get artistSong => _artistSong;
 
   //Llista de Setters
   set name(String name) => _name = name;

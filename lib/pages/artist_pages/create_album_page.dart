@@ -3,16 +3,13 @@ import 'package:cloud_firestore/cloud_firestore.dart'; // Necessari per als mode
 import 'package:projecte_pm/models/song.dart';
 import 'package:projecte_pm/services/ArtistService.dart';
 import 'package:projecte_pm/services/AlbumService.dart';
+import 'package:projecte_pm/widgets/artist_app_bar_widget.dart';
 
 class CreateAlbumPage extends StatefulWidget {
   final ArtistService artistService;
-  final VoidCallback onCreated;
 
-  const CreateAlbumPage({
-    Key? key,
-    required this.artistService,
-    required this.onCreated,
-  }) : super(key: key);
+  const CreateAlbumPage({Key? key, required this.artistService})
+    : super(key: key);
 
   @override
   _CreateAlbumPageState createState() => _CreateAlbumPageState();
@@ -209,7 +206,7 @@ class _CreateAlbumPageState extends State<CreateAlbumPage> {
         coverUrl: _coverUrlController.text,
         songs: _songsToUpload,
       );
-      if (mounted) widget.onCreated();
+      //if (mounted) widget.onCreated();
     } catch (e) {
       if (mounted)
         ScaffoldMessenger.of(
@@ -232,15 +229,7 @@ class _CreateAlbumPageState extends State<CreateAlbumPage> {
         ),
       ),
       child: Scaffold(
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          title: const Text(
-            "Nou Llançament",
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          centerTitle: true,
-        ),
+        appBar: AppBarWidget(artistService: widget.artistService),
         body: _isLoading
             ? const Center(
                 child: CircularProgressIndicator(color: Colors.blueAccent),
@@ -333,6 +322,8 @@ class _CreateAlbumPageState extends State<CreateAlbumPage> {
                         Expanded(
                           flex: 1,
                           child: DropdownButtonFormField<String>(
+                            isExpanded: true,
+                            isDense: true,
                             value: _type,
                             dropdownColor: const Color(0xFF282828),
                             style: const TextStyle(color: Colors.white),
@@ -354,11 +345,8 @@ class _CreateAlbumPageState extends State<CreateAlbumPage> {
                           child: TextField(
                             controller: _genreInputController,
                             style: const TextStyle(color: Colors.white),
-                            decoration:
-                                _inputStyle(
-                                  "Afegir Gènere +",
-                                  Icons.tag,
-                                ).copyWith(
+                            decoration: _inputStyle("Gènere", Icons.tag)
+                                .copyWith(
                                   suffixIcon: IconButton(
                                     icon: const Icon(
                                       Icons.add_circle,
@@ -434,52 +422,54 @@ class _CreateAlbumPageState extends State<CreateAlbumPage> {
                               ),
                             ),
                           )
-                        : ListView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: _songsToUpload.length,
-                            itemBuilder: (context, index) {
-                              final s = _songsToUpload[index];
-                              return Container(
-                                margin: const EdgeInsets.only(bottom: 8),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF282828),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: ListTile(
-                                  leading: Text(
-                                    "${index + 1}",
-                                    style: const TextStyle(
-                                      color: Colors.blueAccent,
-                                      fontSize: 16,
+                        : Expanded(
+                            child: ListView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: _songsToUpload.length,
+                              itemBuilder: (context, index) {
+                                final s = _songsToUpload[index];
+                                return Container(
+                                  margin: const EdgeInsets.only(bottom: 8),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF282828),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: ListTile(
+                                    leading: Text(
+                                      "${index + 1}",
+                                      style: const TextStyle(
+                                        color: Colors.blueAccent,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                    title: Text(
+                                      s.name,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    subtitle: Text(
+                                      "${s.duration.toInt()}s",
+                                      style: const TextStyle(
+                                        color: Colors.grey,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                    trailing: IconButton(
+                                      icon: const Icon(
+                                        Icons.remove_circle_outline,
+                                        color: Colors.grey,
+                                      ),
+                                      onPressed: () => setState(
+                                        () => _songsToUpload.removeAt(index),
+                                      ),
                                     ),
                                   ),
-                                  title: Text(
-                                    s.name,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  subtitle: Text(
-                                    "${s.duration.toInt()}s",
-                                    style: const TextStyle(
-                                      color: Colors.grey,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                  trailing: IconButton(
-                                    icon: const Icon(
-                                      Icons.remove_circle_outline,
-                                      color: Colors.grey,
-                                    ),
-                                    onPressed: () => setState(
-                                      () => _songsToUpload.removeAt(index),
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
+                                );
+                              },
+                            ),
                           ),
                     const SizedBox(height: 40),
                     ElevatedButton(

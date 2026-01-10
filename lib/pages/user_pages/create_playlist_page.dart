@@ -5,18 +5,18 @@ import 'package:projecte_pm/services/UserService.dart';
 import 'package:projecte_pm/services/playlist_service.dart';
 import 'package:projecte_pm/widgets/add_to_playlist.dart';
 import 'package:projecte_pm/services/PlayerService.dart';
-import 'package:projecte_pm/widgets/app_bar_widget.dart';
+import 'package:projecte_pm/widgets/user_app_bar_widget.dart';
 
-class CreateUserPage extends StatefulWidget {
+class CreatePlaylistPage extends StatefulWidget {
   final UserService userService;
 
-  const CreateUserPage({super.key, required this.userService});
+  const CreatePlaylistPage({super.key, required this.userService});
 
   @override
-  State<CreateUserPage> createState() => _CreateUserPageState();
+  State<CreatePlaylistPage> createState() => _CreatePlaylistPageState();
 }
 
-class _CreateUserPageState extends State<CreateUserPage> {
+class _CreatePlaylistPageState extends State<CreatePlaylistPage> {
   late PlaylistService _playlistService; // Per crear playlists
 
   @override

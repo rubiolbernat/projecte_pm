@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:projecte_pm/services/PlayerService.dart';
 import 'package:projecte_pm/services/UserService.dart';
-import 'package:projecte_pm/pages/navigator_pages/home_navigator.dart';
-import 'package:projecte_pm/pages/navigator_pages/search_navigator.dart';
-import 'package:projecte_pm/pages/navigator_pages/create_user_navigator.dart';
-import 'package:projecte_pm/pages/navigator_pages/library_navigator.dart';
+import 'package:projecte_pm/pages/navigator_pages/user/home_navigator.dart';
+import 'package:projecte_pm/pages/navigator_pages/user/search_navigator.dart';
+import 'package:projecte_pm/pages/navigator_pages/user/create_playlist_navigator.dart';
+import 'package:projecte_pm/pages/navigator_pages/user/library_navigator.dart';
 import 'package:projecte_pm/widgets/FloatingPlayButton.dart';
 
 class LandingUserPage extends StatefulWidget {
@@ -81,7 +81,7 @@ class _LandingUserPageState extends State<LandingUserPage> {
                 userService: _userService,
                 playerService: _playerService,
               ),
-              CreateUserNavigator(
+              CreatePlaylistNavigator(
                 navigatorKey: _navigatorKeys[3],
                 userService: _userService,
               ),

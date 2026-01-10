@@ -1,16 +1,14 @@
 import 'dart:developer';
-
-import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:projecte_pm/auth_gate.dart';
-import 'package:projecte_pm/models/artist.dart';
-import 'package:projecte_pm/pages/create_album.dart';
-import 'package:projecte_pm/pages/edit_artist_profile_page.dart';
-import 'package:projecte_pm/pages/home_page.dart';
-import 'package:projecte_pm/pages/library_page.dart';
-import 'package:projecte_pm/pages/navigator_pages/search_navigator.dart';
 import 'package:projecte_pm/services/ArtistService.dart';
-import 'package:projecte_pm/pages/edit_user_profile_page.dart';
+import 'package:projecte_pm/pages/navigator_pages/artist/library_navigator.dart';
+import 'package:projecte_pm/pages/navigator_pages/artist/create_album_navigator.dart';
+import 'package:projecte_pm/services/UserService.dart';
+import 'package:projecte_pm/services/PlayerService.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:projecte_pm/models/user.dart';
 
 class LandingArtistPage extends StatefulWidget {
   final String artistId;
@@ -18,104 +16,106 @@ class LandingArtistPage extends StatefulWidget {
   const LandingArtistPage({super.key, required this.artistId});
 
   @override
-  State<StatefulWidget> createState() => _LandingArtistPageState();
+  State<LandingArtistPage> createState() => _LandingArtistPageState();
 }
 
 class _LandingArtistPageState extends State<LandingArtistPage> {
-  late final ArtistService _artistService;
-
+  ArtistService? _artistService;
+  PlayerService? _playerService;
+  UserService? _userService;
   int _currentIndex = 0;
   bool _isLoading = true;
+
+  final List<GlobalKey<NavigatorState>> _navigatorKeys = [
+    GlobalKey<NavigatorState>(),
+    GlobalKey<NavigatorState>(),
+    GlobalKey<NavigatorState>(),
+  ];
 
   @override
   void initState() {
     super.initState();
-    _initArtistService();
+    _initServices();
   }
 
-  Future<void> _initArtistService() async {
+  Future<void> _initServices() async {
     try {
       _artistService = await ArtistService.create(artistId: widget.artistId);
-    } catch (e, st) {
-      log('Error inicialitzant UserService', error: e, stackTrace: st);
-      rethrow;
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
+      try {
+        _userService = await UserService.createForArtist(
+          artistId: widget.artistId,
+        );
+      } catch (e) {
+        _userService = await UserService.create(userId: widget.artistId);
       }
+
+      _playerService = PlayerService(_userService!);
+    } catch (e, st) {
+      print("=== ERROR INICIALIZANDO SERVICIOS ===");
+      print("Tipus d'error: ${e.runtimeType}");
+      print("Stack trace: $st");
+
+      if (_artistService != null && _userService == null) {
+        _userService = await _createManualUserService();
+        if (_userService != null) {
+          _playerService = PlayerService(_userService!);
+        }
+      }
+
+      if (_artistService == null ||
+          _userService == null ||
+          _playerService == null) {
+        _artistService = null;
+        _userService = null;
+        _playerService = null;
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<UserService?> _createManualUserService() async {
+    try {
+      final firestore = FirebaseFirestore.instance;
+      final artistRef = firestore.collection('artists').doc(widget.artistId);
+
+      final artistSnap = await artistRef.get();
+      if (!artistSnap.exists) return null;
+
+      final artistData = artistSnap.data() as Map<String, dynamic>;
+
+      final user = User(
+        id: widget.artistId,
+        name: artistData['name'] ?? 'Artista',
+        email: artistData['email'] ?? '${widget.artistId}@artist.com',
+        photoURL: artistData['photoURL'] ?? '',
+        bio: artistData['bio'] ?? '',
+        createdAt:
+            (artistData['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+        follower: [],
+        following: [],
+        ownedPlaylist: [],
+        savedPlaylist: [],
+        savedAlbum: [],
+        playHistory: [],
+      );
+    } catch (e) {
+      print("Error creando UserService manual: $e");
+      return null;
     }
   }
 
   Future<void> _signOut() async {
     try {
-      // 1. Tanquem sessió a Firebase
       await auth.FirebaseAuth.instance.signOut();
-
-      // 2. Naveguem al Login i eliminem tot l'historial anterior
       if (mounted) {
-        // Suposant que tens una AuthGate o LoginPage
         Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const AuthGate()),
-          (route) =>
-              false, // Això elimina totes les pantalles anteriors de la memòria
+          MaterialPageRoute(builder: (_) => const AuthGate()),
+          (route) => false,
         );
       }
     } catch (e) {
       print("Error tancant sessió: $e");
-    }
-  }
-
-  // Editar i recarregar en tornar
-  Future<void> _navigateToEditProfile() async {
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) =>
-            EditArtistProfilePage(artistService: _artistService),
-      ),
-    );
-
-    if (result == true) {
-      setState(() {
-        _isLoading = true;
-      });
-
-      await _artistService.refreshArtist();
-
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
-  }
-
-  // --- Selector de Vistes ---
-  Widget _buildCurrentView() {
-    if (_isLoading) return const SizedBox();
-
-    switch (_currentIndex) {
-      case 0:
-        return Center(
-          child: Text(
-            "BENVINGUT ARTISTA",
-            style: TextStyle(color: Colors.white),
-          ),
-        );
-      case 1:
-        //return SearchPage(service: _artistService);
-        return Center(
-          child: Text("Pantalla search", style: TextStyle(color: Colors.white)),
-        );
-      case 2:
-        return CreateAlbumPage(
-          artistService: _artistService,
-          onCreated: () {
-            setState(() {
-              _currentIndex = 0;
-            });
-          },
-        );
-      default:
-        return Container();
     }
   }
 
@@ -130,124 +130,96 @@ class _LandingArtistPageState extends State<LandingArtistPage> {
       );
     }
 
+    if (_artistService == null) {
+      return _buildErrorScreen(
+        "No s'ha pogut carregar el artista",
+        "ID: ${widget.artistId}",
+      );
+    }
+
+    if (_playerService == null || _userService == null) {
+      return _buildErrorScreen(
+        "Error en serveis auxiliars",
+        "UserService o PlayerService no disponibles",
+      );
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
-
-      // --- HEADER
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: const Color(0xFF121212),
-        titleSpacing: 0,
-        title: Row(
-          children: [
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 12),
-              child: CircleAvatar(
-                radius: 16,
-                backgroundImage: AssetImage('icons/SpotyUPC.png'),
-              ),
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Hola, ${_artistService.artist.name.isEmpty ? "Error" : _artistService.artist.name}",
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-                Text(
-                  _artistService.artist.bio.isNotEmpty == true
-                      ? _artistService.artist.bio
-                      : "Sense biografia",
-                  style: TextStyle(color: Colors.grey.shade400, fontSize: 10),
-                ),
-              ],
-            ),
-          ],
-        ),
-        actions: [
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.notifications_none, color: Colors.white),
+      body: IndexedStack(
+        index: _currentIndex,
+        children: [
+          LibraryNavigator(
+            navigatorKey: _navigatorKeys[0],
+            artistService: _artistService!,
+            playerService: _playerService!,
+            userService: _userService!,
           ),
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.settings_outlined, color: Colors.white),
-            color: Colors.grey.shade900, // Color de fons del menú
-            onSelected: (value) {
-              if (value == 'edit') {
-                _navigateToEditProfile(); // La funció que ja tenies
-              } else if (value == 'logout') {
-                _signOut(); // La nova funció
-              }
-            },
-            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-              // Opció 1: Editar
-              const PopupMenuItem<String>(
-                value: 'edit',
-                child: Row(
-                  children: [
-                    Icon(Icons.edit, color: Colors.white, size: 20),
-                    SizedBox(width: 10),
-                    Text(
-                      "Editar Perfil",
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ],
-                ),
-              ),
-              // Divisor visual
-              const PopupMenuDivider(),
-              // Opció 2: Logout
-              const PopupMenuItem<String>(
-                value: 'logout',
-                child: Row(
-                  children: [
-                    Icon(Icons.logout, color: Colors.redAccent, size: 20),
-                    SizedBox(width: 10),
-                    Text(
-                      "Tancar Sessió",
-                      style: TextStyle(color: Colors.redAccent),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+          CreateAlbumNavigator(
+            navigatorKey: _navigatorKeys[1],
+            artistService: _artistService!,
           ),
         ],
       ),
-
-      body: _buildCurrentView(),
-
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          print("Botó Play/Pause flotant");
-        },
-        backgroundColor: Colors.blueAccent,
-        child: const Icon(Icons.play_arrow, color: Colors.white),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: const Color(0xFF121212),
         selectedItemColor: Colors.blueAccent,
         unselectedItemColor: Colors.grey,
         currentIndex: _currentIndex,
         type: BottomNavigationBarType.fixed,
-        onTap: (index) => setState(() => _currentIndex = index),
+        onTap: (index) {
+          if (index == _currentIndex) {
+            _navigatorKeys[index] = GlobalKey<NavigatorState>();
+            setState(() {});
+          } else {
+            _navigatorKeys[index] = GlobalKey<NavigatorState>();
+            setState(() => _currentIndex = index);
+          }
+        },
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home_filled),
-            label: "Inici",
+            icon: Icon(Icons.library_music),
+            label: "Biblioteca",
           ),
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: "Cerca"),
           BottomNavigationBarItem(
             icon: Icon(Icons.add_box_outlined),
             label: "Crea",
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildErrorScreen(String title, String subtitle) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF121212),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error, color: Colors.red, size: 60),
+            const SizedBox(height: 20),
+            Text(
+              title,
+              style: const TextStyle(color: Colors.white, fontSize: 18),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 10),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Text(
+                subtitle,
+                style: TextStyle(color: Colors.grey.shade400),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _initServices,
+              child: const Text("Reintentar"),
+            ),
+          ],
+        ),
       ),
     );
   }
