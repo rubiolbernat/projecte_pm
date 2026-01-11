@@ -27,8 +27,8 @@ class _ArtistProfilePageState extends State<ArtistProfilePage> {
   List<Song> songs = [];
   List<Album> albums = [];
   bool isLoading = true;
-  Map<String, dynamic> artistStats = {}; // Estadístiques de l'artista
-  bool isLoadingStats = false; // Estat de càrrega de les estadístiques
+  Map<String, dynamic> artistStats = {};
+  bool isLoadingStats = false;
   late ArtistService _artistService;
   late PlaylistService _playlistService;
 
@@ -76,7 +76,6 @@ class _ArtistProfilePageState extends State<ArtistProfilePage> {
       });
 
       if (artist != null) {
-        // Carregar cançons de l'artista
         if (artist!.artistSong.isNotEmpty) {
           final songFutures = artist!.artistSong
               .map((ref) => SongService.getSong(ref.id))
@@ -86,7 +85,6 @@ class _ArtistProfilePageState extends State<ArtistProfilePage> {
           songs.sort((a, b) => b.likes.length.compareTo(a.likes.length));
         }
 
-        // Carregar àlbums de l'artista
         if (artist!.artistAlbum.isNotEmpty) {
           final albumFutures = artist!.artistAlbum
               .map((ref) => AlbumService.getAlbum(ref.id))
@@ -376,6 +374,9 @@ class _ArtistProfilePageState extends State<ArtistProfilePage> {
   }
 
   Widget _buildArtistInfoSection() {
+    // VERIFICACIÓN AÑADIDA AQUÍ
+    if (artist == null) return SizedBox();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -475,7 +476,8 @@ class _ArtistProfilePageState extends State<ArtistProfilePage> {
   }
 
   Widget _buildSocialLinks() {
-    if (artist!.socialLink.isEmpty) return SizedBox();
+    // VERIFICACIÓN AÑADIDA AQUÍ
+    if (artist == null || artist!.socialLink.isEmpty) return SizedBox();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -498,7 +500,7 @@ class _ArtistProfilePageState extends State<ArtistProfilePage> {
               label: Text(entry.key, style: TextStyle(color: Colors.white)),
               backgroundColor: Colors.blue[800],
               onPressed: () {
-                // Obrir l'enllaç de la xarxa social, no se com implementar-ho la veritat
+                // Obrir l'enllaç de la xarxa social
               },
             );
           }).toList(),
@@ -507,10 +509,63 @@ class _ArtistProfilePageState extends State<ArtistProfilePage> {
     );
   }
 
+  Widget _buildArtistHeader() {
+    if (artist == null) return SizedBox();
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        CircleAvatar(
+          radius: 50,
+          backgroundImage: NetworkImage(artist!.photoURL),
+        ),
+        SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text(
+                    artist!.name,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  if (artist!.verified)
+                    Padding(
+                      padding: EdgeInsets.only(left: 8),
+                      child: Icon(Icons.verified, color: Colors.blue, size: 20),
+                    ),
+                ],
+              ),
+              SizedBox(height: 8),
+              Text(
+                "${artist!.followerCount()} seguidors",
+                style: TextStyle(color: Colors.white70, fontSize: 14),
+              ),
+              SizedBox(height: 4),
+              Text(
+                "${artist!.albumCount()} àlbums • ${artist!.songCount()} cançons",
+                style: TextStyle(color: Colors.white70, fontSize: 14),
+              ),
+              SizedBox(height: 12),
+              if (artist!.manager.isNotEmpty)
+                Text(
+                  "Manager: ${artist!.manager}",
+                  style: TextStyle(color: Colors.grey[400], fontSize: 12),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final currentUserId = _artistService.getCurrentUserId();
-    final isOwner = currentUserId == artist?.id;
     if (isLoading) {
       return Scaffold(
         appBar: AppBar(),
@@ -538,63 +593,7 @@ class _ArtistProfilePageState extends State<ArtistProfilePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Capçalera amb foto i nom
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                CircleAvatar(
-                  radius: 50,
-                  backgroundImage: NetworkImage(artist!.photoURL),
-                ),
-                SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            artist!.name,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          if (artist!.verified)
-                            Padding(
-                              padding: EdgeInsets.only(left: 8),
-                              child: Icon(
-                                Icons.verified,
-                                color: Colors.blue,
-                                size: 20,
-                              ),
-                            ),
-                        ],
-                      ),
-                      SizedBox(height: 8),
-                      Text(
-                        "${artist!.followerCount()} seguidors",
-                        style: TextStyle(color: Colors.white70, fontSize: 14),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        "${artist!.albumCount()} àlbums • ${artist!.songCount()} cançons",
-                        style: TextStyle(color: Colors.white70, fontSize: 14),
-                      ),
-                      SizedBox(height: 12),
-                      if (artist!.manager.isNotEmpty)
-                        Text(
-                          "Manager: ${artist!.manager}",
-                          style: TextStyle(
-                            color: Colors.grey[400],
-                            fontSize: 12,
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+            _buildArtistHeader(),
 
             // Secció d'estadístiques
             _buildStatsSection(),
