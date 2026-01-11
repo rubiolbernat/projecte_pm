@@ -18,7 +18,6 @@ class _CreateAlbumPageState extends State<CreateAlbumPage> {
   final _formKey = GlobalKey<FormState>();
   final AlbumService _dataService = AlbumService();
 
-  // Controllers
   final TextEditingController _coverUrlController = TextEditingController();
   final TextEditingController _genreInputController = TextEditingController();
 
@@ -134,7 +133,6 @@ class _CreateAlbumPageState extends State<CreateAlbumPage> {
             style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent),
             onPressed: () {
               if (titleCtrl.text.isNotEmpty && urlCtrl.text.isNotEmpty) {
-                // Processem els col·laboradors si n'hi ha
                 List<String> collaborators = collaboratorsCtrl.text
                     .split(',')
                     .map((e) => e.trim())
@@ -205,7 +203,6 @@ class _CreateAlbumPageState extends State<CreateAlbumPage> {
         coverUrl: _coverUrlController.text,
         songs: _songsToUpload,
       );
-      //if (mounted) widget.onCreated();
     } catch (e) {
       if (mounted)
         ScaffoldMessenger.of(
@@ -391,7 +388,7 @@ class _CreateAlbumPageState extends State<CreateAlbumPage> {
                         IconButton(
                           onPressed: _songsToUpload.length < 100
                               ? _addSongDialog
-                              : null, //limit 100 cançons
+                              : null,
                           icon: const Icon(
                             Icons.add,
                             color: Colors.white,

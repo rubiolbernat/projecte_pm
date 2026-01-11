@@ -105,7 +105,7 @@ class _SaveContentButtonState extends State<SaveContentButton> {
         );
       }
     } catch (e) {
-      print("Error al guardar contenido: $e");
+      print("Error al guardar contingut: $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

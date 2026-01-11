@@ -58,7 +58,7 @@ class _ProfilePageState extends State<ProfilePage> {
         });
       }
     } catch (e) {
-      print("Error cargando user: $e");
+      print("Error carregant user: $e");
     } finally {
       setState(() {
         isLoading = false;

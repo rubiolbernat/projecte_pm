@@ -5,7 +5,6 @@ import 'package:projecte_pm/models/user.dart';
 class LoginRegisterService {
   static Future<String> getUserRole(String uid) async {
     try {
-      // A. Mirem si existeix a la col·lecció 'artists'
       final artistDoc = await FirebaseFirestore.instance
           .collection('artists')
           .doc(uid)
@@ -15,7 +14,6 @@ class LoginRegisterService {
         return 'artist';
       }
 
-      // B. Mirem si existeix a la col·lecció 'users'
       final userDoc = await FirebaseFirestore.instance
           .collection('users')
           .doc(uid)
@@ -25,7 +23,6 @@ class LoginRegisterService {
         return 'user';
       }
 
-      // C. Si no està a cap lloc (es va registrar però no va triar rol)
       return 'unknown';
     } catch (e) {
       print("Error comprovant rol: $e");
@@ -39,8 +36,8 @@ class LoginRegisterService {
   }) async {
     final user = User(id: userId, email: userEmail);
     await FirebaseFirestore.instance
-        .collection('users') // nom de la col·lecció
-        .doc(user.id) // pots usar el teu id o deixar que Firestore en generi un
+        .collection('users')
+        .doc(user.id)
         .set(user.toMap());
   }
 

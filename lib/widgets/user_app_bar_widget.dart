@@ -196,7 +196,7 @@ class _AppBarWidgetState extends State<AppBarWidget> {
         );
       }
     } catch (e) {
-      print("Error cerrando sesión: $e");
+      print("Error tancant sesión: $e");
     }
   }
 }
