@@ -1,29 +1,90 @@
+import 'dart:async'; // Necessari per als StreamSubscriptions
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:projecte_pm/pages/detail_screen/QueueScreen.dart';
 import 'package:projecte_pm/pages/detail_screen/artist_detail_screen.dart';
 import 'package:projecte_pm/services/PlayerService.dart';
+import 'package:projecte_pm/widgets/add_to_playlist.dart';
 
 class PlayerScreen extends StatefulWidget {
-  // Pantalla de reproducció completa
-  final PlayerService playerService; // Servei de reproducció
+  final PlayerService playerService;
 
-  const PlayerScreen({super.key, required this.playerService}); // Constructor
+  const PlayerScreen({super.key, required this.playerService});
 
   @override
-  State<PlayerScreen> createState() => _PlayerScreenState(); // Crear estat
+  State<PlayerScreen> createState() => _PlayerScreenState();
 }
 
 class _PlayerScreenState extends State<PlayerScreen> {
-  // Estat de la pantalla
-  bool _isDragging =
-      false; // Estat de si s'està arrossegant el punt de la barra
-  double _dragValue = 0.0; // Valor de la posició d'arrossegament
-  Duration? _currentDuration; // Duració actual de la cançó
+  // Variables d'estat per al temps (substitueixen els StreamBuilders)
+  Duration _duration = Duration.zero;
+  Duration _position = Duration.zero;
+  StreamSubscription? _durationSubscription;
+  StreamSubscription? _positionSubscription;
+  StreamSubscription? _playerStateSubscription; // Per actualitzar play/pause
+
+  double? _dragPosition;
+  bool _showLyrics = false;
+  bool _isPlaying = false; // Estat local per a la interfície
+
+  @override
+  void initState() {
+    super.initState();
+    _setupAudioListeners();
+  }
+
+  void _setupAudioListeners() async {
+    final player = widget.playerService.audioPlayer;
+
+    // 1. OBTENIR VALORS INICIALS IMMEDIATAMENT
+    // Això soluciona el problema del slider bloquejat al principi
+    final currentDuration = await player.getDuration();
+    final currentPosition = await player.getCurrentPosition();
+    final currentState = player.state;
+
+    if (mounted) {
+      setState(() {
+        _duration = currentDuration ?? Duration.zero;
+        _position = currentPosition ?? Duration.zero;
+        _isPlaying = currentState == PlayerState.playing;
+      });
+    }
+
+    // 2. ESCOLTAR CANVIS DE DURADA (quan canvia la cançó)
+    _durationSubscription = widget.playerService.durationStream.listen((d) {
+      if (mounted) setState(() => _duration = d);
+    });
+
+    // 3. ESCOLTAR CANVIS DE POSICIÓ (mentre sona)
+    _positionSubscription = widget.playerService.positionStream.listen((p) {
+      if (mounted) setState(() => _position = p);
+    });
+
+    // 4. ESCOLTAR ESTAT (Play/Pause)
+    // Utilitzem l'stream del servei o directament del player
+    _playerStateSubscription = widget.playerService.playerStateStream.listen((
+      state,
+    ) {
+      if (mounted) {
+        setState(() {
+          _isPlaying = state == PlayerState.playing;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    // És molt important cancel·lar els listeners per evitar errors de memòria
+    _durationSubscription?.cancel();
+    _positionSubscription?.cancel();
+    _playerStateSubscription?.cancel();
+    super.dispose();
+  }
 
   void _cycleLoopMode() {
     final service = widget.playerService;
-
     setState(() {
       switch (service.loopMode) {
         case LoopMode.off:
@@ -39,23 +100,80 @@ class _PlayerScreenState extends State<PlayerScreen> {
     });
   }
 
+  Future<void> _toggleLike() async {
+    final song = widget.playerService.currentSong;
+    if (song == null) return;
+    final userId = widget.playerService.currentUserId;
+    if (userId == null) return;
+
+    final alreadyLiked = song.isLike(userId);
+
+    setState(() {
+      if (alreadyLiked) {
+        song.removeLike(userId);
+      } else {
+        song.addLike(userId);
+      }
+    });
+
+    try {
+      await FirebaseFirestore.instance.collection('songs').doc(song.id).update({
+        'like': song.toMap()['like'],
+      });
+    } catch (e) {
+      setState(() {
+        if (alreadyLiked) {
+          song.addLike(userId);
+        } else {
+          song.removeLike(userId);
+        }
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final currentSong = widget.playerService.currentSong;
+    bool isLiked =
+        currentSong != null &&
+        widget.playerService.currentUserId != null &&
+        currentSong.isLike(widget.playerService.currentUserId);
+
+    if (currentSong == null) {
+      return const Scaffold(
+        backgroundColor: Color(0xFF121212),
+        body: Center(
+          child: Text(
+            'No hi ha cançó reproduint-se',
+            style: TextStyle(color: Colors.white),
+          ),
+        ),
+      );
+    }
+
+    // Càlculs per al Slider
+    var maxSeconds = _duration.inSeconds.toDouble();
+    if (maxSeconds <= 0) maxSeconds = 1; // Evitar divisió per zero
+
+    final currentSeconds = _position.inSeconds.toDouble();
+    // Si l'usuari arrossega, fem servir el seu valor (_dragPosition), si no, la posició real
+    final sliderValue = (_dragPosition ?? currentSeconds).clamp(
+      0.0,
+      maxSeconds,
+    );
+
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
-        // Barra superior
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          // Botó per tornar enrere
           icon: const Icon(
             Icons.keyboard_arrow_down,
             color: Colors.white,
             size: 32,
           ),
-          onPressed: () =>
-              Navigator.pop(context), // Tornar a la pantalla anterior
+          onPressed: () => Navigator.pop(context),
         ),
         actions: [
           IconButton(
@@ -72,438 +190,344 @@ class _PlayerScreenState extends State<PlayerScreen> {
           ),
         ],
       ),
-      body: StreamBuilder<PlayerState>(
-        // Escoltar l'estat del reproductor
-        stream: widget
-            .playerService
-            .playerStateStream, // Stream de l'estat del reproductor
-        builder: (context, snapshot) {
-          // Construir la interfície segons l'estat
-          final isPlaying =
-              snapshot.data ==
-              PlayerState.playing; // Comprovar si està reproduint
-          final currentSong =
-              widget.playerService.currentSong; // Obtenir la cançó actual
-
-          if (currentSong == null) {
-            // Si no hi ha cançó actual
-            return const Center(
-              child: Text(
-                'No hay canción reproduciéndose', // Missatge quan no hi ha cançó
-                style: TextStyle(color: Colors.white), // Text blanc
+      body: Column(
+        children: [
+          // PORTADA
+          Expanded(
+            child: Center(
+              child: Container(
+                width: MediaQuery.of(context).size.width * 0.85,
+                height: MediaQuery.of(context).size.width * 0.85,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.5),
+                      blurRadius: 30,
+                      spreadRadius: 5,
+                    ),
+                  ],
+                  image: currentSong.coverURL.isNotEmpty
+                      ? DecorationImage(
+                          image: NetworkImage(currentSong.coverURL),
+                          fit: BoxFit.cover,
+                        )
+                      : const DecorationImage(
+                          image: AssetImage('assets/default_cover.jpg'),
+                          fit: BoxFit.cover,
+                        ),
+                ),
               ),
-            );
-          }
+            ),
+          ),
 
-          return Column(
-            children: [
-              // Portada de l'àlbum/cançó
-              Expanded(
-                child: Center(
-                  child: Container(
-                    // Contenidor de la portada
-                    width: MediaQuery.of(context).size.width * 0.85,
-                    height: MediaQuery.of(context).size.width * 0.85,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.5),
-                          blurRadius: 30,
-                          spreadRadius: 5,
+          const SizedBox(height: 40),
+
+          // INFO I LLETRES
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Column(
+              children: [
+                Text(
+                  currentSong.name,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          InkWell(
+                            borderRadius: BorderRadius.circular(8),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => ArtistDetailScreen(
+                                    artistId: currentSong.artistId,
+                                    playerService: widget.playerService,
+                                  ),
+                                ),
+                              );
+                            },
+                            child: const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 8),
+                              child: Text(
+                                "Anar a l'artista",
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 15,
+                                ),
+                              ),
+                            ),
+                          ),
+                          if (currentSong.lyrics.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                top: 4.0,
+                              ), // Una mica d'espai superior
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(
+                                  4,
+                                ), // Bordes arrodonits al fer clic
+                                onTap: () {
+                                  setState(() {
+                                    _showLyrics = !_showLyrics;
+                                  });
+                                },
+                                // Fem servir un Row per tenir més control sobre l'espai
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 6.0,
+                                    horizontal: 4.0,
+                                  ), // Zona de clic còmoda però compacta
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize
+                                        .min, // Que ocupi només l'espai necessari
+                                    children: [
+                                      Text(
+                                        _showLyrics
+                                            ? "Amagar lletra"
+                                            : "Mostrar lletra",
+                                        style: TextStyle(
+                                          // Usem gris si està amagat, blau si està mostrant
+                                          color: _showLyrics
+                                              ? Colors.blueAccent
+                                              : Colors.grey,
+                                          fontSize:
+                                              12, // Una mica més gran que 10 per llegibilitat
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      const SizedBox(
+                                        width: 4,
+                                      ), // Espaiet entre text i icona
+                                      Icon(
+                                        _showLyrics
+                                            ? Icons.expand_less
+                                            : Icons.expand_more,
+                                        // La icona segueix el color del text
+                                        color: _showLyrics
+                                            ? Colors.blueAccent
+                                            : Colors.grey,
+                                        size: 18, // Icona més petita i discreta
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          if (_showLyrics)
+                            Container(
+                              margin: const EdgeInsets.only(top: 8),
+                              constraints: const BoxConstraints(maxHeight: 120),
+                              child: SingleChildScrollView(
+                                child: Text(
+                                  currentSong.lyrics.isNotEmpty
+                                      ? currentSong.lyrics
+                                      : "No hi ha lletres disponibles",
+                                  style: const TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: Icon(
+                            isLiked ? Icons.favorite : Icons.favorite_border,
+                            color: isLiked ? Colors.redAccent : Colors.white,
+                          ),
+                          onPressed: _toggleLike,
+                        ),
+                        IconButton(
+                          icon: const Icon(
+                            Icons.add_circle_outline,
+                            color: Colors.grey,
+                          ),
+                          onPressed: () {
+                            AddToPlaylistButton.showAddToPlaylistDialog(
+                              context: context,
+                              songId: currentSong.id,
+                              playerService: widget.playerService,
+                            );
+                          },
                         ),
                       ],
-                      image:
-                          currentSong
-                              .coverURL
-                              .isNotEmpty // Comprovar si hi ha URL de la portada
-                          ? DecorationImage(
-                              // Carregar imatge de la portada
-                              image: NetworkImage(
-                                currentSong.coverURL,
-                              ), // Carregar imatge des de la xarxa
-                              fit: BoxFit
-                                  .cover, // Ajustar la imatge al contenidor
-                            )
-                          : const DecorationImage(
-                              // Imatge per defecte si no hi ha URL
-                              image: AssetImage(
-                                'assets/default_cover.jpg',
-                              ), // Imatge per defecte
-                              fit: BoxFit
-                                  .cover, // Ajustar la imatge al contenidor
-                            ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          // SLIDER CORREGIT
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              children: [
+                SliderTheme(
+                  data: SliderTheme.of(context).copyWith(
+                    trackHeight: 6,
+                    thumbShape: const RoundSliderThumbShape(
+                      enabledThumbRadius: 8,
+                    ),
+                    overlayShape: const RoundSliderOverlayShape(
+                      overlayRadius: 16,
+                    ),
+                    activeTrackColor: Colors.white,
+                    inactiveTrackColor: Colors.grey[800],
+                    thumbColor: Colors.blueAccent,
+                    overlayColor: Colors.blueAccent.withOpacity(0.2),
+                  ),
+                  child: Slider(
+                    min: 0,
+                    max: maxSeconds,
+                    value: sliderValue,
+                    onChangeStart: (value) {
+                      setState(() => _dragPosition = value);
+                    },
+                    onChanged: (value) {
+                      setState(() => _dragPosition = value);
+                    },
+                    onChangeEnd: (value) async {
+                      await widget.playerService.audioPlayer.seek(
+                        Duration(seconds: value.toInt()),
+                      );
+                      // Important: netegem el _dragPosition per tornar a escoltar l'stream
+                      setState(() => _dragPosition = null);
+                    },
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        _formatDuration(Duration(seconds: sliderValue.toInt())),
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 13,
+                        ),
+                      ),
+                      Text(
+                        _formatDuration(_duration),
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 40),
+
+          // CONTROLS DE REPRODUCCIÓ
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                IconButton(
+                  onPressed: () {
+                    setState(() {
+                      widget.playerService.toggleShuffle();
+                    });
+                  },
+                  icon: Icon(
+                    Icons.shuffle,
+                    size: 28,
+                    color: widget.playerService.isShuffleEnabled
+                        ? Colors.blueAccent
+                        : Colors.white,
+                  ),
+                ),
+                IconButton(
+                  onPressed: () async {
+                    await widget.playerService.previous();
+                  },
+                  icon: const Icon(
+                    Icons.skip_previous,
+                    color: Colors.white,
+                    size: 40,
+                  ),
+                ),
+
+                // BOTÓ PLAY / PAUSE
+                GestureDetector(
+                  onTap: () async {
+                    await widget.playerService.playPause();
+                    // L'stream _playerStateSubscription actualitzarà la UI automàticament
+                  },
+                  child: Container(
+                    width: 70,
+                    height: 70,
+                    decoration: const BoxDecoration(
+                      color: Colors.blueAccent,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      _isPlaying ? Icons.pause : Icons.play_arrow,
+                      color: Colors.black,
+                      size: 36,
                     ),
                   ),
                 ),
-              ),
 
-              const SizedBox(height: 40), // Espai entre portada i info
-              // Informació de la cançó
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Column(
-                  children: [
-                    // Títol de la cançó
-                    Text(
-                      currentSong.name,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center, // Centrar el text
-                      maxLines: 1, // Limitar a una línia
-                      overflow: TextOverflow
-                          .ellipsis, // Afegir "..." si és massa llarg
-                    ),
-                    const SizedBox(height: 8),
-                    InkWell(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => ArtistDetailScreen(
-                              artistId: currentSong.artistId,
-                              playerService: widget.playerService,
-                            ),
-                          ),
-                        );
-                      },
-                      child: Text(
-                        "Anar a l'artista",
-                        style: const TextStyle(
-                          color: Colors.grey,
-                          fontSize: 18,
-                        ), // Estil del text
-                      ),
-                    ),
-                  ],
+                IconButton(
+                  onPressed: () async {
+                    await widget.playerService.next();
+                  },
+                  icon: const Icon(
+                    Icons.skip_next,
+                    color: Colors.white,
+                    size: 40,
+                  ),
                 ),
-              ),
-
-              const SizedBox(height: 40), // Espai entre info i barra de progrés
-              // Barra de progrés
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Column(
-                  children: [
-                    StreamBuilder<Duration>(
-                      // Escoltar la duració total
-                      stream: widget
-                          .playerService
-                          .durationStream, // Stream de la duració
-                      builder: (context, durationSnapshot) {
-                        // Construir la barra de progrés
-                        return StreamBuilder<Duration>(
-                          // Escoltar la posició actual
-                          stream: widget
-                              .playerService
-                              .positionStream, // Stream de la posició
-                          builder: (context, positionSnapshot) {
-                            // Construir la barra de progrés
-                            final duration =
-                                durationSnapshot.data ??
-                                Duration.zero; // Duració total de la cançó
-                            final position =
-                                positionSnapshot.data ??
-                                Duration.zero; // Posició actual de la cançó
-
-                            double progress = 0.0; // Progrés de la cançó
-                            if (duration.inSeconds > 0) {
-                              // Evitar divisió per zero
-                              progress =
-                                  position.inSeconds /
-                                  duration.inSeconds; // Calcular progrés
-                            }
-
-                            final displayProgress =
-                                _isDragging // Mostrar progrés arrossegat
-                                ? _dragValue // Valor d'arrossegament
-                                : progress; // Progrés actual
-
-                            return GestureDetector(
-                              // Detectar gestos a la barra
-                              onHorizontalDragStart: (_) {
-                                // Inici d'arrossegament
-                                setState(() {
-                                  // Actualitzar estat
-                                  _isDragging =
-                                      true; // Establir arrossegament a true
-                                  _currentDuration =
-                                      duration; // Guardar duració actual
-                                });
-                              },
-                              onHorizontalDragUpdate: (details) {
-                                // Actualització d'arrossegament
-                                final box = // Obtenir mida del widget
-                                    context.findRenderObject()
-                                        as RenderBox?; // Cast a RenderBox
-                                if (box != null) {
-                                  // Comprovar si el box no és nul
-                                  setState(() {
-                                    // Actualitzar estat
-                                    _dragValue = // Calcular nou valor d'arrossegament
-                                    (details.localPosition.dx / box.size.width)
-                                        .clamp(0.0, 1.0); // Limitar entre 0 i 1
-                                  });
-                                }
-                              },
-                              onHorizontalDragEnd: (_) async {
-                                // Fi d'arrossegament
-                                if (_currentDuration != null) {
-                                  // Comprovar si hi ha duració
-                                  final newPosition = Duration(
-                                    // Calcular nova posició
-                                    seconds: // Segons basats en l'arrossegament
-                                    (_currentDuration!.inSeconds * _dragValue)
-                                        .toInt(), // Convertir a enter
-                                  );
-                                  await widget.playerService.audioPlayer.seek(
-                                    newPosition, // Moure la cançó a la nova posició
-                                  );
-                                }
-                                setState(() {
-                                  _isDragging =
-                                      false; // Finalitzar arrossegament
-                                });
-                              },
-                              onTapDown: (details) async {
-                                // Tap a la barra
-                                final box =
-                                    context.findRenderObject()
-                                        as RenderBox?; // Obtenir mida del widget
-                                if (box != null && duration.inSeconds > 0) {
-                                  // Comprovar si el box no és nul i duració vàlida
-                                  final newProgress =
-                                      details.localPosition.dx /
-                                      box
-                                          .size
-                                          .width; // Calcular progrés basat en el tap
-                                  final newPosition = Duration(
-                                    seconds:
-                                        (duration.inSeconds *
-                                                newProgress) // Segons basats en el tap
-                                            .toInt(),
-                                  );
-                                  await widget.playerService.audioPlayer.seek(
-                                    newPosition, // Moure la cançó a la nova posició
-                                  );
-                                }
-                              },
-                              child: Column(
-                                children: [
-                                  // Barra de progrés
-                                  Stack(
-                                    children: [
-                                      // Barra de fons
-                                      Container(
-                                        height: 4,
-                                        decoration: BoxDecoration(
-                                          color: Colors.grey[800],
-                                          borderRadius: BorderRadius.circular(
-                                            2,
-                                          ),
-                                        ),
-                                      ),
-
-                                      // Barra de progrés
-                                      FractionallySizedBox(
-                                        widthFactor:
-                                            displayProgress, // Amplada segons el progrés
-                                        child: Container(
-                                          height: 4,
-                                          decoration: BoxDecoration(
-                                            color: Colors.white,
-                                            borderRadius: BorderRadius.circular(
-                                              2,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-
-                                      // Punt de progrés
-                                      Positioned(
-                                        left:
-                                            (MediaQuery.of(context).size.width -
-                                                    48) *
-                                                displayProgress -
-                                            12, // Posició segons el progrés
-                                        child: Container(
-                                          // Punt circular
-                                          width: 24,
-                                          height: 24,
-                                          decoration: BoxDecoration(
-                                            color: Colors.blueAccent,
-                                            shape: BoxShape.circle,
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: Colors.blueAccent
-                                                    .withOpacity(0.5),
-                                                blurRadius: 8,
-                                                spreadRadius:
-                                                    2, // Sombra del punt
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-
-                                  const SizedBox(height: 8),
-
-                                  // Text de duració
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment
-                                        .spaceBetween, // Espaiar els texts
-                                    children: [
-                                      Text(
-                                        _formatDuration(
-                                          // Duració actual
-                                          _isDragging &&
-                                                  _currentDuration !=
-                                                      null // Si s'està arrossegant
-                                              ? Duration(
-                                                  seconds:
-                                                      (_currentDuration!
-                                                                  .inSeconds * // Calcular segons arrossegats
-                                                              _dragValue)
-                                                          .toInt(),
-                                                )
-                                              : position, // Posició actual
-                                        ),
-                                        style: const TextStyle(
-                                          //
-                                          color: Colors.grey,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                      Text(
-                                        // Duració total
-                                        _formatDuration(duration),
-                                        style: const TextStyle(
-                                          color: Colors.grey,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    ),
-                  ],
+                IconButton(
+                  onPressed: _cycleLoopMode,
+                  icon: Icon(
+                    widget.playerService.loopMode == LoopMode.one
+                        ? Icons.repeat_one
+                        : Icons.repeat,
+                    size: 28,
+                    color: widget.playerService.loopMode == LoopMode.off
+                        ? Colors.white
+                        : Colors.blueAccent,
+                  ),
                 ),
-              ),
-
-              const SizedBox(height: 40),
-
-              // Controls de reproducció
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 32),
-                child: Row(
-                  mainAxisAlignment:
-                      MainAxisAlignment.spaceEvenly, // Espaiar els botons
-                  children: [
-                    // Shuffle
-                    IconButton(
-                      onPressed: () {
-                        setState(() {
-                          widget.playerService.toggleShuffle();
-                        });
-                      },
-                      icon: Icon(
-                        Icons.shuffle,
-                        size: 28,
-                        color: widget.playerService.isShuffleEnabled
-                            ? Colors.blueAccent
-                            : Colors.white,
-                      ),
-                    ),
-
-                    // Previous
-                    IconButton(
-                      // Botó de cançó anterior
-                      onPressed: () async {
-                        await widget.playerService
-                            .previous(); // Anar a la cançó anterior
-                      },
-                      icon: const Icon(
-                        Icons.skip_previous,
-                        color: Colors.white,
-                        size: 40,
-                      ),
-                    ),
-
-                    // Play/Pause
-                    GestureDetector(
-                      onTap: () async {
-                        await widget.playerService
-                            .playPause(); // Reproduir/Pausar
-                      },
-                      child: Container(
-                        width: 70,
-                        height: 70,
-                        decoration: BoxDecoration(
-                          color: Colors.blueAccent,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          isPlaying ? Icons.pause : Icons.play_arrow,
-                          color: Colors.black,
-                          size: 36,
-                        ),
-                      ),
-                    ),
-
-                    // Boto Next
-                    IconButton(
-                      onPressed: () async {
-                        await widget.playerService
-                            .next(); // Anar a la següent cançó
-                      },
-                      icon: const Icon(
-                        Icons.skip_next,
-                        color: Colors.white,
-                        size: 40,
-                      ),
-                    ),
-
-                    // Repetir
-                    IconButton(
-                      onPressed: _cycleLoopMode,
-                      icon: Icon(
-                        widget.playerService.loopMode == LoopMode.one
-                            ? Icons.repeat_one
-                            : Icons.repeat,
-                        size: 28,
-                        color: widget.playerService.loopMode == LoopMode.off
-                            ? Colors.white
-                            : Colors.blueAccent,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 40),
-            ],
-          );
-        },
+              ],
+            ),
+          ),
+          const SizedBox(height: 40),
+        ],
       ),
     );
   }
 
   String _formatDuration(Duration duration) {
-    // Formatejar duració a mm:ss
-    String twoDigits(int n) =>
-        n.toString().padLeft(2, "0"); // Afegir zero davant si és necessari
-    final minutes = twoDigits(duration.inMinutes.remainder(60)); // Minuts
-    final seconds = twoDigits(duration.inSeconds.remainder(60)); // Segons
-    return "$minutes:$seconds"; // Retornar format mm:ss
+    String twoDigits(int n) => n.toString().padLeft(2, "0");
+    final minutes = twoDigits(duration.inMinutes.remainder(60));
+    final seconds = twoDigits(duration.inSeconds.remainder(60));
+    return "$minutes:$seconds";
   }
 }

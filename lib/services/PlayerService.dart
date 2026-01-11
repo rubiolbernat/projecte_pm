@@ -180,8 +180,16 @@ class PlayerService {
 
   Future<void> playSongFromId(String songId) async {
     try {
+      await _audioPlayer.stop();
+
+      _queue.clear();
+      _originalQueue.clear();
+      currentIndex = -1;
+
       _currentPlaylist = null;
       _currentPlaylistId = null;
+      _shuffleEnabled = false;
+      _loopMode = LoopMode.off;
 
       final doc = await FirebaseFirestore.instance
           .collection('songs')
@@ -193,9 +201,13 @@ class PlayerService {
       final data = doc.data()!..['id'] = doc.id;
       final song = Song.fromMap(data);
 
-      await playNow(song);
+      _queue.add(song);
+      _originalQueue.add(song);
+      currentIndex = 0;
+
+      await _playCurrent();
     } catch (e) {
-      print("Error carregant cançó: $e");
+      print("Error reproduint cançó per ID: $e");
     }
   }
 
