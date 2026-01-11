@@ -1,16 +1,15 @@
 //CREADA DESDE ZERO (VICTOR)
 
 import 'package:flutter/material.dart';
-import 'package:projecte_pm/services/UserService.dart';
 import 'package:projecte_pm/services/playlist_service.dart';
 import 'package:projecte_pm/widgets/add_to_playlist.dart';
 import 'package:projecte_pm/services/PlayerService.dart';
 import 'package:projecte_pm/widgets/user_app_bar_widget.dart';
 
 class CreatePlaylistPage extends StatefulWidget {
-  final UserService userService;
+  final PlayerService playerService;
 
-  const CreatePlaylistPage({super.key, required this.userService});
+  const CreatePlaylistPage({super.key, required this.playerService});
 
   @override
   State<CreatePlaylistPage> createState() => _CreatePlaylistPageState();
@@ -30,7 +29,7 @@ class _CreatePlaylistPageState extends State<CreatePlaylistPage> {
     AddToPlaylistButton.createEmptyPlaylist(
       // Metode del servei per crear playlist buida
       context: context,
-      playerService: PlayerService(widget.userService),
+      playerService: widget.playerService,
       playlistService: _playlistService,
     );
   }
@@ -40,7 +39,7 @@ class _CreatePlaylistPageState extends State<CreatePlaylistPage> {
     //Botó per crear playlist, bastant self explanatory
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
-      appBar: AppBarWidget(userService: widget.userService),
+      appBar: AppBarWidget(playerService: widget.playerService),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

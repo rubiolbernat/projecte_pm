@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:projecte_pm/services/PlayerService.dart';
 import 'package:projecte_pm/services/UserService.dart';
 
 class FollowArtistButton extends StatefulWidget {
   final String artistId;
-  final UserService userService;
+  final PlayerService playerService;
   final bool showText;
   final double? iconSize;
   final double? fontSize;
@@ -11,7 +12,7 @@ class FollowArtistButton extends StatefulWidget {
   const FollowArtistButton({
     super.key,
     required this.artistId,
-    required this.userService,
+    required this.playerService,
     this.showText = true,
     this.iconSize = 18,
     this.fontSize = 14,
@@ -33,11 +34,11 @@ class _FollowArtistButtonState extends State<FollowArtistButton> {
 
   Future<void> _checkIfFollowing() async {
     // Comprova si l'usuari ja segueix l'artista
-    if (widget.userService.currentUserId == null)
+    if (widget.playerService.userService.currentUserId == null)
       return; // Usuari no autenticat
 
     try {
-      final isFollowing = await widget.userService.isFollowingArtist(
+      final isFollowing = await widget.playerService.userService.isFollowingArtist(
         widget.artistId,
       );
       if (mounted) {
@@ -52,7 +53,7 @@ class _FollowArtistButtonState extends State<FollowArtistButton> {
 
   Future<void> _toggleFollow() async {
     // Seguir/Deixar de seguir artista
-    if (_isLoading || widget.userService.currentUserId == null)
+    if (_isLoading || widget.playerService.userService.currentUserId == null)
       return; // Evita múltiples clics ràpids o usuari no autenticat
 
     setState(() => _isLoading = true); // Indica que s'està processant l'acció
@@ -61,15 +62,15 @@ class _FollowArtistButtonState extends State<FollowArtistButton> {
       // Intentar seguir/deixar de seguir
       if (_isFollowing) {
         // Ja segueix, així que deixa de seguir
-        await widget.userService.unfollowArtist(
+        await widget.playerService.userService.unfollowArtist(
           widget.artistId,
         ); // Deixar de seguir
       } else {
         // No segueix, així que segueix
-        await widget.userService.followArtist(widget.artistId); // Seguir
+        await widget.playerService.userService.followArtist(widget.artistId); // Seguir
       }
 
-      final actualStatus = await widget.userService.isFollowingArtist(
+      final actualStatus = await widget.playerService.userService.isFollowingArtist(
         // Verifica l'estat actual
         widget.artistId, // ID de l'artista
       );

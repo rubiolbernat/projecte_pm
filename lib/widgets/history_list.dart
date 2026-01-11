@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:projecte_pm/services/PlayerService.dart';
 import 'package:projecte_pm/widgets/save_content.dart';
 import 'package:projecte_pm/services/UserService.dart';
 
@@ -6,7 +7,7 @@ class HorizontalCardList extends StatefulWidget {
   final List<Map<String, dynamic>> items;
   final String listName;
   final Function(String id, String type)? onTap;
-  final UserService? userService;
+  final PlayerService? playerService;
   final dynamic playlistService;
   final dynamic albumService;
   final bool showSaveButton;
@@ -15,7 +16,7 @@ class HorizontalCardList extends StatefulWidget {
     required this.items,
     required this.listName,
     this.onTap,
-    this.userService,
+    this.playerService,
     this.playlistService,
     this.albumService,
     this.showSaveButton = false,
@@ -67,7 +68,7 @@ class _HorizontalCardListState extends State<HorizontalCardList> {
               bool isCircular = (type == 'user' || type == 'artist');
               final showSaveButtonForItem =
                   widget.showSaveButton &&
-                  widget.userService != null &&
+                  widget.playerService?.userService != null &&
                   (type == 'playlist' || type == 'album') &&
                   !isCircular;
 
@@ -111,7 +112,7 @@ class _HorizontalCardListState extends State<HorizontalCardList> {
                             ),
 
                             // Botó SaveContentButton
-                            if (showSaveButtonForItem)
+                            if (showSaveButtonForItem && widget.playerService != null)
                               Positioned(
                                 bottom: 4,
                                 right: 4,
@@ -120,7 +121,7 @@ class _HorizontalCardListState extends State<HorizontalCardList> {
                                   type: type == 'playlist'
                                       ? SaveType.playlist
                                       : SaveType.album,
-                                  userService: widget.userService!,
+                                  userService: widget.playerService!.userService,
                                   contentService: type == 'playlist'
                                       ? widget.playlistService
                                       : widget.albumService,

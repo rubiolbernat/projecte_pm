@@ -16,13 +16,11 @@ import 'package:projecte_pm/widgets/edit_album_page.dart';
 class ArtistLibraryPage extends StatefulWidget {
   final ArtistService artistService;
   final PlayerService playerService;
-  final UserService userService;
 
   const ArtistLibraryPage({
     super.key,
     required this.artistService,
     required this.playerService,
-    required this.userService,
   });
 
   @override
@@ -90,7 +88,6 @@ class _ArtistLibraryPageState extends State<ArtistLibraryPage> {
             albumId: album.id,
             playerService: widget.playerService,
             playlistService: PlaylistService(),
-            userService: widget.userService,
           ),
         ),
       ),

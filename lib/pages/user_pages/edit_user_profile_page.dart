@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:projecte_pm/models/user.dart';
-import 'package:projecte_pm/services/UserService.dart';
+import 'package:projecte_pm/services/PlayerService.dart';
 
 class EditUserProfilePage extends StatefulWidget {
-  final UserService userService;
+  final PlayerService playerService;
 
-  const EditUserProfilePage({super.key, required this.userService});
+  const EditUserProfilePage({super.key, required this.playerService});
 
   @override
   State<EditUserProfilePage> createState() => _EditUserProfilePageState();
@@ -24,11 +24,11 @@ class _EditUserProfilePageState extends State<EditUserProfilePage> {
     super.initState();
 
     draftUser = User(
-      id: widget.userService.user.id,
-      name: widget.userService.user.name,
-      email: widget.userService.user.email,
-      photoURL: widget.userService.user.photoURL,
-      bio: widget.userService.user.bio,
+      id: widget.playerService.userService.user.id,
+      name: widget.playerService.userService.user.name,
+      email: widget.playerService.userService.user.email,
+      photoURL: widget.playerService.userService.user.photoURL,
+      bio: widget.playerService.userService.user.bio,
     );
 
     nameController = TextEditingController(text: draftUser.name);
@@ -51,7 +51,7 @@ class _EditUserProfilePageState extends State<EditUserProfilePage> {
     draftUser.bio = bioController.text.trim();
     draftUser.photoURL = photoURLController.text.trim();
 
-    await widget.userService.updateUser(draftUser);
+    await widget.playerService.userService.updateUser(draftUser);
 
     if (mounted) {
       Navigator.pop(context, true);

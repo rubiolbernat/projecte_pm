@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:projecte_pm/models/user.dart';
 import 'package:projecte_pm/models/playlist.dart';
+import 'package:projecte_pm/pages/detail_screen/FollowDetails.dart';
 import 'package:projecte_pm/services/UserService.dart';
 import 'package:projecte_pm/services/playlist_service.dart';
 import 'package:projecte_pm/pages/detail_screen/playlist_detail_screen.dart';
@@ -8,7 +9,8 @@ import 'package:projecte_pm/services/PlayerService.dart';
 
 class ProfilePage extends StatefulWidget {
   final String userId;
-  const ProfilePage({required this.userId, super.key});
+  final PlayerService playerService;
+  const ProfilePage({required this.userId, required this.playerService, super.key});
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -250,21 +252,48 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      Text(
-                        "${user!.followerCount()} seguidors",
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 14,
-                        ),
-                      ),
-                      SizedBox(height: 8),
-                      Text(
-                        "${user!.followingCount()} seguits",
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 14,
-                        ),
-                      ),
+
+                      InkWell(
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => FollowDetails(
+                                    isFollower: true,
+                                    user: widget.playerService.userService.user,
+                                    playerService: widget.playerService,
+                                  ),
+                                ),
+                              );
+                            },
+                            child: Text(
+                              "${user!.followerCount()} seguidors",
+                              style: TextStyle(
+                                color: Colors.grey.shade400,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 15),
+                          InkWell(
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => FollowDetails(
+                                    isFollower: false,
+                                    user: widget.playerService.userService.user,
+                                    playerService: widget.playerService,
+                                  ),
+                                ),
+                              );
+                            },
+                            child: Text(
+                              "${user!.followingCount()} seguint",
+                              style: TextStyle(
+                                color: Colors.grey.shade400,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
                     ],
                   ),
                 ),
@@ -302,13 +331,12 @@ class _ProfilePageState extends State<ProfilePage> {
                 final playlist = playlists[index];
                 return GestureDetector(
                   onTap: () {
-                    final playerService = PlayerService(_userService);
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => PlaylistDetailScreen(
                           playlistId: playlist.id,
-                          playerService: playerService,
+                          playerService: widget.playerService,
                         ),
                       ),
                     );

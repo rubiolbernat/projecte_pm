@@ -203,7 +203,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                         // Botó de seguir artista
                         FollowArtistButton(
                           artistId: artist!.id,
-                          userService: widget.playerService.userService,
+                          playerService: widget.playerService,
                           showText: true,
                         ),
                       ],
@@ -329,7 +329,6 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                             builder: (_) => AlbumDetailScreen(
                               albumId: album.id,
                               playerService: widget.playerService,
-                              userService: widget.playerService.userService,
                               playlistService:
                                   PlaylistService(), // Afegit per enrecordar playlists anteriors
                             ),

@@ -13,12 +13,10 @@ import 'package:cloud_firestore/cloud_firestore.dart'; // Per a Firestore
 import 'package:projecte_pm/services/AlbumService.dart';
 
 class HomePage extends StatefulWidget {
-  final UserService userService;
   final PlayerService playerService;
 
   const HomePage({
     super.key,
-    required this.userService,
     required this.playerService,
   });
 
@@ -31,7 +29,7 @@ class _HomePageState extends State<HomePage> {
   late AlbumService albumService;
   void initState() {
     super.initState();
-    print("Iniciant HomePage per a: ${widget.userService.user.name}");
+    print("Iniciant HomePage per a: ${widget.playerService.userService.user.name}");
     albumService = AlbumService();
   }
 
@@ -39,7 +37,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     // Fem servir SingleChildScrollView per evitar errors d'espai (overflow)
     return Scaffold(
-      appBar: AppBarWidget(userService: widget.userService),
+      appBar: AppBarWidget(playerService: widget.playerService),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.only(top: 20.0),
@@ -63,7 +61,7 @@ class _HomePageState extends State<HomePage> {
 
               // --- SECCIÓ 1: NOVETATS GLOBALS ---
               FutureBuilder<List<Map<String, dynamic>>>(
-                future: widget.userService.getGlobalNewReleases(
+                future: widget.playerService.userService.getGlobalNewReleases(
                   name: null,
                   readSongs: false,
                   readAlbums: true,
@@ -111,7 +109,6 @@ class _HomePageState extends State<HomePage> {
                             MaterialPageRoute(
                               builder: (_) => AlbumDetailScreen(
                                 albumId: id,
-                                userService: widget.userService,
                                 playerService: widget.playerService,
                                 playlistService: PlaylistService(),
                               ),
@@ -140,7 +137,6 @@ class _HomePageState extends State<HomePage> {
                           break;
                       }
                     },
-                    userService: widget.userService,
                     playlistService: PlaylistService(),
                     albumService: albumService,
                     showSaveButton: true,
@@ -232,7 +228,6 @@ class _HomePageState extends State<HomePage> {
                         );
                       }
                     },
-                    userService: widget.userService,
                     playlistService: PlaylistService(),
                     albumService: albumService,
                     showSaveButton: true,
@@ -243,7 +238,7 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(height: 30),
               // --- SECCIÓ 3: NOVETATS GENT ---
               FutureBuilder<List<Map<String, dynamic>>>(
-                future: widget.userService.getGlobalNewReleases(
+                future: widget.playerService.userService.getGlobalNewReleases(
                   readUsers: true,
                   name: null,
                 ), //No es fa cerca per name i no volem novetats d'usuaris
@@ -294,7 +289,6 @@ class _HomePageState extends State<HomePage> {
                           break;
                       }
                     },
-                    userService: widget.userService,
                     playlistService: PlaylistService(),
                     albumService: albumService,
                     showSaveButton: false,
@@ -318,7 +312,7 @@ class _HomePageState extends State<HomePage> {
       final followingSnapshot = await FirebaseFirestore
           .instance // Accedir a Firestore
           .collection('users') // Col·lecció d'usuaris
-          .doc(widget.userService.currentUserId) // Document de l'usuari actual
+          .doc(widget.playerService.userService.currentUserId) // Document de l'usuari actual
           .collection('followingArtists') // Subcol·lecció d'artistes seguits
           .get(); // Obtenir documents
 

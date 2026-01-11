@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:projecte_pm/models/user.dart';
 import 'package:projecte_pm/models/playlist.dart';
+import 'package:projecte_pm/pages/detail_screen/FollowDetails.dart';
 import 'package:projecte_pm/services/UserService.dart';
 import 'package:projecte_pm/services/playlist_service.dart';
 import 'package:projecte_pm/pages/detail_screen/playlist_detail_screen.dart';
@@ -35,7 +36,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => ProfilePage(userId: widget.userId),
+            builder: (context) => ProfilePage(userId: widget.userId, playerService: widget.playerService),
           ),
         );
       });
@@ -140,19 +141,45 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          Text(
-                            "${user!.followerCount()} seguidores",
-                            style: TextStyle(
-                              color: Colors.grey.shade400,
-                              fontSize: 14,
+                          InkWell(
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => FollowDetails(
+                                    isFollower: true,
+                                    user: user!,
+                                    playerService: widget.playerService,
+                                  ),
+                                ),
+                              );
+                            },
+                            child: Text(
+                              "${user!.followerCount()} seguidors",
+                              style: TextStyle(
+                                color: Colors.grey.shade400,
+                                fontSize: 14,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 15),
-                          Text(
-                            "${user!.followingCount()} seguint",
-                            style: TextStyle(
-                              color: Colors.grey.shade400,
-                              fontSize: 14,
+                          InkWell(
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => FollowDetails(
+                                    isFollower: false,
+                                    user: user!,
+                                    playerService: widget.playerService,
+                                  ),
+                                ),
+                              );
+                            },
+                            child: Text(
+                              "${user!.followingCount()} seguint",
+                              style: TextStyle(
+                                color: Colors.grey.shade400,
+                                fontSize: 14,
+                              ),
                             ),
                           ),
                         ],
