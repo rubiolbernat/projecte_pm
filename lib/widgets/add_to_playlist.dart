@@ -206,13 +206,17 @@ class AddToPlaylistButton extends StatefulWidget {
                       );
 
                       final service = playlistService ?? PlaylistService();
-                      await service.createPlaylist(
+                      final playlistId = await service.createPlaylist(
                         userId: playerService.currentUserId,
                         name: name,
                         description: description,
                         coverURL: coverURL,
                         isPublic: isPublic,
                       );
+
+                      final user = playerService.userService.user;
+                      user.addOwnedPlaylist(playlistId);
+                      await playerService.userService.updateUser(user);
 
                       Navigator.pop(dialogContext);
                       Navigator.pop(dialogContext);
@@ -721,6 +725,10 @@ class _AddToPlaylistDialogContentState
                             coverURL: coverURL,
                             isPublic: isPublic,
                           );
+
+                      final user = widget.playerService.userService.user;
+                      user.addOwnedPlaylist(playlistId!);
+                      await widget.playerService.userService.updateUser(user);
 
                       Navigator.pop(context);
                       Navigator.pop(context);

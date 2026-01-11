@@ -1,12 +1,12 @@
 COSES A FER:
 
-- Fer pantalla Profile de Artist, aqui veura les seves estadistiques.
+- Fer pantalla Profile de Artist, aqui veura les seves estadistiques. (CHECK - VICTOR)
 
 - Quan es fa que un album sigui privat es continua mostrant de forma publica, segurament tambe pasa amb les playlist, no ho he pogut provar.
 
 - Les playlist es creen pero no s'asocien be amb el user, he creat varies playlist i no surten a la meva biblioteca, no les puc editar/eliminar.
 
-- Si entras a un album surt per un instant una pantalla vermella.
+- Si entras a un album surt per un instant una pantalla vermella. 
 
 - No hem carrega el logo de spotyupc quan inicio sesio en el mobil, en chrome si hem carrega, deu ser per algun tema de assets.
 

@@ -73,9 +73,6 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isThisAlbum = widget.playerService.currentPlaylistId == album!.id;
-    final isPlayingThisAlbum = isThisAlbum && widget.playerService.isPlaying;
-
     if (isLoading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
@@ -87,6 +84,9 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
         ),
       );
     }
+
+    final isThisAlbum = widget.playerService.currentPlaylistId == album!.id;
+    final isPlayingThisAlbum = isThisAlbum && widget.playerService.isPlaying;
 
     return Scaffold(
       appBar: AppBar(title: Text(album!.name)),
