@@ -46,7 +46,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
 
         for (var item in artist!.artistAlbum) {
           final album = await AlbumService.getAlbum(item.id);
-          if (album != null) loadedAlbums.add(album);
+          if ((album != null) && album.isPublic) loadedAlbums.add(album);
         }
 
         setState(() {

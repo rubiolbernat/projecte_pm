@@ -340,14 +340,16 @@ class _HomePageState extends State<HomePage> {
       for (var doc in songsSnapshot.docs) {
         // Iterar sobre documents
         final data = doc.data() as Map<String, dynamic>; // Dades del document
-        releases.add({
-          // Afegir a la llista de novetats
-          'id': doc.id, // ID de la cançó
-          'type': 'song', // Tipus de contingut
-          'title': data['name'] ?? 'Sin título', // Títol de la cançó
-          'subtitle': 'Del artista', // Subtítol genèric
-          'imageUrl': data['coverURL'] ?? '', // URL de la imatge
-        });
+        if (data['isPublic'] == true) {
+          releases.add({
+            // Afegir a la llista de novetats
+            'id': doc.id, // ID de la cançó
+            'type': 'song', // Tipus de contingut
+            'title': data['name'] ?? 'Sin título', // Títol de la cançó
+            'subtitle': 'Del artista', // Subtítol genèric
+            'imageUrl': data['coverURL'] ?? '', // URL de la imatge
+          });
+        }
       }
 
       return releases; // Retornar novetats
