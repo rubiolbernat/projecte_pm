@@ -84,6 +84,7 @@ class _LandingUserPageState extends State<LandingUserPage> {
               CreatePlaylistNavigator(
                 navigatorKey: _navigatorKeys[3],
                 userService: _userService,
+                playerService: _playerService,
               ),
             ],
           ),

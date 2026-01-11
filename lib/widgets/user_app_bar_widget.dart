@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:projecte_pm/pages/user_pages/edit_user_profile_page.dart';
+import 'package:projecte_pm/services/PlayerService.dart';
 import 'package:projecte_pm/services/UserService.dart';
 import 'package:projecte_pm/auth_gate.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
@@ -7,8 +8,9 @@ import 'package:projecte_pm/pages/user_pages/profile_page.dart';
 
 class AppBarWidget extends StatefulWidget implements PreferredSizeWidget {
   final UserService userService;
+  final PlayerService playerService;
 
-  const AppBarWidget({super.key, required this.userService});
+  const AppBarWidget({super.key, required this.userService, required this.playerService});
 
   @override
   State<AppBarWidget> createState() => _AppBarWidgetState();
@@ -29,7 +31,10 @@ class _AppBarWidgetState extends State<AppBarWidget> {
         onTap: () {
           Navigator.of(context).push(
             MaterialPageRoute(
-              builder: (_) => ProfilePage(userId: widget.userService.user.id),
+              builder: (_) => ProfilePage(
+                userId: widget.userService.user.id,
+                playerService: widget.playerService,
+              ),
             ),
           );
         },

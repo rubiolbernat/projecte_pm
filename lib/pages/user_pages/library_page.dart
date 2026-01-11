@@ -822,7 +822,7 @@ class _LibraryPageState extends State<LibraryPage> {
   Widget build(BuildContext context) {
     // Handler d'errors
     return Scaffold(
-      appBar: AppBarWidget(userService: widget.userService),
+      appBar: AppBarWidget(userService: widget.userService, playerService: widget.playerService),
       body: _isLoading
           ? const Center(
               child: CircularProgressIndicator(color: Colors.blueAccent),

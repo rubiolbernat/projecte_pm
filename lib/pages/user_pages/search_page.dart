@@ -56,7 +56,7 @@ class _SearchPageState extends State<SearchPage> {
     final currentUserId = widget.userService.currentUserId;
 
     return Scaffold(
-      appBar: AppBarWidget(userService: widget.userService),
+      appBar: AppBarWidget(userService: widget.userService, playerService: widget.playerService),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(

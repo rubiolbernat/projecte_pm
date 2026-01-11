@@ -39,7 +39,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     // Fem servir SingleChildScrollView per evitar errors d'espai (overflow)
     return Scaffold(
-      appBar: AppBarWidget(userService: widget.userService),
+      appBar: AppBarWidget(userService: widget.userService, playerService: widget.playerService),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.only(top: 20.0),

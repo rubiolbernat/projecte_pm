@@ -9,8 +9,9 @@ import 'package:projecte_pm/widgets/user_app_bar_widget.dart';
 
 class CreatePlaylistPage extends StatefulWidget {
   final UserService userService;
+  final PlayerService playerService;
 
-  const CreatePlaylistPage({super.key, required this.userService});
+  const CreatePlaylistPage({super.key, required this.userService, required this.playerService});
 
   @override
   State<CreatePlaylistPage> createState() => _CreatePlaylistPageState();
@@ -40,7 +41,7 @@ class _CreatePlaylistPageState extends State<CreatePlaylistPage> {
     //Botó per crear playlist, bastant self explanatory
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
-      appBar: AppBarWidget(userService: widget.userService),
+      appBar: AppBarWidget(userService: widget.userService, playerService: widget.playerService),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
