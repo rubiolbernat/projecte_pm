@@ -51,7 +51,11 @@ class _EditUserProfilePageState extends State<EditUserProfilePage> {
     draftUser.bio = bioController.text.trim();
     draftUser.photoURL = photoURLController.text.trim();
 
-    await widget.playerService.userService.updateUser(draftUser);
+    await widget.playerService.userService.updateUser(
+      name: draftUser.name,
+      photoURL: draftUser.photoURL,
+      bio: draftUser.bio,
+    );
 
     if (mounted) {
       Navigator.pop(context, true);

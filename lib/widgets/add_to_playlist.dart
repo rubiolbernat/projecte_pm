@@ -216,8 +216,11 @@ class AddToPlaylistButton extends StatefulWidget {
 
                       final user = playerService.userService.user;
                       user.addOwnedPlaylist(playlistId);
-                      await playerService.userService.updateUser(user);
-
+                      await playerService.userService.updateUser(
+                        name: user.name,
+                        photoURL: user.photoURL,
+                        bio: user.bio,
+                      );
                       Navigator.pop(dialogContext);
                       Navigator.pop(dialogContext);
 
@@ -728,8 +731,11 @@ class _AddToPlaylistDialogContentState
 
                       final user = widget.playerService.userService.user;
                       user.addOwnedPlaylist(playlistId!);
-                      await widget.playerService.userService.updateUser(user);
-
+                      await widget.playerService.userService.updateUser(
+                        name: user.name,
+                        photoURL: user.photoURL,
+                        bio: user.bio,
+                      );
                       Navigator.pop(context);
                       Navigator.pop(context);
 
@@ -762,7 +768,7 @@ class _AddToPlaylistDialogContentState
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text('❌ Error: ${e.toString()}'),
+                            content: Text('Error: ${e.toString()}'),
                             backgroundColor: Colors.red,
                           ),
                         );

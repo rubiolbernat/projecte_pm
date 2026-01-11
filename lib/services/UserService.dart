@@ -43,10 +43,23 @@ class UserService {
     _user = User.fromMap(snap.data() as Map<String, dynamic>);
   }
 
-  Future<void> updateUser(User user) async {
+  Future<void> updateUser({String? name, String? photoURL, String? bio}) async {
     if (_currentUserRef == null) return;
+
     try {
-      await _currentUserRef!.update(user.toMap());
+      final updateData = <String, dynamic>{};
+
+      if (name != null) updateData['name'] = name;
+      if (photoURL != null) updateData['photoURL'] = photoURL;
+      if (bio != null) updateData['bio'] = bio;
+
+      if (updateData.isNotEmpty) {
+        await _currentUserRef!.update(updateData);
+
+        if (name != null) _user.name = name;
+        if (photoURL != null) _user.photoURL = photoURL;
+        if (bio != null) _user.bio = bio;
+      }
     } catch (e) {
       print("Error actualitzant usuari: $e");
       rethrow;
@@ -459,15 +472,13 @@ class UserService {
 
       if (query.isNotEmpty) {
         if (includeSongs) {
-          final songQuery = _firestore
-              .collection('songs')
-              .where('isPublic', isEqualTo: true)
-              .where('name', isGreaterThanOrEqualTo: query)
-              .where('name', isLessThan: query + '\uf8ff')
-              .orderBy('name')
-              .limit(limit * 2);
-
-          futures.add(songQuery.get());
+          futures.add(
+            _firestore
+                .collection('songs')
+                .where('isPublic', isEqualTo: true)
+                .limit(limit)
+                .get(),
+          );
         }
 
         if (includeAlbums) {
@@ -475,9 +486,6 @@ class UserService {
             _firestore
                 .collection('albums')
                 .where('isPublic', isEqualTo: true)
-                .where('name', isGreaterThanOrEqualTo: query)
-                .where('name', isLessThan: query + '\uf8ff')
-                .orderBy('name')
                 .limit(limit)
                 .get(),
           );
@@ -488,45 +496,27 @@ class UserService {
             _firestore
                 .collection('playlists')
                 .where('isPublic', isEqualTo: true)
-                .where('name', isGreaterThanOrEqualTo: query)
-                .where('name', isLessThan: query + '\uf8ff')
-                .orderBy('name')
                 .limit(limit)
                 .get(),
           );
         }
 
         if (includeArtists) {
-          futures.add(
-            _firestore
-                .collection('artists')
-                .where('name', isGreaterThanOrEqualTo: query)
-                .where('name', isLessThan: query + '\uf8ff')
-                .orderBy('name')
-                .limit(limit)
-                .get(),
-          );
+          futures.add(_firestore.collection('artists').limit(limit).get());
         }
 
         if (includeUsers) {
-          futures.add(
-            _firestore
-                .collection('users')
-                .where('name', isGreaterThanOrEqualTo: query)
-                .where('name', isLessThan: query + '\uf8ff')
-                .orderBy('name')
-                .limit(limit)
-                .get(),
-          );
+          futures.add(_firestore.collection('users').limit(limit).get());
         }
       } else {
         if (includeSongs) {
-          final songQuery = _firestore
-              .collection('songs')
-              .where('isPublic', isEqualTo: true)
-              .limit(limit * 2);
-
-          futures.add(songQuery.get());
+          futures.add(
+            _firestore
+                .collection('songs')
+                .where('isPublic', isEqualTo: true)
+                .limit(limit)
+                .get(),
+          );
         }
 
         if (includeAlbums) {
@@ -570,7 +560,6 @@ class UserService {
           final data = doc.data() as Map<String, dynamic>?;
           if (data == null) continue;
 
-          // Verificar si l'album te prioritat de public o privat
           if (type == 'songs') {
             try {
               final albumId = data['albumId'];
@@ -581,16 +570,16 @@ class UserService {
                       .doc(albumId)
                       .get();
 
+                  final albumData = albumDoc.data() as Map<String, dynamic>?;
                   albumCache[albumId] = albumDoc.exists
-                      ? (albumDoc.data()?['isPublic'] ?? false)
+                      ? (albumData?['isPublic'] ?? false)
                       : false;
                 }
 
-                // Saltar cancó si el álbum es privat
                 if (albumCache[albumId] == false) continue;
               }
             } catch (e) {
-              continue; // En caso de error, no mostrar la cancó
+              continue;
             }
           }
 
@@ -604,56 +593,71 @@ class UserService {
           };
 
           String? artistName;
-          String? artistId;
           if (uiType == 'song') {
             try {
               final artistRef = data['artistId'];
               if (artistRef is DocumentReference) {
-                artistId = artistRef.id;
                 final artistDoc = await artistRef.get();
-                if (artistDoc.exists) {
-                  artistName = artistDoc['name'];
+                final artistData = artistDoc.data() as Map<String, dynamic>?;
+                if (artistData != null) {
+                  artistName = artistData['name'];
                 }
-              } else if (artistRef is String) {
-                artistId = artistRef;
+              } else if (artistRef is String && artistRef.isNotEmpty) {
                 final artistDoc = await _firestore
                     .collection('artists')
                     .doc(artistRef)
                     .get();
-                if (artistDoc.exists) {
-                  artistName = artistDoc['name'];
+                final artistData = artistDoc.data() as Map<String, dynamic>?;
+                if (artistData != null) {
+                  artistName = artistData['name'];
                 }
               }
             } catch (e) {}
           }
 
+          final itemName = data['name'] ?? 'Sin título';
+
+          if (query.isNotEmpty &&
+              !itemName.toLowerCase().contains(query.toLowerCase())) {
+            continue;
+          }
+
           mixedList.add({
             'id': doc.id,
             'type': uiType,
-            'title': data['name'] ?? 'Sin título',
+            'title': itemName,
             'subtitle': artistName ?? uiType,
             'imageUrl': _getImageUrl(uiType, data),
             'createdAt': (data['createdAt'] as Timestamp?) ?? Timestamp.now(),
             'ispublic': uiType == 'playlist' ? data['isPublic'] ?? false : null,
             'duration': uiType == 'song' ? data['duration'] : null,
-            'artistId': artistId,
-            'albumId': uiType == 'song' ? data['albumId'] : null,
           });
         }
       }
 
+      // ORDENAR RESULTADOS
       if (query.isNotEmpty) {
-        mixedList.sort(
-          (a, b) => (a['title'] as String).toLowerCase().compareTo(
-            (b['title'] as String).toLowerCase(),
-          ),
-        );
+        // Para búsquedas: primero los que empiezan con la query, luego los que contienen
+        mixedList.sort((a, b) {
+          final aTitle = (a['title'] as String).toLowerCase();
+          final bTitle = (b['title'] as String).toLowerCase();
+          final queryLower = query.toLowerCase();
+
+          final aStartsWith = aTitle.startsWith(queryLower);
+          final bStartsWith = bTitle.startsWith(queryLower);
+
+          if (aStartsWith && !bStartsWith) return -1;
+          if (!aStartsWith && bStartsWith) return 1;
+          return aTitle.compareTo(bTitle);
+        });
       } else {
+        // Para contenido general: ordenar por fecha
         mixedList.sort((a, b) => b['createdAt'].compareTo(a['createdAt']));
       }
 
       return mixedList.take(limit).toList();
     } catch (e) {
+      print("Error en searchContent: $e");
       return [];
     }
   }

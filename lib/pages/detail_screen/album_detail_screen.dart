@@ -252,7 +252,11 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                           album!.removeFollower(user!.id);
                         }
                       });
-                      await widget.playerService.userService.updateUser(user!);
+                      await widget.playerService.userService.updateUser(
+                        name: user!.name,
+                        photoURL: user!.photoURL,
+                        bio: user!.bio,
+                      );
                       await AlbumService.updateAlbum(album!);
                     },
                     child: Icon(
