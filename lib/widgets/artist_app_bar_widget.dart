@@ -30,7 +30,7 @@ class _AppBarWidgetState extends State<AppBarWidget> {
           Navigator.of(context).push(
             MaterialPageRoute(
               builder: (_) =>
-                  ProfilePage(artistId: widget.artistService.artist.id),
+                  ArtistProfilePage(artistId: widget.artistService.artist.id),
             ),
           );
         },

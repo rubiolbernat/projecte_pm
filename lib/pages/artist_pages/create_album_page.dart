@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // Necessari per als models
 import 'package:projecte_pm/models/song.dart';
 import 'package:projecte_pm/services/ArtistService.dart';
 import 'package:projecte_pm/services/AlbumService.dart';
