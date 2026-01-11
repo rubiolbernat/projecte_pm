@@ -139,28 +139,11 @@ class _SearchPageState extends State<SearchPage> {
                         child: ListTile(
                           leading: Stack(
                             children: [
-                              // Imagen principal
-                              item['imageUrl'] != ''
-                                  ? SizedBox(
-                                      width: 50,
-                                      height: 50,
-                                      child: Image.network(
-                                        item['imageUrl'],
-                                        fit: BoxFit.cover,
-                                      ),
-                                    )
-                                  : Container(
-                                      width: 50,
-                                      height: 50,
-                                      decoration: BoxDecoration(
-                                        color: Colors.grey[800],
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: Icon(
-                                        _getIconForType(item['type']),
-                                        color: Colors.white,
-                                      ),
-                                    ),
+                              buildSearchImage(
+                                imageUrl: item['imageUrl'],
+                                type: item['type'],
+                                size: 50,
+                              ),
 
                               // Widget per afegir a playlist
                               if (showAddButton)
@@ -369,6 +352,58 @@ class _SearchPageState extends State<SearchPage> {
         });
       },
       child: Text(typeName, style: const TextStyle(fontSize: 13)),
+    );
+  }
+
+  Widget buildSearchImage({
+    required String? imageUrl,
+    required String type,
+    double size = 50,
+  }) {
+    final icon = _getIconForType(type);
+
+    if (imageUrl == null || imageUrl.isEmpty) {
+      return _placeholder(icon, size);
+    }
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(6),
+      child: Image.network(
+        imageUrl,
+        width: size,
+        height: size,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) {
+          return _placeholder(icon, size);
+        },
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            width: size,
+            height: size,
+            color: Colors.grey[800],
+            child: const Center(
+              child: SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _placeholder(IconData icon, double size) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: Colors.grey[850],
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Icon(icon, color: Colors.grey[400], size: size * 0.5),
     );
   }
 }
