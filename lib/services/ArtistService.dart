@@ -66,11 +66,85 @@ class ArtistService {
   Future<void> updateArtist(Artist artist) async {
     if (_currentArtistRef == null) return;
     try {
-      await _currentArtistRef!.update(artist.toMap());
+      final currentDoc = await _currentArtistRef!.get();
+      if (!currentDoc.exists) return;
+
+      final currentData = currentDoc.data() as Map<String, dynamic>;
+      final updateData = <String, dynamic>{};
+
+      if (artist.name != (currentData['name'] ?? '')) {
+        updateData['name'] = artist.name;
+      }
+
+      if (artist.bio != (currentData['bio'] ?? '')) {
+        updateData['bio'] = artist.bio;
+      }
+
+      if (artist.photoURL != (currentData['photoURL'] ?? '')) {
+        updateData['photoURL'] = artist.photoURL;
+      }
+
+      if (artist.coverURL != (currentData['coverURL'] ?? '')) {
+        updateData['coverURL'] = artist.coverURL;
+      }
+
+      if (artist.verified != (currentData['verified'] ?? false)) {
+        updateData['verified'] = artist.verified;
+      }
+
+      if (artist.label != (currentData['label'] ?? '')) {
+        updateData['label'] = artist.label;
+      }
+
+      if (artist.manager != (currentData['manager'] ?? '')) {
+        updateData['manager'] = artist.manager;
+      }
+
+      // **Gèneres i Social Links - amb possibilitat de buidar**
+      final currentGenres = List<String>.from(currentData['genre'] ?? []);
+      if (!_areListsEqual(artist.genre, currentGenres)) {
+        updateData['genre'] = artist.genre;
+      }
+
+      final currentSocialLinks = Map<String, String>.from(
+        currentData['socialLink'] ?? {},
+      );
+      if (!_areMapsEqual(artist.socialLink, currentSocialLinks)) {
+        updateData['socialLink'] = artist.socialLink;
+      }
+      if (updateData.isNotEmpty) {
+        print("Actualitzant camps: ${updateData.keys.toList()}");
+        await _currentArtistRef!.update(updateData);
+        await refreshArtist();
+      }
     } catch (e) {
-      print("Error actualitzant usuari: $e");
+      print("Error actualitzant artista: $e");
       rethrow;
     }
+  }
+
+  bool _areListsEqual(List<String> list1, List<String> list2) {
+    // Si ambdues són buides, són iguals
+    if (list1.isEmpty && list2.isEmpty) return true;
+    // Si només una és buida, NO són iguals
+    if (list1.isEmpty || list2.isEmpty) return false;
+    if (list1.length != list2.length) return false;
+    for (int i = 0; i < list1.length; i++) {
+      if (list1[i] != list2[i]) return false;
+    }
+    return true;
+  }
+
+  bool _areMapsEqual(Map<String, String> map1, Map<String, String> map2) {
+    // Si ambdós són buits, són iguals
+    if (map1.isEmpty && map2.isEmpty) return true;
+    // Si només un és buit, NO són iguals
+    if (map1.isEmpty || map2.isEmpty) return false;
+    if (map1.length != map2.length) return false;
+    for (var key in map1.keys) {
+      if (map1[key] != map2[key]) return false;
+    }
+    return true;
   }
 
   static Future<Artist?> getArtist(String artistId) async {
