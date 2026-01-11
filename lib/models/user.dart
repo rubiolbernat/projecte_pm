@@ -56,8 +56,7 @@ class User {
   List<SaveId> get savedAlbum => _savedAlbum;
   List<SaveId>? get follower => _follower;
   List<SaveId>? get following => _following;
-  List<SaveId> get savedPlaylistCount =>
-      _savedPlaylist; //Canviat nom per sintaxis
+  List<SaveId> get savedPlaylists => _savedPlaylist; //Canviat nom per sintaxis
 
   //Llista de Setters
   set name(String name) => _name = name;

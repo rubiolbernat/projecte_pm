@@ -16,8 +16,6 @@ COSES A MILLORAR:
 
 - Fer que s'arroseguin les pistes en editar album només desde la icona.
 
-
-
 - al PopupMenuButton del songList afegir les opcions que falten //Quines???
 
 -----------------------------------------------------------------

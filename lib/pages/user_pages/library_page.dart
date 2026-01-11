@@ -19,10 +19,7 @@ import 'package:projecte_pm/widgets/user_app_bar_widget.dart';
 class LibraryPage extends StatefulWidget {
   final PlayerService playerService;
 
-  const LibraryPage({
-    super.key,
-    required this.playerService,
-  });
+  const LibraryPage({super.key, required this.playerService});
 
   @override
   State<LibraryPage> createState() => _LibraryPageState();
@@ -123,25 +120,24 @@ class _LibraryPageState extends State<LibraryPage> {
       final List<Playlist> playlists = [];
       final user = widget.playerService.userService.user;
 
-      if (user.savedPlaylist == null) {
-        // Per si un cas
+      if (user.savedPlaylists.isEmpty) {
         return [];
       }
 
-      final futures = user.savedPlaylistCount!.map((item) async {
+      for (var item in user.savedPlaylists) {}
+
+      final futures = user.savedPlaylists.map((item) async {
         try {
-          final playlist = await PlaylistService.getPlaylist(
-            item.id,
-          ); // Mateixa dinamica que el anterior, buscant per savedPlaylist i no Owned
+          final playlist = await PlaylistService.getPlaylist(item.id);
           return playlist;
         } catch (e) {
-          print("Error carregant playlist guardada ${item.id}: $e");
           return null;
         }
       }).toList();
 
       final results = await Future.wait(futures);
-      playlists.addAll(results.whereType<Playlist>());
+      final loadedPlaylists = results.whereType<Playlist>().toList();
+      playlists.addAll(loadedPlaylists);
 
       return playlists;
     } catch (e) {
