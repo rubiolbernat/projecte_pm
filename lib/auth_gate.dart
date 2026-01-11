@@ -58,7 +58,9 @@ class AuthGate extends StatelessWidget {
                 padding: const EdgeInsets.all(20),
                 child: AspectRatio(
                   aspectRatio: 1,
-                  child: Image.asset('icons/SpotyUPC.png'),
+                  child: Image.network(
+                    'https://github.com/rubiolbernat/projecte_pm/blob/main/assets/icons/SpotyUPC.png?raw=true',
+                  ),
                 ),
               );
             },
