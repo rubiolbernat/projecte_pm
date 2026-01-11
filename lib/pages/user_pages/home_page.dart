@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:projecte_pm/pages/detail_screen/user_detail_screen.dart';
 import 'package:projecte_pm/services/PlayerService.dart';
-import 'package:projecte_pm/services/UserService.dart';
 import 'package:projecte_pm/services/playlist_service.dart';
 import 'package:projecte_pm/widgets/history_list.dart';
 import 'package:projecte_pm/pages/detail_screen/album_detail_screen.dart';
@@ -15,10 +14,7 @@ import 'package:projecte_pm/services/AlbumService.dart';
 class HomePage extends StatefulWidget {
   final PlayerService playerService;
 
-  const HomePage({
-    super.key,
-    required this.playerService,
-  });
+  const HomePage({super.key, required this.playerService});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -29,7 +25,9 @@ class _HomePageState extends State<HomePage> {
   late AlbumService albumService;
   void initState() {
     super.initState();
-    print("Iniciant HomePage per a: ${widget.playerService.userService.user.name}");
+    print(
+      "Iniciant HomePage per a: ${widget.playerService.userService.user.name}",
+    );
     albumService = AlbumService();
   }
 
@@ -312,7 +310,9 @@ class _HomePageState extends State<HomePage> {
       final followingSnapshot = await FirebaseFirestore
           .instance // Accedir a Firestore
           .collection('users') // Col·lecció d'usuaris
-          .doc(widget.playerService.userService.currentUserId) // Document de l'usuari actual
+          .doc(
+            widget.playerService.userService.currentUserId,
+          ) // Document de l'usuari actual
           .collection('followingArtists') // Subcol·lecció d'artistes seguits
           .get(); // Obtenir documents
 

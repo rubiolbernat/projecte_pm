@@ -36,7 +36,10 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => ProfilePage(userId: widget.userId, playerService: widget.playerService),
+            builder: (context) => ProfilePage(
+              userId: widget.userId,
+              playerService: widget.playerService,
+            ),
           ),
         );
       });
@@ -48,6 +51,8 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
   Future<void> _loadUserAndPlaylists() async {
     try {
       final resultUser = await UserService.getUser(widget.userId);
+      final currentUserId = widget.playerService.currentUserId;
+      final isOwner = currentUserId == widget.userId;
 
       setState(() {
         user = resultUser;
@@ -57,24 +62,22 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
         final List<Playlist> loadedPlaylists = [];
 
         for (var item in user!.ownedPlaylist) {
-          print("DEBUG: Intentando cargar playlist ID: ${item.id}");
           try {
             final playlist = await PlaylistService.getPlaylist(item.id);
             if (playlist != null) {
-              print("DEBUG: ✓ Playlist cargada: ${playlist.name}");
-              loadedPlaylists.add(playlist);
+              bool canView = playlist.isPublic || isOwner;
+              if (canView) {
+                loadedPlaylists.add(playlist);
+              } else {
+                print("Playlist privada, no visible: ${playlist.name}");
+              }
             } else {
-              print("DEBUG: ✗ Playlist NO encontrada: ${item.id}");
+              print("Playlist NO trobada: ${item.id}");
             }
           } catch (e) {
-            print("DEBUG: Error cargando playlist ${item.id}: $e");
+            print("Error carregant playlist ${item.id}: $e");
           }
         }
-
-        print(
-          "DEBUG: Total playlists cargadas exitosamente: ${loadedPlaylists.length}",
-        );
-
         setState(() {
           playlists = loadedPlaylists;
         });

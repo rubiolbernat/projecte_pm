@@ -79,23 +79,40 @@ class _SearchPageState extends State<SearchPage> {
             const SizedBox(height: 16),
             Expanded(
               child: FutureBuilder<List<Map<String, dynamic>>>(
-                future: widget.playerService.userService.getGlobalNewReleases(
-                  name: query.isEmpty ? null : query,
-                  readSongs: _effectiveFilter('song'),
-                  readAlbums: _effectiveFilter('album'),
-                  readPlaylists: _effectiveFilter('playlist'),
-                  readArtists: _effectiveFilter('artist'),
-                  readUsers: _effectiveFilter('user'),
+                future: widget.playerService.userService.searchContent(
+                  query: query,
+                  includeSongs: _effectiveFilter('song'),
+                  includeAlbums: _effectiveFilter('album'),
+                  includePlaylists: _effectiveFilter('playlist'),
+                  includeArtists: _effectiveFilter('artist'),
+                  includeUsers: _effectiveFilter('user'),
+                  limit: 100, // Ajustat a 100 resultats
                 ),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
                   }
                   if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Center(
-                      child: Text(
-                        "Sin resultados",
-                        style: TextStyle(color: Colors.white),
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.search_off,
+                            size: 50,
+                            color: Colors.grey[600],
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            query.isEmpty
+                                ? "Escriu alguna cosa per buscar"
+                                : "No s'han trobat resultats",
+                            style: TextStyle(
+                              color: Colors.grey[400],
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
                       ),
                     );
                   }
@@ -105,13 +122,14 @@ class _SearchPageState extends State<SearchPage> {
                     itemCount: results.length,
                     itemBuilder: (context, index) {
                       final item = results[index];
+                      final currentUserId =
+                          widget.playerService.userService.currentUserId;
 
                       // Determinar quin botó afegir
                       final showAddButton =
                           item['type'] == 'song' && currentUserId != null;
 
                       final type = item['type'];
-
                       final showSaveButton =
                           (type == 'playlist' || type == 'album') &&
                           currentUserId != null;
@@ -144,7 +162,7 @@ class _SearchPageState extends State<SearchPage> {
                                       ),
                                     ),
 
-                              // Botón para añadir a playlist (solo para canciones y si hay usuario)
+                              // Widget per afegir a playlist
                               if (showAddButton)
                                 Positioned(
                                   bottom: 0,
@@ -153,11 +171,10 @@ class _SearchPageState extends State<SearchPage> {
                                     songId: item['id'],
                                     playerService: widget.playerService,
                                     playlistService: playlistService,
-                                    size:
-                                        20, // Pequeño para que quede bien en la esquina
+                                    size: 20,
                                   ),
                                 ),
-                              if (showSaveButton) // Botó per guardar album o playlist
+                              if (showSaveButton)
                                 Positioned(
                                   bottom: 0,
                                   right: 0,
@@ -185,15 +202,15 @@ class _SearchPageState extends State<SearchPage> {
                                 ),
                               ),
                               if (type == 'playlist' &&
-                                  item['isPublic'] != null)
+                                  item['ispublic'] != null)
                                 Padding(
                                   padding: const EdgeInsets.only(left: 8),
                                   child: Icon(
-                                    item['isPublic']
+                                    item['ispublic']
                                         ? Icons.public
                                         : Icons.lock,
                                     size: 14,
-                                    color: item['isPublic']
+                                    color: item['ispublic']
                                         ? Colors.blue
                                         : Colors.grey,
                                   ),
@@ -220,7 +237,6 @@ class _SearchPageState extends State<SearchPage> {
     );
   }
 
-  // Método para obtener el icono según el tipo
   IconData _getIconForType(String type) {
     switch (type) {
       case 'song':
@@ -238,17 +254,27 @@ class _SearchPageState extends State<SearchPage> {
     }
   }
 
-  // Método para formatear el subtítulo
+  // Metode per formatejar el subtitle
   String _getSubtitle(Map<String, dynamic> item) {
     final type = item['type'];
     final subtitle = item['subtitle'] ?? '';
+    final duration = item['duration'];
 
-    // Si ya tiene un subtítulo, usarlo
+    if (type == 'song' && duration != null) {
+      final minutes = (duration ~/ 60).floor();
+      final seconds = (duration % 60).floor();
+      final durationStr = '${minutes}:${seconds.toString().padLeft(2, '0')}';
+
+      if (subtitle != 'song' && subtitle.isNotEmpty) {
+        return '$subtitle • $durationStr';
+      }
+      return durationStr;
+    }
+
     if (subtitle.isNotEmpty && subtitle != type) {
       return subtitle;
     }
 
-    // Si no, mostrar el tipo en catalan
     switch (type) {
       case 'song':
         return 'Cançó';
@@ -265,7 +291,7 @@ class _SearchPageState extends State<SearchPage> {
     }
   }
 
-  // Método para navegar a la pantalla de detalle
+  // Método para navegar a la pantalla de detall
   void _navigateToDetailScreen(Map<String, dynamic> item) {
     switch (item['type']) {
       case 'song':

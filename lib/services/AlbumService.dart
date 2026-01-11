@@ -147,10 +147,58 @@ class AlbumService {
           {'id': albumId},
         ]),
       });
-      print("Álbum $albumId eliminado de guardados para usuario $userId");
+      print("Álbum $albumId elimitat de guardats per usuari $userId");
     } catch (e) {
       print("Error en removeAlbumFromSaved: $e");
       rethrow;
+    }
+  }
+
+  // Metode per obtenir tots els albums publics
+  static Future<List<Album>> getPublicAlbums() async {
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('albums')
+          .where('isPublic', isEqualTo: true)
+          .get();
+
+      return snapshot.docs
+          .map((doc) => Album.fromMap({...doc.data(), 'id': doc.id}))
+          .toList();
+    } catch (e) {
+      print("Error obtenint álbums públics: $e");
+      return [];
+    }
+  }
+
+  // Metode per obtindre albums visibles
+  static Future<List<Album>> getUserVisibleAlbums(
+    String userId,
+    String? currentUserId,
+  ) async {
+    try {
+      if (currentUserId == userId) {
+        final snapshot = await FirebaseFirestore.instance
+            .collection('albums')
+            .where('artistId', isEqualTo: userId)
+            .get();
+
+        return snapshot.docs
+            .map((doc) => Album.fromMap({...doc.data(), 'id': doc.id}))
+            .toList();
+      } else {
+        final snapshot = await FirebaseFirestore.instance
+            .collection('albums')
+            .where('artistId', isEqualTo: userId)
+            .where('isPublic', isEqualTo: true)
+            .get();
+        return snapshot.docs
+            .map((doc) => Album.fromMap({...doc.data(), 'id': doc.id}))
+            .toList();
+      }
+    } catch (e) {
+      print("Error obtenint albums del usuari: $e");
+      return [];
     }
   }
 }

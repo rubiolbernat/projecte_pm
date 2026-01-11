@@ -7,16 +7,22 @@ class ArtistService {
   final FirebaseFirestore _firestore;
   final DocumentReference? _currentArtistRef;
   Artist _artist;
+  final String? _currentUserId;
 
   ArtistService._({
     required FirebaseFirestore firestore,
     required DocumentReference currentArtistRef,
     required Artist artist,
+    String? currentUserId,
   }) : _firestore = firestore,
        _currentArtistRef = currentArtistRef,
-       _artist = artist;
+       _artist = artist,
+       _currentUserId = currentUserId;
 
-  static Future<ArtistService> create({required String artistId}) async {
+  static Future<ArtistService> create({
+    required String artistId,
+    String? currentUserId,
+  }) async {
     final firestore = FirebaseFirestore.instance;
     final ref = firestore.collection('artists').doc(artistId);
 
@@ -31,9 +37,11 @@ class ArtistService {
       firestore: firestore,
       currentArtistRef: ref,
       artist: artist,
+      currentUserId: currentUserId,
     );
   }
 
+  String? getCurrentUserId() => _currentUserId;
   String? get currentArtistId => _artist.id;
   DocumentReference? get currentArtistRef => _currentArtistRef;
 

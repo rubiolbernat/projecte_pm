@@ -4,13 +4,19 @@ import 'package:projecte_pm/models/song.dart';
 import 'package:projecte_pm/models/album.dart';
 import 'package:projecte_pm/services/ArtistService.dart';
 import 'package:projecte_pm/services/AlbumService.dart';
+import 'package:projecte_pm/services/PlayerService.dart';
 import 'package:projecte_pm/services/song_service.dart';
 import 'package:projecte_pm/widgets/artist_app_bar_widget.dart';
 import 'package:projecte_pm/services/playlist_service.dart';
 
 class ArtistProfilePage extends StatefulWidget {
   final String artistId;
-  const ArtistProfilePage({required this.artistId, super.key});
+  final PlayerService? playerService;
+  const ArtistProfilePage({
+    required this.artistId,
+    this.playerService,
+    super.key,
+  });
 
   @override
   State<ArtistProfilePage> createState() => _ArtistProfilePageState();
@@ -34,7 +40,19 @@ class _ArtistProfilePageState extends State<ArtistProfilePage> {
 
   Future<void> _initServices() async {
     try {
-      _artistService = await ArtistService.create(artistId: widget.artistId);
+      String? currentUserId;
+
+      if (widget.playerService != null) {
+        currentUserId = widget.playerService!.userService.currentUserId;
+      } else {
+        currentUserId = null;
+      }
+
+      _artistService = await ArtistService.create(
+        artistId: widget.artistId,
+        currentUserId: currentUserId,
+      );
+
       _playlistService = PlaylistService();
       await _loadArtistData();
       await _loadArtistStats();
@@ -50,6 +68,8 @@ class _ArtistProfilePageState extends State<ArtistProfilePage> {
   Future<void> _loadArtistData() async {
     try {
       final artistData = await _artistService.getCurrentArtist();
+      final currentUserId = _artistService.getCurrentUserId();
+      final isOwner = currentUserId == widget.artistId;
 
       setState(() {
         artist = artistData;
@@ -63,7 +83,6 @@ class _ArtistProfilePageState extends State<ArtistProfilePage> {
               .toList();
           final songResults = await Future.wait(songFutures);
           songs = songResults.whereType<Song>().toList();
-          // Ordenar per popularitat (likes)
           songs.sort((a, b) => b.likes.length.compareTo(a.likes.length));
         }
 
@@ -73,8 +92,12 @@ class _ArtistProfilePageState extends State<ArtistProfilePage> {
               .map((ref) => AlbumService.getAlbum(ref.id))
               .toList();
           final albumResults = await Future.wait(albumFutures);
-          albums = albumResults.whereType<Album>().toList();
-          // Ordenar per data de creació (més recents primer)
+
+          albums = albumResults.whereType<Album>().where((album) {
+            if (album == null) return false;
+            return isOwner || album.isPublic;
+          }).toList();
+
           albums.sort((a, b) => b.createdAt.compareTo(a.createdAt));
         }
       }
@@ -285,24 +308,49 @@ class _ArtistProfilePageState extends State<ArtistProfilePage> {
           itemBuilder: (context, index) {
             final album = albums[index];
             return GestureDetector(
-              onTap: () {},
+              onTap: () {
+                // Aquí deberías navegar al detalle del álbum
+                // Navigator.push(...)
+              },
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.network(
-                      album.coverURL,
-                      width: double.infinity,
-                      height: 150,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        width: double.infinity,
-                        height: 150,
-                        color: Colors.grey[800],
-                        child: Icon(Icons.album, color: Colors.white),
+                  Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          album.coverURL,
+                          width: double.infinity,
+                          height: 150,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              Container(
+                                width: double.infinity,
+                                height: 150,
+                                color: Colors.grey[800],
+                                child: Icon(Icons.album, color: Colors.white),
+                              ),
+                        ),
                       ),
-                    ),
+                      if (!album.isPublic)
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: Container(
+                            padding: EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: Colors.black54,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Icon(
+                              Icons.lock,
+                              color: Colors.white,
+                              size: 16,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                   SizedBox(height: 8),
                   Text(
@@ -315,7 +363,7 @@ class _ArtistProfilePageState extends State<ArtistProfilePage> {
                     maxLines: 1,
                   ),
                   Text(
-                    "${album.createdAt.year} • ${album.albumSong.length} cançons",
+                    "${album.createdAt.year} • ${album.albumSong.length} cançons ${!album.isPublic ? '• Privat' : ''}",
                     style: TextStyle(color: Colors.grey[400], fontSize: 12),
                   ),
                 ],
@@ -461,6 +509,8 @@ class _ArtistProfilePageState extends State<ArtistProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    final currentUserId = _artistService.getCurrentUserId();
+    final isOwner = currentUserId == artist?.id;
     if (isLoading) {
       return Scaffold(
         appBar: AppBar(),

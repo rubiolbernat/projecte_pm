@@ -5,7 +5,6 @@ import 'package:projecte_pm/models/album.dart';
 import 'package:projecte_pm/models/artist.dart';
 import 'package:projecte_pm/models/song.dart';
 import 'package:projecte_pm/services/PlayerService.dart';
-import 'package:projecte_pm/services/UserService.dart';
 import 'package:projecte_pm/services/playlist_service.dart';
 import 'package:projecte_pm/services/AlbumService.dart';
 import 'package:projecte_pm/services/ArtistService.dart';
