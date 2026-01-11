@@ -61,6 +61,7 @@ class Playlist {
           .map((playlistSong) => playlistSong.songId)
           .toList(); // Llista de IDs de cançons
   int get totalSongCount => _song.length;
+  List<PlaylistSong> get song => _song;
 
   //Llista de Setters
   set name(String name) => _name = name;

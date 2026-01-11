@@ -1,4 +1,4 @@
-//NOTA, Ja que he posat bastant codi nou en aquest fitxer, he comentat gairebé totes les línies per a que es vegi clarament que fa cada part del codi.
+//NOTA: He comentat gairebé totes les línies perquè es vegi clarament què fa cada part del codi.
 // VICTOR
 
 import 'package:flutter/material.dart';
@@ -9,20 +9,20 @@ import 'package:projecte_pm/services/PlayerService.dart';
 import 'package:projecte_pm/services/playlist_service.dart';
 import 'package:projecte_pm/services/song_service.dart';
 import 'package:projecte_pm/widgets/SongListItem.dart';
+import 'package:projecte_pm/widgets/playlistmanager.dart'; // Importem el widget de gestió
 
-// Pantalla de detall de una playlist
+// Pantalla de detall d'una playlist
 class PlaylistDetailScreen extends StatefulWidget {
   final String playlistId; // ID de la playlist a mostrar
   final PlayerService playerService; // Servei de reproductor
   const PlaylistDetailScreen({
-    // Constructor
     required this.playlistId, // ID de la playlist
     required this.playerService, // Servei de reproductor
     super.key, // Clau de widget
   });
 
   @override
-  State<PlaylistDetailScreen> createState() => _PlaylistDetailScreenState(); // Crear l'estat del widget
+  State<PlaylistDetailScreen> createState() => _PlaylistDetailScreenState();
 }
 
 class _PlaylistDetailScreenState extends State<PlaylistDetailScreen> {
@@ -31,193 +31,714 @@ class _PlaylistDetailScreenState extends State<PlaylistDetailScreen> {
   bool isLoading = true; // Indicador de càrrega
   bool isLoadingSongs = true; // Indicador de càrrega de cançons
   List<Song> songs = []; // Llista de cançons de la playlist
+  late PlaylistService _playlistService; // Servei de playlists
+  bool _isDeleting = false; // Control per evitar eliminacions múltiples
 
   @override
   void initState() {
-    super.initState(); // Inicialitzar l'estat
+    super.initState();
+    _playlistService = PlaylistService(); // Inicialitzar el servei
     _loadPlaylistAndSongs(); // Carregar la playlist i les cançons
   }
 
+  // Carrega la playlist i les seves cançons
   Future<void> _loadPlaylistAndSongs() async {
-    // Carregar la playlist i les cançons
     try {
-      // Intentar carregar la playlist
       setState(() {
-        // Actualitzar l'estat
-        isLoading = true; // Indicador de càrrega
-        isLoadingSongs = true; // Indicador de càrrega de cançons
+        isLoading = true;
+        isLoadingSongs = true;
       });
 
       final resultPlaylist = await PlaylistService.getPlaylist(
-        // Obtenir la playlist
-        widget.playlistId, // ID de la playlist
+        widget.playlistId,
       );
 
       setState(() {
-        // Actualitzar l'estat
-        playlist = resultPlaylist; // Assignar la playlist obtinguda
+        playlist = resultPlaylist;
       });
 
       if (playlist != null) {
-        // Si la playlist existeix
-        await _loadSongs(
-          playlist!.songIds,
-        ); // Carregar les cançons de la playlist
+        await _loadSongs(playlist!.songIds);
       }
     } catch (e) {
-      // Capturar errors si no es troba playlist
-      print("Error cargando playlist: $e"); // Mostrar missatge d'error
+      print("Error carregant playlist: $e");
     } finally {
       setState(() {
-        // Actualitzar l'estat
         isLoading = false;
       });
     }
   }
 
+  // Carrega les cançons de la playlist
   Future<void> _loadSongs(List<String> songIds) async {
-    // Carregar les cançons
     try {
-      // Intentar carregar les cançons
-      List<Song> loadedSongs = []; // Llista temporal de cançons carregades
+      List<Song> loadedSongs = [];
 
       for (var songId in songIds) {
-        // Iterar sobre els IDs de les cançons
         try {
-          // Intentar carregar cada cançó
-          final song = await SongService.getSong(
-            songId,
-          ); // Obtenir la cançó per ID
+          final song = await SongService.getSong(songId);
           if (song != null) {
-            // Si la cançó existeix
-            loadedSongs.add(song); // Afegir la cançó a la llista carregada
+            loadedSongs.add(song);
           }
         } catch (e) {
-          // Capturar errors en carregar una cançó
-          print(
-            "Error cargando canción $songId: $e",
-          ); // Mostrar missatge d'error
+          print("Error carregant cançó $songId: $e");
         }
       }
 
       setState(() {
-        // Actualitzar l'estat
-        songs = loadedSongs; // Assignar les cançons carregades
-        isLoadingSongs = false; // Indicador de càrrega de cançons
+        songs = loadedSongs;
+        isLoadingSongs = false;
       });
     } catch (e) {
-      // Capturar errors generals
-      print("Error cargando canciones: $e");
+      print("Error carregant cançons: $e");
       setState(() {
         isLoadingSongs = false;
       });
     }
   }
 
-  // Mètode helper per obtenir el nombre de cançons
-  int _getSongCount() {
-    // Obtenir el nombre de cançons
+  // Elimina una cançó de la playlist
+  // Elimina una cançó de la playlist
+  // Versión simplificada usando el nuevo método
+  Future<void> _removeSongFromPlaylist(String songId) async {
+    if (playlist == null || !_isOwner) return;
+
     try {
-      //
-      return playlist!.totalSongCount; // Retornar el nombre de cançons
+      // Mostrem l'indicador de càrrega
+      final overlay = Overlay.of(context);
+      final overlayEntry = OverlayEntry(
+        builder: (context) => const Material(
+          color: Colors.black54,
+          child: Center(child: CircularProgressIndicator()),
+        ),
+      );
+
+      overlay.insert(overlayEntry);
+
+      // Usamos el nuevo método para eliminar la canción
+      await _playlistService.removeSongFromPlaylist(
+        playlistId: playlist!.id,
+        songId: songId,
+      );
+
+      // Eliminem l'Overlay de càrrega
+      overlayEntry.remove();
+
+      // Recarreguem les dades
+      await _loadPlaylistAndSongs();
+
+      // Mostrem missatge d'èxit
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Cançó eliminada de la playlist'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
     } catch (e) {
-      // Capturar errors
+      // En cas d'error, intentem eliminar l'overlay
+      try {
+        final overlay = Overlay.of(context);
+      } catch (_) {}
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  // Confirma l'eliminació d'una cançó de la playlist
+  void _confirmRemoveSong(String songId, String songName) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.grey[900],
+          title: const Text(
+            'Eliminar cançó',
+            style: TextStyle(color: Colors.white),
+          ),
+          content: Text(
+            'Estàs segur que vols eliminar "$songName" d\'aquesta playlist?',
+            style: const TextStyle(color: Colors.grey),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text(
+                'Cancel·lar',
+                style: TextStyle(color: Colors.grey),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context); // Tanquem el diàleg de confirmació
+                _removeSongFromPlaylist(songId); // Eliminem la cançó
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              child: const Text('Eliminar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Retorna el nombre de cançons de la playlist
+  int _getSongCount() {
+    try {
+      return playlist!.totalSongCount;
+    } catch (e) {
       rethrow;
     }
   }
 
+  // Calcula la durada total de la playlist en minuts
   double _getPlaylistDurationInMinutes() {
-    // Obtenir la durada total de la playlist en minuts
     try {
-      int totalDurationInSeconds = 0; // Durada total en segons
+      int totalDurationInSeconds = 0;
 
       for (var song in songs) {
-        totalDurationInSeconds += song.duration
-            .toInt(); // Sumar la durada de cada cançó
+        totalDurationInSeconds += song.duration.toInt();
       }
 
-      return totalDurationInSeconds / 60; // Retornar la durada en minuts
+      return totalDurationInSeconds / 60;
     } catch (e) {
       rethrow;
     }
+  }
+
+  // Verifica si l'usuari actual és el propietari de la playlist
+  bool get _isOwner {
+    return playlist?.ownerId == widget.playerService.currentUserId;
+  }
+
+  // Mostra el diàleg per eliminar la playlist
+  void _confirmDeletePlaylist() {
+    if (playlist == null || _isDeleting) return;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.grey[900],
+          title: const Text(
+            'Eliminar Playlist',
+            style: TextStyle(color: Colors.white),
+          ),
+          content: const Text(
+            'Estàs segur que vols eliminar aquesta playlist? Aquesta acció no es pot desfer.',
+            style: TextStyle(color: Colors.grey),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text(
+                'Cancel·lar',
+                style: TextStyle(color: Colors.grey),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context); // Tanquem el diàleg de confirmació
+                _deletePlaylistWithLoading(); // Iniciem l'eliminació
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              child: const Text('Eliminar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Executa l'eliminació de la playlist amb indicador de càrrega
+  Future<void> _deletePlaylistWithLoading() async {
+    if (playlist == null || _isDeleting) return;
+
+    setState(() {
+      _isDeleting = true;
+    });
+
+    // Guardem el NavigatorState abans de les operacions asíncrones
+    final navigator = Navigator.of(context);
+
+    // Guardem les dades locals que necessitarem
+    final playlistId = playlist!.id;
+    final playerService = widget.playerService;
+    final playlistService = _playlistService;
+
+    try {
+      // Mostrem l'indicador de càrrega amb Overlay
+      final overlay = Overlay.of(context);
+      final overlayEntry = OverlayEntry(
+        builder: (context) => const Material(
+          color: Colors.black54,
+          child: Center(child: CircularProgressIndicator()),
+        ),
+      );
+
+      overlay.insert(overlayEntry);
+
+      // 1. Eliminem la playlist de Firestore
+      await playlistService.deletePlaylist(playlistId);
+
+      // 2. Actualitzem l'usuari
+      final user = playerService.userService.user;
+      user.removeOwnedPlaylist(playlistId);
+      await playerService.userService.updateUser(
+        name: user.name,
+        photoURL: user.photoURL,
+        bio: user.bio,
+      );
+
+      // Eliminem l'Overlay de càrrega
+      overlayEntry.remove();
+
+      // Fem servir el NavigatorState guardat per navegar
+      navigator.pop(); // Tornem a la pantalla anterior
+
+      // Mostrem missatge d'èxit amb un post-frame callback
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Playlist eliminada'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      });
+    } catch (e) {
+      // En cas d'error, netegem l'estat
+      if (mounted) {
+        setState(() {
+          _isDeleting = false;
+        });
+
+        // Mostrem l'error
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
+  }
+
+  // Mostra el diàleg per editar la playlist
+  void _showEditPlaylistDialog() {
+    if (playlist == null) return;
+
+    String name = playlist!.name;
+    String description = playlist!.description;
+    String coverURL = playlist!.coverURL;
+    bool isPublic = playlist!.isPublic;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              backgroundColor: Colors.grey[900],
+              title: const Text(
+                'Editar Playlist',
+                style: TextStyle(color: Colors.white),
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Imatge actual de la playlist
+                    Container(
+                      width: 100,
+                      height: 100,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        image: coverURL.isNotEmpty
+                            ? DecorationImage(
+                                image: NetworkImage(coverURL),
+                                fit: BoxFit.cover,
+                              )
+                            : null,
+                        color: Colors.grey[800],
+                      ),
+                      child: coverURL.isEmpty
+                          ? const Icon(
+                              Icons.music_note,
+                              color: Colors.white,
+                              size: 40,
+                            )
+                          : null,
+                    ),
+
+                    // Camp per editar el nom
+                    TextField(
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        labelText: 'Nom*',
+                        labelStyle: TextStyle(color: Colors.grey[400]),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: const BorderSide(color: Colors.blue),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      controller: TextEditingController(text: name),
+                      onChanged: (value) => name = value,
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Camp per editar la descripció
+                    TextField(
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        labelText: 'Descripció',
+                        labelStyle: TextStyle(color: Colors.grey[400]),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: const BorderSide(color: Colors.blue),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      controller: TextEditingController(text: description),
+                      onChanged: (value) => description = value,
+                      maxLines: 3,
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Camp per editar la URL de la imatge
+                    TextField(
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        labelText: 'URL de la imatge',
+                        labelStyle: TextStyle(color: Colors.grey[400]),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: const BorderSide(color: Colors.blue),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      controller: TextEditingController(text: coverURL),
+                      onChanged: (value) => coverURL = value,
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Toggle per canviar la visibilitat
+                    GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          isPublic = !isPublic;
+                        });
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.grey[800]!.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: isPublic ? Colors.blue : Colors.grey,
+                            width: 1,
+                          ),
+                        ),
+                        padding: const EdgeInsets.all(12),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Playlist pública',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  isPublic
+                                      ? 'Tothom pot veure aquesta playlist'
+                                      : 'Només tu pots veure aquesta playlist',
+                                  style: TextStyle(
+                                    color: Colors.grey[400],
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Container(
+                              width: 50,
+                              height: 30,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(15),
+                                color: isPublic
+                                    ? Colors.blue
+                                    : Colors.grey[700],
+                              ),
+                              child: Row(
+                                mainAxisAlignment: isPublic
+                                    ? MainAxisAlignment.end
+                                    : MainAxisAlignment.start,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.all(3),
+                                    child: Container(
+                                      width: 24,
+                                      height: 24,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Icon(
+                                        isPublic ? Icons.check : Icons.close,
+                                        color: isPublic
+                                            ? Colors.blue
+                                            : Colors.grey[700],
+                                        size: 16,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                // Botó per eliminar la playlist
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context); // Tanquem el diàleg d'edició
+                    _confirmDeletePlaylist(); // Obrim el diàleg d'eliminació
+                  },
+                  style: TextButton.styleFrom(foregroundColor: Colors.red),
+                  child: const Text('Eliminar'),
+                ),
+                const SizedBox(width: 8),
+
+                // Botó per cancel·lar
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text(
+                    'Cancel·lar',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ),
+
+                // Botó per guardar els canvis
+                ElevatedButton(
+                  onPressed: () async {
+                    if (name.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('El nom és obligatori'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      return;
+                    }
+
+                    try {
+                      // Tanquem el diàleg d'edició
+                      Navigator.pop(context);
+
+                      // Mostrem l'indicador de càrrega amb Overlay
+                      final overlay = Overlay.of(context);
+                      final overlayEntry = OverlayEntry(
+                        builder: (context) => const Material(
+                          color: Colors.black54,
+                          child: Center(child: CircularProgressIndicator()),
+                        ),
+                      );
+
+                      overlay.insert(overlayEntry);
+
+                      // Actualitzem la playlist
+                      await _playlistService.updatePlaylist(
+                        playlistId: playlist!.id,
+                        name: name,
+                        description: description,
+                        coverURL: coverURL,
+                        isPublic: isPublic,
+                      );
+
+                      // Eliminem l'Overlay de càrrega
+                      overlayEntry.remove();
+
+                      // Recarreguem les dades
+                      await _loadPlaylistAndSongs();
+
+                      // Mostrem missatge d'èxit
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Playlist "${name}" actualitzada'),
+                          backgroundColor: Colors.green,
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    } catch (e) {
+                      // En cas d'error, intentem netejar l'overlay
+                      try {
+                        final overlay = Overlay.of(context);
+                        // No podem eliminar l'overlay específic, però podem mostrar l'error
+                      } catch (_) {}
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Error: ${e.toString()}'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+                  child: const Text('Guardar'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    // Construir la interfície d'usuari
+    // Si està carregant, mostrem un indicador
     if (isLoading) {
-      // Si està carregant
       return const Scaffold(
-        // Pantalla d'espera
-        backgroundColor: Color(0xFF121212), // Fons fosc
-        body: Center(
-          child: CircularProgressIndicator(),
-        ), // Indicador de càrrega
+        backgroundColor: Color(0xFF121212),
+        body: Center(child: CircularProgressIndicator()),
       );
     }
 
+    // Si no es troba la playlist, mostrem un missatge d'error
     if (playlist == null) {
-      // Si no es troba la playlist
       return const Scaffold(
-        // Pantalla d'error
-        backgroundColor: Color(0xFF121212), // Fons fosc
+        backgroundColor: Color(0xFF121212),
         body: Center(
-          // Centrar el missatge
           child: Text(
-            // Missatge d'error
-            "Playlist no trobada", // Text del missatge
-            style: TextStyle(color: Colors.white), // Estil del text
+            "Playlist no trobada",
+            style: TextStyle(color: Colors.white),
           ),
         ),
       );
     }
 
     return Scaffold(
-      // Pantalla de detall de la playlist
-      backgroundColor: Color(0xFF121212), // Fons fosc
+      backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
-        // Barra d'aplicació
-        title: Text(playlist!.name), // Nom de la playlist
-        backgroundColor: Colors.transparent, // Fons transparent
-        elevation: 0, // Sense ombra
-        iconTheme: IconThemeData(color: Colors.white), // Color dels icones
+        title: Text(playlist!.name),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+        actions: _isOwner
+            ? [
+                PopupMenuButton<String>(
+                  icon: const Icon(Icons.more_vert, color: Colors.white),
+                  color: Colors.grey[900],
+                  onSelected: (value) {
+                    if (value == 'edit') {
+                      _showEditPlaylistDialog();
+                    } else if (value == 'manage') {
+                      // Navegem al gestor complet de playlists
+                      PlaylistManager.showPlaylistManager(
+                        context: context,
+                        playerService: widget.playerService,
+                        playlistService: _playlistService,
+                        onPlaylistUpdated: () {
+                          // Recarreguem les dades quan s'actualitzi una playlist
+                          _loadPlaylistAndSongs();
+                        },
+                      );
+                    } else if (value == 'delete') {
+                      _confirmDeletePlaylist();
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    const PopupMenuItem<String>(
+                      value: 'edit',
+                      child: Row(
+                        children: [
+                          Icon(Icons.edit, color: Colors.white, size: 20),
+                          SizedBox(width: 8),
+                          Text('Editar', style: TextStyle(color: Colors.white)),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem<String>(
+                      value: 'manage',
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.playlist_play,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                          SizedBox(width: 8),
+                          Text(
+                            'Gestionar Playlists',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem<String>(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          Icon(Icons.delete, color: Colors.red, size: 20),
+                          SizedBox(width: 8),
+                          Text('Eliminar', style: TextStyle(color: Colors.red)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ]
+            : [],
       ),
       body: SingleChildScrollView(
-        // Contingut desplaçable
         child: Padding(
-          // Espaiat
-          padding: const EdgeInsets.all(16), // Espaiat de 16 píxels
+          padding: const EdgeInsets.all(16),
           child: Column(
-            // Columna de contingut
-            crossAxisAlignment: CrossAxisAlignment.start, // Alineació a l'inici
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // PORTADA
+              // Portada de la playlist
               Center(
                 child: ClipRRect(
-                  // Contenidor amb cantonades arrodonides
-                  borderRadius: BorderRadius.circular(
-                    12,
-                  ), // Radi de les cantonades
+                  borderRadius: BorderRadius.circular(12),
                   child: Container(
-                    // Contenidor de la imatge
                     width: 225,
                     height: 225,
                     color: Colors.grey[900],
                     child: (playlist!.coverURL.isNotEmpty)
                         ? Image.network(
-                            // Carregar la imatge de la portada
-                            playlist!.coverURL, // URL de la portada
-                            width: 225, //  Amplada de la imatge
-                            height: 225, // Alçada de la imatge
-                            fit:
-                                BoxFit.cover, // Ajustar la imatge al contenidor
+                            playlist!.coverURL,
+                            width: 225,
+                            height: 225,
+                            fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) {
-                              // Gestió d'errors en carregar la imatge
                               return Center(
-                                // Centrar el contingut
                                 child: Icon(
-                                  // Icona per defecte
-                                  Icons.music_note, // Icona de nota musical
+                                  Icons.music_note,
                                   color: Colors.white,
                                   size: 50,
                                 ),
@@ -237,25 +758,22 @@ class _PlaylistDetailScreenState extends State<PlaylistDetailScreen> {
 
               const SizedBox(height: 16),
 
-              // NOMBRE DE LA PLAYLIST
+              // Nom de la playlist
               Text(
-                // Nom de la playlist
-                playlist!.name, // Nom de la playlist
+                playlist!.name,
                 style: const TextStyle(
-                  // Estil del text
-                  color: Colors.white, // Color blanc
-                  fontSize: 24, // Mida de la font
-                  fontWeight: FontWeight.bold, // Font en negreta
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
 
               const SizedBox(height: 8),
 
-              // INFO ADICIONAL
+              // Informació addicional
               Row(
-                // Fila d'informació addicional
                 children: [
-                  // BOTONS DE PLAY I SHUFFLE
+                  // Botons de reproducció
                   Row(
                     children: [
                       ElevatedButton(
@@ -268,10 +786,8 @@ class _PlaylistDetailScreenState extends State<PlaylistDetailScreen> {
                               isCurrentPlaylist;
 
                           if (isPlaying) {
-                            // Si ja està reproduint aquesta playlist → pause
                             await widget.playerService.pause();
                           } else {
-                            // Si no → reproduir la playlist des del principi
                             await widget.playerService.playPlaylist(
                               songs,
                               widget.playlistId,
@@ -279,11 +795,11 @@ class _PlaylistDetailScreenState extends State<PlaylistDetailScreen> {
                             );
                           }
 
-                          setState(() {}); // Actualitzar la UI
+                          setState(() {});
                         },
                         style: ElevatedButton.styleFrom(
-                          shape: CircleBorder(),
-                          padding: EdgeInsets.all(20),
+                          shape: const CircleBorder(),
+                          padding: const EdgeInsets.all(20),
                           backgroundColor: Colors.blueAccent,
                         ),
                         child: Icon(
@@ -300,9 +816,7 @@ class _PlaylistDetailScreenState extends State<PlaylistDetailScreen> {
                       IconButton(
                         onPressed: () {
                           widget.playerService.toggleShuffle();
-                          setState(
-                            () {},
-                          ); // Actualitzar la UI per mostrar l'estat del shuffle
+                          setState(() {});
                         },
                         icon: Icon(
                           Icons.shuffle,
@@ -316,12 +830,11 @@ class _PlaylistDetailScreenState extends State<PlaylistDetailScreen> {
                   ),
                   const SizedBox(height: 60),
 
-                  // Elements de la fila
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Nombre de cançons + durada
+                        // Nombre de cançons i durada
                         Text(
                           "${_getSongCount()} cançons • ${_getPlaylistDurationInMinutes().toStringAsFixed(1)} min",
                           style: const TextStyle(
@@ -331,7 +844,7 @@ class _PlaylistDetailScreenState extends State<PlaylistDetailScreen> {
                         ),
                         const SizedBox(height: 4),
 
-                        // Públic / Privat
+                        // Informació de visibilitat i data de creació
                         Row(
                           children: [
                             Icon(
@@ -360,6 +873,29 @@ class _PlaylistDetailScreenState extends State<PlaylistDetailScreen> {
                               ),
                           ],
                         ),
+
+                        // Indicador de propietari
+                        if (_isOwner)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.person,
+                                  color: Colors.green,
+                                  size: 14,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  "La teva playlist",
+                                  style: TextStyle(
+                                    color: Colors.green,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                       ],
                     ),
                   ),
@@ -368,82 +904,145 @@ class _PlaylistDetailScreenState extends State<PlaylistDetailScreen> {
 
               const SizedBox(height: 20),
 
-              // LISTA DE CANCIONES
-              if (isLoadingSongs) // Si està carregant les cançons
+              // Llista de cançons
+              if (isLoadingSongs)
                 Center(
-                  // Centrar l'indicador de càrrega
                   child: Padding(
-                    // Espaiat
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 20,
-                    ), // Espaiat vertical
-                    child: CircularProgressIndicator(
-                      color: Colors.blueAccent,
-                    ), // Indicador de càrrega
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    child: CircularProgressIndicator(color: Colors.blueAccent),
                   ),
                 )
-              else if (songs.isEmpty) // Si no hi ha cançons
+              else if (songs.isEmpty)
                 Center(
                   child: Padding(
-                    // Espaiat
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 40,
-                    ), // Espaiat vertical
+                    padding: const EdgeInsets.symmetric(vertical: 40),
                     child: Column(
-                      // Columna de contingut
                       children: [
-                        // Elements de la columna
                         Icon(
-                          Icons.music_off, // Icona de sense cançons
-                          color: Colors.grey[600], // Color gris
-                          size: 60, // Mida de la icona
+                          Icons.music_off,
+                          color: Colors.grey[600],
+                          size: 60,
                         ),
-                        SizedBox(height: 16), // Espaiat entre icona i text
+                        const SizedBox(height: 16),
                         Text(
-                          // Missatge d'absència de cançons
-                          "Esta playlist es buida", // Text del missatge
+                          "Esta playlist es buida",
                           style: TextStyle(
-                            // Estil del text
                             color: Colors.grey[400],
                             fontSize: 18,
                           ),
                         ),
+                        if (_isOwner)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 16),
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Afegeix cançons desde el menú de cada cançó',
+                                    ),
+                                    backgroundColor: Colors.blue,
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.add, color: Colors.white),
+                              label: const Text('Afegir cançons'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.blue,
+                              ),
+                            ),
+                          ),
                       ],
                     ),
                   ),
                 )
-              else // Si hi ha cançons
+              else
                 ListView.builder(
-                  // Llista de cançons
-                  shrinkWrap: true, // Ajustar la mida al contingut
-                  physics:
-                      const NeverScrollableScrollPhysics(), // Desactivar desplaçament
-                  itemCount: songs.length, // Nombre de cançons
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: songs.length,
                   itemBuilder: (context, index) {
-                    // Construir cada element de la llista
-                    final song = songs[index]; // Cançó actual
-                    return SongListItem(
-                      // Element de la llista de cançons
-                      song: song, // Cançó a mostrar
-                      index: index + 1, // Índex de la cançó
-                      playerService:
-                          widget.playerService, // Servei de reproductor
-                      onTap: () async {
-                        await widget.playerService.playPlaylist(
-                          songs,
-                          widget.playlistId,
-                          startIndex: index,
-                        );
+                    final song = songs[index];
+                    return Dismissible(
+                      key: Key(song.id),
+                      direction: _isOwner
+                          ? DismissDirection.endToStart
+                          : DismissDirection.none,
+                      background: Container(
+                        color: Colors.red,
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.only(right: 20),
+                        child: const Icon(
+                          Icons.delete,
+                          color: Colors.white,
+                          size: 30,
+                        ),
+                      ),
+                      confirmDismiss: _isOwner
+                          ? (direction) async {
+                              // Mostrem diàleg de confirmació per eliminar la cançó
+                              final result = await showDialog(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  backgroundColor: Colors.grey[900],
+                                  title: const Text(
+                                    'Eliminar cançó',
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                  content: Text(
+                                    'Vols eliminar "${song.name}" d\'aquesta playlist?',
+                                    style: const TextStyle(color: Colors.grey),
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(context, false),
+                                      child: const Text(
+                                        'Cancel·lar',
+                                        style: TextStyle(color: Colors.grey),
+                                      ),
+                                    ),
+                                    ElevatedButton(
+                                      onPressed: () =>
+                                          Navigator.pop(context, true),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.red,
+                                      ),
+                                      child: const Text('Eliminar'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                              return result == true;
+                            }
+                          : null,
+                      onDismissed: _isOwner
+                          ? (direction) {
+                              _removeSongFromPlaylist(song.id);
+                            }
+                          : null,
+                      child: SongListItem(
+                        song: song,
+                        index: index + 1,
+                        playerService: widget.playerService,
+                        onTap: () async {
+                          await widget.playerService.playPlaylist(
+                            songs,
+                            widget.playlistId,
+                            startIndex: index,
+                          );
 
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => PlayerScreen(
-                              playerService: widget.playerService,
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => PlayerScreen(
+                                playerService: widget.playerService,
+                              ),
                             ),
-                          ),
-                        );
-                      },
+                          );
+                        },
+                      ),
                     );
                   },
                 ),

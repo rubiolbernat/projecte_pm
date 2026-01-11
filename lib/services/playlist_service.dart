@@ -33,19 +33,6 @@ class PlaylistService {
 
   //////////////////////////////////////////////////////////////////////////////
 
-  static Future<void> updatePlaylist(Playlist playlist) async {
-    try {
-      await FirebaseFirestore.instance
-          .collection("playlists")
-          .doc(playlist.id)
-          .update(playlist.toMap());
-    } catch (e) {
-      throw Exception('Error actualitzant Playlist $e');
-    }
-  }
-
-  //////////////////////////////////////////////////////////////////////////////
-
   // Petició de les playlists d'un usuari
 
   Future<List<Playlist>> getUserPlaylists(String userId) async {
@@ -279,6 +266,74 @@ class PlaylistService {
     } catch (e) {
       print("Error en removePlaylistFromSaved: $e");
       rethrow;
+    }
+  }
+
+  Future<void> updatePlaylist({
+    required String playlistId,
+    required String name,
+    String description = '',
+    String coverURL = '',
+    bool isPublic = true,
+  }) async {
+    try {
+      final playlistRef = FirebaseFirestore.instance
+          .collection('playlists')
+          .doc(playlistId);
+
+      await playlistRef.update({
+        'name': name,
+        'description': description,
+        'coverURL': coverURL,
+        'isPublic': isPublic,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      print("Error actualitzant playlist: $e");
+      throw Exception("No s'ha pogut actualitzar la playlist: $e");
+    }
+  }
+
+  Future<void> deletePlaylist(String playlistId) async {
+    try {
+      final playlistRef = FirebaseFirestore.instance
+          .collection('playlists')
+          .doc(playlistId);
+      await playlistRef.delete();
+    } catch (e) {
+      print("Error eliminant playlist: $e");
+      throw Exception("No s'ha pogut eliminar la playlist: $e");
+    }
+  }
+
+  Future<void> removeSongFromPlaylist({
+    required String playlistId,
+    required String songId,
+  }) async {
+    try {
+      final playlistRef = _firestore.collection('playlists').doc(playlistId);
+      final playlistDoc = await playlistRef.get();
+
+      if (!playlistDoc.exists) {
+        throw Exception('Playlist no trobada');
+      }
+
+      final playlistData = playlistDoc.data() as Map<String, dynamic>;
+      final songs = List<Map<String, dynamic>>.from(playlistData['song'] ?? []);
+
+      songs.removeWhere((song) => song['songId'] == songId);
+
+      for (int i = 0; i < songs.length; i++) {
+        songs[i]['trackNumber'] = i + 1;
+      }
+
+      await playlistRef.update({
+        'song': songs,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      print("Error eliminant cançó de playlist: $e");
+      throw Exception("No s'ha pogut eliminar la cançó de la playlist: $e");
     }
   }
 }

@@ -11,6 +11,8 @@ class SongListItem extends StatefulWidget {
   final int? index;
   final VoidCallback?
   onTap; // Acció personalitzada en tocar l'element, aixo es fa per poder amagar la barra de reprodució quan entrem a la pantalla de reproducció
+  final bool showContextMenu;
+  final VoidCallback? onRemoveFromPlaylist;
 
   const SongListItem({
     super.key,
@@ -18,6 +20,8 @@ class SongListItem extends StatefulWidget {
     this.onTap, // Acció personalitzada en tocar l'element
     required this.song,
     required this.playerService,
+    this.showContextMenu = false,
+    this.onRemoveFromPlaylist,
   });
 
   @override
@@ -35,134 +39,136 @@ class _SongListItemState extends State<SongListItem> {
   }
 
   @override
-Widget build(BuildContext context) {
-  final currentSong = widget.playerService.currentSong;
-  final currentPlaylistId = widget.playerService.currentPlaylistId;
+  Widget build(BuildContext context) {
+    final currentSong = widget.playerService.currentSong;
+    final currentPlaylistId = widget.playerService.currentPlaylistId;
 
-  // Comparacions
-  final isCurrentSong = currentSong?.id == widget.song.id;
-  final isFromCurrentPlaylist = currentPlaylistId != null; // Si vols només marcar les cançons de la cua actual
+    // Comparacions
+    final isCurrentSong = currentSong?.id == widget.song.id;
+    final isFromCurrentPlaylist =
+        currentPlaylistId !=
+        null; // Si vols només marcar les cançons de la cua actual
 
-  // Color del text de la cançó
-  final textColor = isCurrentSong
-      ? Colors.blueAccent
-      : isFromCurrentPlaylist
-          ? Colors.white
-          : Colors.grey;
+    // Color del text de la cançó
+    final textColor = isCurrentSong
+        ? Colors.blueAccent
+        : isFromCurrentPlaylist
+        ? Colors.white
+        : Colors.grey;
 
-  final isPlaying = isCurrentSong && widget.playerService.isPlaying;
+    final isPlaying = isCurrentSong && widget.playerService.isPlaying;
 
-  return MouseRegion(
-    onEnter: (_) => setState(() => isHovering = true),
-    onExit: (_) => setState(() => isHovering = false),
-    child: ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: SizedBox(
-        width: 32,
-        child: Center(
-          child: isHovering
-              ? IconButton(
-                  icon: Icon(
-                    isPlaying ? Icons.pause : Icons.play_arrow,
-                    color: Colors.white,
-                  ),
-                  onPressed: () {
-                    if (isCurrentSong) {
-                      widget.playerService.playPause();
-                    } else {
-                      widget.playerService.playSongFromId(widget.song.id);
-                    }
-                    setState(() {});
-                  },
-                )
-              : Text(
-                  (widget.index ?? "").toString(),
-                  style: TextStyle(color: Colors.grey),
-                ),
-        ),
-      ),
-      title: Row(
-        children: [
-          Expanded(
-            child: Text(
-              widget.song.name,
-              style: TextStyle(color: textColor),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.add_circle_outline, color: Colors.grey),
-            tooltip: 'Afegir a la playlist',
-            onPressed: () {
-              AddToPlaylistButton.showAddToPlaylistDialog(
-                context: context,
-                songId: widget.song.id,
-                playerService: widget.playerService,
-                playlistService: playlistService,
-              );
-            },
-          ),
-        ],
-      ),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.access_time, size: 16, color: Colors.grey),
-          const SizedBox(width: 4),
-          Text(
-            widget.song.duration.toStringAsFixed(2),
-            style: const TextStyle(color: Colors.grey),
-          ),
-          const SizedBox(width: 8),
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert, color: Colors.grey),
-            onSelected: (value) {
-              switch (value) {
-                case 'queue':
-                  widget.playerService.addNext(widget.song);
-                  break;
-                case 'playlist':
-                  AddToPlaylistButton.showAddToPlaylistDialog(
-                    context: context,
-                    songId: widget.song.id,
-                    playerService: widget.playerService,
-                    playlistService: playlistService,
-                  );
-                  break;
-                case 'artist':
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => ArtistDetailScreen(
-                        artistId: widget.song.artistId,
-                        playerService: widget.playerService,
-                      ),
+    return MouseRegion(
+      onEnter: (_) => setState(() => isHovering = true),
+      onExit: (_) => setState(() => isHovering = false),
+      child: ListTile(
+        contentPadding: EdgeInsets.zero,
+        leading: SizedBox(
+          width: 32,
+          child: Center(
+            child: isHovering
+                ? IconButton(
+                    icon: Icon(
+                      isPlaying ? Icons.pause : Icons.play_arrow,
+                      color: Colors.white,
                     ),
-                  );
-                  break;
-              }
-            },
-            itemBuilder: (context) => const [
-              PopupMenuItem(value: 'queue', child: Text('Afegeix a la cua')),
-              PopupMenuItem(
-                value: 'playlist',
-                child: Text('Afegeix a una playlist'),
-              ),
-              PopupMenuItem(value: 'artist', child: Text('Ves a l’artista')),
-            ],
+                    onPressed: () {
+                      if (isCurrentSong) {
+                        widget.playerService.playPause();
+                      } else {
+                        widget.playerService.playSongFromId(widget.song.id);
+                      }
+                      setState(() {});
+                    },
+                  )
+                : Text(
+                    (widget.index ?? "").toString(),
+                    style: TextStyle(color: Colors.grey),
+                  ),
           ),
-        ],
+        ),
+        title: Row(
+          children: [
+            Expanded(
+              child: Text(
+                widget.song.name,
+                style: TextStyle(color: textColor),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.add_circle_outline, color: Colors.grey),
+              tooltip: 'Afegir a la playlist',
+              onPressed: () {
+                AddToPlaylistButton.showAddToPlaylistDialog(
+                  context: context,
+                  songId: widget.song.id,
+                  playerService: widget.playerService,
+                  playlistService: playlistService,
+                );
+              },
+            ),
+          ],
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.access_time, size: 16, color: Colors.grey),
+            const SizedBox(width: 4),
+            Text(
+              widget.song.duration.toStringAsFixed(2),
+              style: const TextStyle(color: Colors.grey),
+            ),
+            const SizedBox(width: 8),
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert, color: Colors.grey),
+              onSelected: (value) {
+                switch (value) {
+                  case 'queue':
+                    widget.playerService.addNext(widget.song);
+                    break;
+                  case 'playlist':
+                    AddToPlaylistButton.showAddToPlaylistDialog(
+                      context: context,
+                      songId: widget.song.id,
+                      playerService: widget.playerService,
+                      playlistService: playlistService,
+                    );
+                    break;
+                  case 'artist':
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => ArtistDetailScreen(
+                          artistId: widget.song.artistId,
+                          playerService: widget.playerService,
+                        ),
+                      ),
+                    );
+                    break;
+                }
+              },
+              itemBuilder: (context) => const [
+                PopupMenuItem(value: 'queue', child: Text('Afegeix a la cua')),
+                PopupMenuItem(
+                  value: 'playlist',
+                  child: Text('Afegeix a una playlist'),
+                ),
+                PopupMenuItem(value: 'artist', child: Text('Ves a l’artista')),
+              ],
+            ),
+          ],
+        ),
+        onTap:
+            widget.onTap ??
+            () {
+              if (isCurrentSong) {
+                widget.playerService.playPause();
+              } else {
+                widget.playerService.playSongFromId(widget.song.id);
+              }
+              setState(() {});
+            },
       ),
-      onTap: widget.onTap ??
-          () {
-            if (isCurrentSong) {
-              widget.playerService.playPause();
-            } else {
-              widget.playerService.playSongFromId(widget.song.id);
-            }
-            setState(() {});
-          },
-    ),
-  );
-}
-
+    );
+  }
 }
