@@ -13,10 +13,7 @@ import 'package:projecte_pm/services/AlbumService.dart';
 
 class SearchPage extends StatefulWidget {
   final PlayerService playerService;
-  const SearchPage({
-    super.key,
-    required this.playerService,
-  });
+  const SearchPage({super.key, required this.playerService});
 
   @override
   State<SearchPage> createState() => _SearchPageState();
@@ -72,8 +69,7 @@ class _SearchPageState extends State<SearchPage> {
                   borderSide: BorderSide.none,
                 ),
               ),
-              onChanged: (value) =>
-                  setState(() => query = value.trim().toLowerCase()),
+              onChanged: (value) => setState(() => query = value.trim()),
             ),
             const SizedBox(height: 16),
             Row(
@@ -170,7 +166,8 @@ class _SearchPageState extends State<SearchPage> {
                                     type: type == 'playlist'
                                         ? SaveType.playlist
                                         : SaveType.album,
-                                    userService: widget.playerService.userService,
+                                    userService:
+                                        widget.playerService.userService,
                                     contentService: type == 'playlist'
                                         ? playlistService
                                         : albumService,

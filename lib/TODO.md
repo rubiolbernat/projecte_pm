@@ -2,17 +2,17 @@ COSES A FER:
 
 - Fer pantalla Profile de Artist, aqui veura les seves estadistiques.
 
-- Fer que l'artista no pugui reproduir musica o afeir la barra de reproducció, ara pot reproduir pero no surt la barra. El mes sencill jo crec que es que no pugui reproduir.
-
 - Quan es fa que un album sigui privat es continua mostrant de forma publica, segurament tambe pasa amb les playlist, no ho he pogut provar.
 
-- Les playlist es creen pero no s'asocien be amb el user, he creat varies playlist i no les puc editar/eliminar.
+- Les playlist es creen pero no s'asocien be amb el user, he creat varies playlist i no surten a la meva biblioteca, no les puc editar/eliminar.
 
-- En web es veu be la icona a l'hora d'iniciar sesió de spotyupc pero en android no carrega. Si dema no esta corregit fare que agafi l'icona desde una url.
+- Si entras a un album surt per un instant una pantalla vermella.
+
+- No hem carrega el logo de spotyupc quan inicio sesio en el mobil, en chrome si hem carrega, deu ser per algun tema de assets.
 
 COSES A MILLORAR:
 
-- Fer que seguidors i seguint siguin dos butons, quan es premin que s'obri una llista de les persones que segueixes o les que et segueixen com a una xarxa social.
+- Millorar les estadistiques.
 
 - Fer que s'arroseguin les pistes en editar album només desde la icona.
 
