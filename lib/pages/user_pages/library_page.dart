@@ -17,12 +17,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:projecte_pm/widgets/user_app_bar_widget.dart';
 
 class LibraryPage extends StatefulWidget {
-  final UserService userService;
   final PlayerService playerService;
 
   const LibraryPage({
     super.key,
-    required this.userService,
     required this.playerService,
   });
 
@@ -91,7 +89,7 @@ class _LibraryPageState extends State<LibraryPage> {
     //Metode per trobar les playlists del user
     try {
       final List<Playlist> playlists = [];
-      final user = widget.userService.user;
+      final user = widget.playerService.userService.user;
 
       if (user.ownedPlaylist == null || user.ownedPlaylist!.isEmpty) {
         return [];
@@ -123,7 +121,7 @@ class _LibraryPageState extends State<LibraryPage> {
     //Carreguem playlists guardades per l'usuari
     try {
       final List<Playlist> playlists = [];
-      final user = widget.userService.user;
+      final user = widget.playerService.userService.user;
 
       if (user.savedPlaylist == null) {
         // Per si un cas
@@ -156,7 +154,7 @@ class _LibraryPageState extends State<LibraryPage> {
     // Mateixa dinamica que savedPlaylists pero per la colleccio album
     try {
       final List<Album> albums = [];
-      final user = widget.userService.user;
+      final user = widget.playerService.userService.user;
 
       if (user.savedAlbum == null || user.savedAlbum!.isEmpty) {
         return [];
@@ -185,7 +183,7 @@ class _LibraryPageState extends State<LibraryPage> {
   Future<List<Artist>> _loadFollowedArtists() async {
     try {
       final List<Artist> followedArtists = [];
-      final currentUserId = widget.userService.user.id;
+      final currentUserId = widget.playerService.userService.user.id;
 
       if (currentUserId.isEmpty) {
         return [];
@@ -235,7 +233,7 @@ class _LibraryPageState extends State<LibraryPage> {
     // Carrega de cançons amb like
     try {
       final List<Song> likedSongs = [];
-      final currentUserId = widget.userService.user.id;
+      final currentUserId = widget.playerService.userService.user.id;
 
       if (currentUserId.isEmpty) {
         return [];
@@ -548,7 +546,6 @@ class _LibraryPageState extends State<LibraryPage> {
         builder: (_) => AlbumDetailScreen(
           albumId: album.id,
           playerService: widget.playerService,
-          userService: widget.userService,
           playlistService: _playlistService,
         ),
       ),
@@ -750,7 +747,7 @@ class _LibraryPageState extends State<LibraryPage> {
             ),
             const SizedBox(height: 5),
             Text(
-              "Benvingut, ${widget.userService.user.name}!",
+              "Benvingut, ${widget.playerService.userService.user.name}!",
               style: TextStyle(fontSize: 14, color: Colors.grey.shade400),
             ),
             const SizedBox(height: 20),
@@ -822,7 +819,7 @@ class _LibraryPageState extends State<LibraryPage> {
   Widget build(BuildContext context) {
     // Handler d'errors
     return Scaffold(
-      appBar: AppBarWidget(userService: widget.userService, playerService: widget.playerService),
+      appBar: AppBarWidget(playerService: widget.playerService),
       body: _isLoading
           ? const Center(
               child: CircularProgressIndicator(color: Colors.blueAccent),

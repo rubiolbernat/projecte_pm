@@ -28,7 +28,6 @@ class LibraryNavigator extends StatelessWidget {
           builder: (_) => ArtistLibraryPage(
             artistService: artistService,
             playerService: playerService,
-            userService: userService,
           ),
         );
       },

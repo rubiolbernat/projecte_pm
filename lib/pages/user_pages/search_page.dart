@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:projecte_pm/services/UserService.dart';
 import '../detail_screen/album_detail_screen.dart';
 import 'package:projecte_pm/pages/detail_screen/song_detail_screen.dart';
 import 'package:projecte_pm/pages/detail_screen/playlist_detail_screen.dart';
@@ -13,11 +12,9 @@ import 'package:projecte_pm/widgets/save_content.dart';
 import 'package:projecte_pm/services/AlbumService.dart';
 
 class SearchPage extends StatefulWidget {
-  final UserService userService;
   final PlayerService playerService;
   const SearchPage({
     super.key,
-    required this.userService,
     required this.playerService,
   });
 
@@ -53,10 +50,10 @@ class _SearchPageState extends State<SearchPage> {
 
   @override
   Widget build(BuildContext context) {
-    final currentUserId = widget.userService.currentUserId;
+    final currentUserId = widget.playerService.userService.currentUserId;
 
     return Scaffold(
-      appBar: AppBarWidget(userService: widget.userService, playerService: widget.playerService),
+      appBar: AppBarWidget(playerService: widget.playerService),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -86,7 +83,7 @@ class _SearchPageState extends State<SearchPage> {
             const SizedBox(height: 16),
             Expanded(
               child: FutureBuilder<List<Map<String, dynamic>>>(
-                future: widget.userService.getGlobalNewReleases(
+                future: widget.playerService.userService.getGlobalNewReleases(
                   name: query.isEmpty ? null : query,
                   readSongs: _effectiveFilter('song'),
                   readAlbums: _effectiveFilter('album'),
@@ -173,7 +170,7 @@ class _SearchPageState extends State<SearchPage> {
                                     type: type == 'playlist'
                                         ? SaveType.playlist
                                         : SaveType.album,
-                                    userService: widget.userService,
+                                    userService: widget.playerService.userService,
                                     contentService: type == 'playlist'
                                         ? playlistService
                                         : albumService,
@@ -290,7 +287,6 @@ class _SearchPageState extends State<SearchPage> {
           MaterialPageRoute(
             builder: (_) => AlbumDetailScreen(
               albumId: item['id'],
-              userService: widget.userService,
               playerService: widget.playerService,
               playlistService:
                   PlaylistService(), // Afegit perque el albumdetailscreen ara necessita playlistservice

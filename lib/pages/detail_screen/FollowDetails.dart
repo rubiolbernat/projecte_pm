@@ -19,15 +19,16 @@ class FollowDetails extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final followers = user.follower ?? [];
+    final following = user.following ?? [];
+
+    final ids = isFollower ? followers : following;
 
     return Scaffold(
       appBar: AppBar(
         title: Text(isFollower ? 'Seguidors' : 'Seguint'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
+          onPressed: () => Navigator.of(context).pop(),
         ),
       ),
       body: Padding(
@@ -68,8 +69,8 @@ class FollowDetails extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '${followers.length} seguidors · ${user.following?.length ?? 0} seguint',
-                          style: TextStyle(color: Colors.grey),
+                          '${followers.length} seguidors · ${following.length} seguint',
+                          style: const TextStyle(color: Colors.grey),
                         ),
                       ],
                     ),
@@ -88,22 +89,22 @@ class FollowDetails extends StatelessWidget {
             const SizedBox(height: 8),
 
             Expanded(
-              child: followers.isEmpty
+              child: ids.isEmpty
                   ? Center(
                       child: Text(
                         isFollower
-                            ? 'Aquest usuari no el segueix ningú'
+                            ? 'Aquest usuari no té seguidors'
                             : 'Aquest usuari no segueix ningú',
-                        style: TextStyle(color: Colors.grey),
+                        style: const TextStyle(color: Colors.grey),
                       ),
                     )
                   : ListView.builder(
-                      itemCount: followers.length,
+                      itemCount: ids.length,
                       itemBuilder: (context, index) {
-                        final followerId = followers[index].id;
+                        final userId = ids[index].id;
 
                         return FutureBuilder<User?>(
-                          future: UserService.getUser(followerId),
+                          future: UserService.getUser(userId),
                           builder: (context, snapshot) {
                             if (snapshot.connectionState ==
                                 ConnectionState.waiting) {
@@ -124,43 +125,40 @@ class FollowDetails extends StatelessWidget {
                               );
                             }
 
-                            final followerUser = snapshot.data!;
+                            final listUser = snapshot.data!;
 
                             return ListTile(
                               leading: CircleAvatar(
                                 radius: 22,
-                                backgroundImage:
-                                    followerUser.photoURL.isNotEmpty
-                                    ? NetworkImage(followerUser.photoURL)
+                                backgroundImage: listUser.photoURL.isNotEmpty
+                                    ? NetworkImage(listUser.photoURL)
                                     : null,
-                                child: followerUser.photoURL.isEmpty
+                                child: listUser.photoURL.isEmpty
                                     ? Text(
-                                        followerUser.name[0].toUpperCase(),
+                                        listUser.name[0].toUpperCase(),
                                         style: const TextStyle(
                                           fontWeight: FontWeight.bold,
                                         ),
                                       )
                                     : null,
                               ),
-
                               title: Text(
-                                followerUser.name,
+                                listUser.name,
                                 style: const TextStyle(
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
-
                               subtitle: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  if (followerUser.bio.isNotEmpty)
+                                  if (listUser.bio.isNotEmpty)
                                     Text(
-                                      followerUser.bio,
+                                      listUser.bio,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   Text(
-                                    '${followerUser.followerCount()} seguidors',
+                                    '${listUser.followerCount()} seguidors',
                                     style: TextStyle(
                                       fontSize: 12,
                                       color: Colors.grey[600],
@@ -168,14 +166,12 @@ class FollowDetails extends StatelessWidget {
                                   ),
                                 ],
                               ),
-
                               trailing: const Icon(Icons.chevron_right),
-
                               onTap: () {
                                 Navigator.of(context).push(
                                   MaterialPageRoute(
                                     builder: (_) => UserDetailScreen(
-                                      userId: followerUser.id,
+                                      userId: listUser.id,
                                       playerService: playerService,
                                     ),
                                   ),

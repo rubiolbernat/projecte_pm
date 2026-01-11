@@ -16,7 +16,6 @@ class LandingUserPage extends StatefulWidget {
 }
 
 class _LandingUserPageState extends State<LandingUserPage> {
-  late final UserService _userService;
   late final PlayerService _playerService;
   int _currentIndex = 0;
   bool _isLoading = true;
@@ -39,7 +38,6 @@ class _LandingUserPageState extends State<LandingUserPage> {
     try {
       UserService myUser = await UserService.create(userId: widget.userId);
       _playerService = PlayerService(myUser);
-      _userService = _playerService.userService;
     } catch (e) {
       print(e);
     } finally {
@@ -68,22 +66,18 @@ class _LandingUserPageState extends State<LandingUserPage> {
             children: [
               HomeNavigator(
                 navigatorKey: _navigatorKeys[0],
-                userService: _userService,
                 playerService: _playerService,
               ),
               SearchNavigator(
                 navigatorKey: _navigatorKeys[1],
-                userService: _userService,
                 playerService: _playerService,
               ),
               LibraryNavigator(
                 navigatorKey: _navigatorKeys[2],
-                userService: _userService,
                 playerService: _playerService,
               ),
               CreatePlaylistNavigator(
                 navigatorKey: _navigatorKeys[3],
-                userService: _userService,
                 playerService: _playerService,
               ),
             ],

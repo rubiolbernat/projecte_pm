@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:projecte_pm/models/song.dart';
 import 'package:projecte_pm/pages/detail_screen/artist_detail_screen.dart';
-import 'package:projecte_pm/pages/detail_screen/song_detail_screen.dart';
 import 'package:projecte_pm/services/PlayerService.dart';
 import 'package:projecte_pm/services/playlist_service.dart';
 import 'package:projecte_pm/widgets/add_to_playlist.dart';

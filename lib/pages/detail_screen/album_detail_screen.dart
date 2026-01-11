@@ -7,20 +7,17 @@ import 'package:projecte_pm/models/album.dart';
 import 'package:projecte_pm/models/artist.dart';
 import 'package:projecte_pm/pages/detail_screen/artist_detail_screen.dart';
 import 'package:projecte_pm/services/PlayerService.dart';
-import 'package:projecte_pm/services/UserService.dart';
-import 'package:projecte_pm/services/playlist_service.dart'; // Afegit
+import 'package:projecte_pm/services/playlist_service.dart';
 import 'package:projecte_pm/widgets/SongListItem.dart';
 
 class AlbumDetailScreen extends StatefulWidget {
   final String albumId;
-  final UserService userService;
   final PlayerService playerService;
   final PlaylistService
   playlistService; // Afegit per recordar playlists en el widget
 
   const AlbumDetailScreen({
     required this.albumId,
-    required this.userService,
     required this.playerService,
     required this.playlistService, // Afegit per recordar playlists en el widget
     super.key,
@@ -40,9 +37,9 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
   @override
   void initState() {
     super.initState();
-    user = widget.userService.user;
+    user = widget.playerService.userService.user;
     _loadAlbumAndArtist();
-    for (final item in widget.userService.user.savedAlbum) {
+    for (final item in widget.playerService.userService.user.savedAlbum) {
       if (item.id == widget.albumId) {
         isFavorite = true;
       }
@@ -255,7 +252,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                           album!.removeFollower(user!.id);
                         }
                       });
-                      await widget.userService.updateUser(user!);
+                      await widget.playerService.userService.updateUser(user!);
                       await AlbumService.updateAlbum(album!);
                     },
                     child: Icon(

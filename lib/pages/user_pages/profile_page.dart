@@ -259,7 +259,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                 MaterialPageRoute(
                                   builder: (_) => FollowDetails(
                                     isFollower: true,
-                                    user: user!,
+                                    user: widget.playerService.userService.user,
                                     playerService: widget.playerService,
                                   ),
                                 ),
@@ -280,7 +280,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                 MaterialPageRoute(
                                   builder: (_) => FollowDetails(
                                     isFollower: false,
-                                    user: user!,
+                                    user: widget.playerService.userService.user,
                                     playerService: widget.playerService,
                                   ),
                                 ),

@@ -5,7 +5,6 @@ import 'package:projecte_pm/services/ArtistService.dart';
 import 'package:projecte_pm/services/AlbumService.dart';
 import 'package:projecte_pm/pages/detail_screen/album_detail_screen.dart';
 import 'package:projecte_pm/services/PlayerService.dart';
-import 'package:projecte_pm/services/UserService.dart';
 import 'package:projecte_pm/services/playlist_service.dart'; //Afegit per recordar playlists en el widget
 import 'package:projecte_pm/widgets/FollowArtistButton.dart';
 
@@ -204,7 +203,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                         // Botó de seguir artista
                         FollowArtistButton(
                           artistId: artist!.id,
-                          userService: widget.playerService.userService,
+                          playerService: widget.playerService,
                           showText: true,
                         ),
                       ],
@@ -330,7 +329,6 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                             builder: (_) => AlbumDetailScreen(
                               albumId: album.id,
                               playerService: widget.playerService,
-                              userService: widget.playerService.userService,
                               playlistService:
                                   PlaylistService(), // Afegit per enrecordar playlists anteriors
                             ),
