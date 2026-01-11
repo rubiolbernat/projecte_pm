@@ -182,7 +182,6 @@ class ArtistService {
         totalLikes += likesList.length;
       }
 
-      print("DEBUG - Likes totals calculats: $totalLikes");
       return totalLikes;
     } catch (e) {
       print("Error obtenint likes totals: $e");

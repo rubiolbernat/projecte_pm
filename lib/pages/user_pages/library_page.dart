@@ -213,7 +213,7 @@ class _LibraryPageState extends State<LibraryPage> {
             followedArtists.add(artist);
           }
         } catch (e) {
-          print("Error procesando artista ${doc.id}: $e");
+          print("Error processant artista ${doc.id}: $e");
         }
       }
 

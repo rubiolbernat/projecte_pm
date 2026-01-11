@@ -57,7 +57,7 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
             artist = resultArtist;
           });
         } catch (e) {
-          print("Error cargando artista: $e");
+          print("Error carregant artista: $e");
           // artist permanece null
         }
       }

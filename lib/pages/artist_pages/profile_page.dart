@@ -177,8 +177,7 @@ class _ArtistProfilePageState extends State<ArtistProfilePage> {
   Widget _buildCenteredStatItem(String title, String value) {
     return Column(
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment:
-          CrossAxisAlignment.center, // ← CENTRAT HORITZONTALMENT
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Text(
           value,
@@ -187,13 +186,13 @@ class _ArtistProfilePageState extends State<ArtistProfilePage> {
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
-          textAlign: TextAlign.center, // ← CENTRAT DINS DEL TEXT
+          textAlign: TextAlign.center,
         ),
         SizedBox(height: 4),
         Text(
           title,
           style: TextStyle(color: Colors.grey[400], fontSize: 12),
-          textAlign: TextAlign.center, // ← CENTRAT DINS DEL TEXT
+          textAlign: TextAlign.center,
         ),
       ],
     );
@@ -315,10 +314,7 @@ class _ArtistProfilePageState extends State<ArtistProfilePage> {
           itemBuilder: (context, index) {
             final album = albums[index];
             return GestureDetector(
-              onTap: () {
-                // Aquí deberías navegar al detalle del álbum
-                // Navigator.push(...)
-              },
+              onTap: () {},
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -383,7 +379,6 @@ class _ArtistProfilePageState extends State<ArtistProfilePage> {
   }
 
   Widget _buildArtistInfoSection() {
-    // VERIFICACIÓN AÑADIDA AQUÍ
     if (artist == null) return SizedBox();
 
     return Column(
@@ -485,7 +480,6 @@ class _ArtistProfilePageState extends State<ArtistProfilePage> {
   }
 
   Widget _buildSocialLinks() {
-    // VERIFICACIÓN AÑADIDA AQUÍ
     if (artist == null || artist!.socialLink.isEmpty) return SizedBox();
 
     return Column(

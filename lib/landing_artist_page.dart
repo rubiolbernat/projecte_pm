@@ -50,7 +50,6 @@ class _LandingArtistPageState extends State<LandingArtistPage> {
 
       _playerService = PlayerService(_userService!);
     } catch (e, st) {
-      print("=== ERROR INICIALIZANDO SERVICIOS ===");
       print("Tipus d'error: ${e.runtimeType}");
       print("Stack trace: $st");
 
@@ -99,7 +98,7 @@ class _LandingArtistPageState extends State<LandingArtistPage> {
         playHistory: [],
       );
     } catch (e) {
-      print("Error creando UserService manual: $e");
+      print("Error creant UserService manual: $e");
       return null;
     }
   }

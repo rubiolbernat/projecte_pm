@@ -83,7 +83,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
         });
       }
     } catch (e) {
-      print("Error cargando user: $e");
+      print("Error carregant user: $e");
     } finally {
       setState(() {
         isLoading = false;
@@ -252,8 +252,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                         MaterialPageRoute(
                           builder: (context) => PlaylistDetailScreen(
                             playlistId: playlist.id,
-                            playerService: widget
-                                .playerService, // O crea uno si es necesario
+                            playerService: widget.playerService,
                           ),
                         ),
                       );
