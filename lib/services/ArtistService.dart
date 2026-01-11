@@ -66,16 +66,12 @@ class ArtistService {
   Future<void> updateArtist(Artist artist) async {
     if (_currentArtistRef == null) return;
     try {
-      // Actualitzem només els camps necessaris (excepte ID i email que solen ser fixos)
       await _currentArtistRef!.update(artist.toMap());
     } catch (e) {
       print("Error actualitzant usuari: $e");
-      rethrow; // Llancem l'error perquè la UI sàpiga que ha fallat
+      rethrow;
     }
   }
-
-  //////////////////////////////////////////////////////////////////////////////
-  //**************************************************************************//
 
   static Future<Artist?> getArtist(String artistId) async {
     try {
@@ -84,166 +80,317 @@ class ArtistService {
           .doc(artistId)
           .get();
 
-      if (!doc.exists) return null; //Id no valid, retorna null
+      if (!doc.exists) return null;
 
       final data = doc.data();
-      data!['id'] = doc.id; // añadimos el id del documento
+      data!['id'] = doc.id;
 
       Artist artist = Artist.fromMap(data);
 
-      return artist; //Id valid, retorna album
+      return artist;
     } catch (e) {
       throw Exception('Error obtenint artist: $e');
     }
   }
 
-  //**************************************************************************//
-  //////////////////////////////////////////////////////////////////////////////
+  // Funció auxiliar per formatejar el temps
+  String _formatListeningTime(int seconds) {
+    if (seconds <= 0) return '0 minuts';
+
+    final hours = seconds ~/ 3600;
+    final minutes = (seconds % 3600) ~/ 60;
+    final remainingSeconds = seconds % 60;
+
+    if (hours > 0) {
+      if (minutes > 0) {
+        return '${hours}h ${minutes}m';
+      } else {
+        return '${hours}h';
+      }
+    } else if (minutes > 0) {
+      if (remainingSeconds > 0) {
+        return '${minutes}m ${remainingSeconds}s';
+      } else {
+        return '${minutes} minuts';
+      }
+    } else {
+      return '${seconds} segons';
+    }
+  }
 
   Future<Map<String, dynamic>> getArtistStats() async {
-    // Estadístiques de l'artista
-    if (_currentArtistRef == null)
-      return {}; // Si no hi ha referència, retorna buit
-
     try {
-      // Intentem obtenir les dades
-      final artistData = _artist.toMap(); // Dades de l'artista
-      final stats =
-          artistData['stats'] as Map<String, dynamic>? ?? {}; // Estadístiques
-
-      final songs =
-          await _firestore // Obtenir cançons de l'artista
-              .collection('songs') // Col·lecció de cançons
-              .where('artistId', isEqualTo: _artist.id) // Filtrar per artista
-              .get(); // Obtenir documents
-
-      int totalPlays = 0; // Comptador de reproduccions
-      for (final doc in songs.docs) {
-        // Iterar per cada cançó
-        final songData =
-            doc.data() as Map<String, dynamic>; // Dades de la cançó
-        final songStats =
-            songData['stats'] as Map<String, dynamic>? ??
-            {}; // Estadístiques de la cançó
-        totalPlays +=
-            (songStats['playCount'] as int? ?? 0); // Sumar reproduccions
-      }
-
-      final albums =
-          await _firestore // Obtenir àlbums de l'artista
-              .collection('albums') // Col·lecció d'àlbums
-              .where('artistId', isEqualTo: _artist.id) // Filtrar per artista
-              .get(); // Obtenir documents
+      // Obtenir estadístiques bàsiques
+      final totalLikes = await _getTotalLikes();
+      final totalSongPlays = await _getTotalSongPlays();
 
       return {
-        // Retornar estadístiques
-        'followers': stats['followers'] ?? 0, // Nombre de seguidors
-        'monthlyListeners': stats['monthlyListeners'] ?? 0, // Oients mensuals
-        'totalAlbums': albums.docs.length, // Nombre d'àlbums
-        'totalTracks': songs.docs.length, // Nombre de cançons
-        'totalPlays': totalPlays, // Total de reproduccions
-        'songCount': songs.docs.length, // Nombre de cançons
-        'albumCount': albums.docs.length, // Nombre d'àlbums
+        // Estadístiques principals
+        'totalPlays': totalSongPlays, // Reproduccions totals
+        'totalLikes': totalLikes, // Likes totals ← AQUEST ÉS EL QUE VOLS
+        'songCount': _artist.songCount(),
+        'albumCount': _artist.albumCount(),
+
+        // Temps d'escolta (si el tens implementat)
+        'totalListeningTime': _artist.totalListeningTime,
+        'formattedListeningTime': _formatListeningTime(
+          _artist.totalListeningTime,
+        ),
       };
     } catch (e) {
-      // Capturar errors
-      print("Error obteniendo estadísticas de artista: $e"); // Missatge d'error
-      return {}; // Retornar buit en cas d'error
+      print("Error obtenint estadístiques d'artista: $e");
+      return _getDefaultStats();
+    }
+  }
+
+  // Mètode auxiliar per obtenir reproduccions totals
+  Future<int> _getTotalSongPlays() async {
+    try {
+      final songs = await _firestore
+          .collection('songs')
+          .where('artistId', isEqualTo: _artist.id)
+          .get();
+
+      int totalPlays = 0;
+      for (final songDoc in songs.docs) {
+        final songData = songDoc.data() as Map<String, dynamic>;
+        totalPlays += (songData['playCount'] as int? ?? 0);
+      }
+      return totalPlays;
+    } catch (e) {
+      print("Error obtenint reproduccions totals: $e");
+      return 0;
+    }
+  }
+
+  // Mètode auxiliar per obtenir likes totals
+  Future<int> _getTotalLikes() async {
+    try {
+      // Obtenir totes les cançons de l'artista
+      final songsSnapshot = await _firestore
+          .collection('songs')
+          .where('artistId', isEqualTo: _artist.id)
+          .get();
+
+      int totalLikes = 0;
+
+      for (final songDoc in songsSnapshot.docs) {
+        final songData = songDoc.data() as Map<String, dynamic>;
+
+        // Sumar la llista de likes d'aquesta cançó
+        final likesList = songData['likes'] as List<dynamic>? ?? [];
+        totalLikes += likesList.length;
+      }
+
+      print("DEBUG - Likes totals calculats: $totalLikes");
+      return totalLikes;
+    } catch (e) {
+      print("Error obtenint likes totals: $e");
+      return 0;
+    }
+  }
+
+  // Estadístiques per defecte
+  Map<String, dynamic> _getDefaultStats() {
+    return {
+      'totalPlays': 0,
+      'totalLikes': 0,
+      'songCount': 0,
+      'albumCount': 0,
+      'totalListeningTime': 0,
+      'formattedListeningTime': '0 minuts',
+    };
+  }
+
+  // Mètodes auxiliars (opcionals, si els necessites)
+  Future<int> _getMonthlyListeners() async {
+    try {
+      final now = DateTime.now();
+      final firstDayOfMonth = DateTime(now.year, now.month, 1);
+
+      final monthlyListening = await _firestore
+          .collectionGroup('artistListeningTime')
+          .where('artistId', isEqualTo: _artist.id)
+          .where(
+            'lastListened',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(firstDayOfMonth),
+          )
+          .get();
+
+      return monthlyListening.docs.length;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  Future<int> _getWeeklyListeners() async {
+    try {
+      final now = DateTime.now();
+      final firstDayOfWeek = now.subtract(Duration(days: now.weekday - 1));
+
+      final weeklyListening = await _firestore
+          .collectionGroup('artistListeningTime')
+          .where('artistId', isEqualTo: _artist.id)
+          .where(
+            'lastListened',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(firstDayOfWeek),
+          )
+          .get();
+
+      return weeklyListening.docs.length;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  Future<int> _getUniqueListeners() async {
+    try {
+      final allListeners = await _firestore
+          .collectionGroup('artistListeningTime')
+          .where('artistId', isEqualTo: _artist.id)
+          .get();
+
+      return allListeners.docs.length;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  // Funció per obtenir estadístiques detallades per període (opcional)
+  Future<Map<String, dynamic>> getArtistTimeStats({
+    String? period = 'month',
+  }) async {
+    try {
+      final now = DateTime.now();
+      DateTime startDate;
+
+      switch (period) {
+        case 'day':
+          startDate = DateTime(now.year, now.month, now.day);
+          break;
+        case 'week':
+          startDate = now.subtract(Duration(days: now.weekday - 1));
+          break;
+        case 'year':
+          startDate = DateTime(now.year, 1, 1);
+          break;
+        case 'month':
+        default:
+          startDate = DateTime(now.year, now.month, 1);
+          break;
+      }
+
+      final periodStats = await _firestore
+          .collectionGroup('artistListeningTime')
+          .where('artistId', isEqualTo: _artist.id)
+          .where(
+            'lastListened',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(startDate),
+          )
+          .get();
+
+      int periodTime = 0;
+      final userContributions = <String, int>{};
+
+      for (final doc in periodStats.docs) {
+        final data = doc.data();
+        final seconds = data['totalSeconds'] as int? ?? 0;
+        periodTime += seconds;
+
+        // Obtenir ID d'usuari del path del document
+        final pathParts = doc.reference.path.split('/');
+        if (pathParts.length >= 2) {
+          final userId = pathParts[1];
+          userContributions[userId] =
+              (userContributions[userId] ?? 0) + seconds;
+        }
+      }
+
+      return {
+        'period': period,
+        'totalTime': periodTime,
+        'formattedTime': _formatListeningTime(periodTime),
+        'listenerCount': periodStats.docs.length,
+        'userContributions': userContributions,
+      };
+    } catch (e) {
+      print("Error obtenint estadístiques de temps per període: $e");
+      return {};
+    }
+  }
+
+  // Mètode per incrementar el temps d'escolta de l'artista (per PlayerService)
+  Future<void> incrementArtistListeningTime(int seconds) async {
+    if (_currentArtistRef == null) return;
+
+    try {
+      await _currentArtistRef!.update({
+        'totalListeningTime': FieldValue.increment(seconds),
+        'lastListened': FieldValue.serverTimestamp(),
+      });
+
+      print("Temps incrementat per artista ${_artist.id}: $seconds segons");
+    } catch (e) {
+      print("Error incrementant temps d'artista: $e");
     }
   }
 
   // Obtindre les cancons més populars de l'artista
   Future<List<Map<String, dynamic>>> getTopSongs({int limit = 10}) async {
-    // Limitar a 10 per defecte
-    if (_currentArtistRef == null)
-      return []; // Si no hi ha referència, retorna buit
+    if (_currentArtistRef == null) return [];
 
     try {
-      // Intentem obtenir les dades
-      final songs =
-          await _firestore // Obtenir cançons
-              .collection('songs') // Col·lecció de cançons
-              .where('artistId', isEqualTo: _artist.id) // Filtrar per artista
-              .orderBy(
-                'stats.playCount',
-                descending: true,
-              ) // Ordenar per popularitat
-              .limit(limit) // Limitar resultats
-              .get(); // Obtenir documents
+      final songs = await _firestore
+          .collection('songs')
+          .where('artistId', isEqualTo: _artist.id)
+          .orderBy('playCount', descending: true)
+          .limit(limit)
+          .get();
 
       return songs.docs.map((doc) {
-        // Mapear documents
-        final data = doc.data() as Map<String, dynamic>; // Dades de la cançó
-        final songStats =
-            data['stats'] as Map<String, dynamic>? ?? {}; // Estadístiques
+        final data = doc.data() as Map<String, dynamic>;
+        final likesList = data['likes'] as List<dynamic>? ?? [];
 
         return {
-          // Retornar dades rellevants
-          'id': doc.id, // ID de la cançó
-          'title':
-              data['title'] ??
-              'Sense Titol', // Títol, si no hi ha posem "Sin título", que no hauria de passar
-          'playCount':
-              songStats['playCount'] ??
-              0, // Comptador de reproduccions, si no hi ha, 0
-          'likes':
-              songStats['likes'] ?? 0, // Comptador de likes, si no hi ha, 0
-          'duration':
-              data['duration'] ?? 0, // Durada de la cançó, si no hi ha, 0
-          'coverURL':
-              data['coverURL'] ?? '', // URL de la portada, si no hi ha, buit
+          'id': doc.id,
+          'title': data['name'] ?? 'Sense Titol',
+          'playCount': data['playCount'] ?? 0,
+          'likes': likesList.length,
+          'duration': data['duration'] ?? 0,
+          'coverURL': data['coverURL'] ?? '',
         };
-      }).toList(); // Convertir a llista
+      }).toList();
     } catch (e) {
-      // Capturar errors
-      print("Error obtenint top de cançons: $e"); // Missatge d'error
-      return []; // Retornar buit en cas d'error
+      print("Error obtenint top de cançons: $e");
+      return [];
     }
   }
 
   Future<List<Map<String, dynamic>>> getArtistAlbums() async {
-    // Obtenir àlbums de l'artista
-    if (_currentArtistRef == null)
-      return []; // Si no hi ha referència, retorna buit
+    if (_currentArtistRef == null) return [];
 
     try {
-      // Intentem obtenir les dades
-      final albums =
-          await _firestore // Obtenir àlbums
-              .collection('albums') // Col·lecció d'àlbums
-              .where('artistId', isEqualTo: _artist.id) // Filtrar per artista
-              .orderBy(
-                'stats.playCount',
-                descending: true,
-              ) // Ordenar per popularitat
-              .get(); // Obtenir documents
+      final albums = await _firestore
+          .collection('albums')
+          .where('artistId', isEqualTo: _artist.id)
+          .orderBy('createdAt', descending: true)
+          .get();
 
       return albums.docs.map((doc) {
-        // Mapear documents
-        final data = doc.data() as Map<String, dynamic>; // Dades de l'àlbum
-        final albumStats =
-            data['stats'] as Map<String, dynamic>? ??
-            {}; // Estadístiques, si no hi ha, buit
+        final data = doc.data() as Map<String, dynamic>;
+        final albumSongs = data['albumSong'] as List<dynamic>? ?? [];
 
         return {
-          // Retornar dades rellevants
-          'id': doc.id, // ID de l'àlbum
-          'title':
-              data['title'] ??
-              'Sense Titol', // Títol de l'àlbum, si no hi ha posem "Sense Titol", que no hauria de passar
-          'coverURL':
-              data['coverURL'] ?? '', // URL de la portada, si no hi ha, buit
-          'type': data['type'] ?? 'album', // Tipus d'àlbum, per defecte "album"
-          'playCount':
-              albumStats['playCount'] ??
-              0, // Comptador de reproduccions, si no hi ha, 0
-          'saves':
-              albumStats['saves'] ?? 0, // Comptador de guardats, si no hi ha, 0
-          'totalTracks':
-              albumStats['totalTracks'] ??
-              0, // Nombre total de cançons, si no hi ha, 0
+          'id': doc.id,
+          'title': data['name'] ?? 'Sense Titol',
+          'coverURL': data['coverURL'] ?? '',
+          'type': data['type'] ?? 'album',
+          'playCount': data['playCount'] ?? 0,
+          'saves': data['saves'] ?? 0,
+          'totalTracks': albumSongs.length,
+          'isPublic': data['isPublic'] ?? true,
         };
-      }).toList(); // Convertir a llista
+      }).toList();
     } catch (e) {
       print("Error obtenint albums del artista: $e");
       return [];
@@ -251,7 +398,6 @@ class ArtistService {
   }
 
   Future<void> saveAlbum({
-    // Metode per guardar album
     required String userId,
     required String albumId,
   }) async {
@@ -268,7 +414,6 @@ class ArtistService {
   }
 
   Future<void> removeAlbumFromSaved({
-    // Metode per treure album del guardat
     required String userId,
     required String albumId,
   }) async {
@@ -301,11 +446,10 @@ class ArtistService {
   }
 
   Future<void> addSongToArtist(Song song) async {
-    // Metode afegir per poder editar albums
     try {
       final artistDoc = FirebaseFirestore.instance
           .collection('artists')
-          .doc(artist.id);
+          .doc(_artist.id);
 
       await artistDoc.update({
         'artistSong': FieldValue.arrayUnion([
@@ -319,11 +463,10 @@ class ArtistService {
   }
 
   Future<void> removeSongFromArtist(String songId) async {
-    // Metode afegir per poder editar albums
     try {
       final artistDoc = FirebaseFirestore.instance
           .collection('artists')
-          .doc(artist.id);
+          .doc(_artist.id);
 
       await artistDoc.update({
         'artistSong': FieldValue.arrayRemove([

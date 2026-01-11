@@ -10,7 +10,11 @@ import 'package:projecte_pm/services/PlayerService.dart';
 class ProfilePage extends StatefulWidget {
   final String userId;
   final PlayerService playerService;
-  const ProfilePage({required this.userId, required this.playerService, super.key});
+  const ProfilePage({
+    required this.userId,
+    required this.playerService,
+    super.key,
+  });
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -109,19 +113,18 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildStatsSection() {
-    // Secció d'estadístiques
-    if (isLoadingStats) {
-      // Si està carregant
-      return Center(child: CircularProgressIndicator()); // Indicador de càrrega
+    if (isLoadingStats || user == null) {
+      return Center(child: CircularProgressIndicator());
     }
+
+    // Tot directe de l'objecte User
+    final totalSaved = user!.savedPlaylists.length + user!.savedAlbum.length;
+
     return Column(
-      // Columna
-      crossAxisAlignment: CrossAxisAlignment.start, // Alineació a l'inici
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Fills
-        SizedBox(height: 20), // Espai vertical
+        SizedBox(height: 20),
         Text(
-          // Títol
           "Estadístiques",
           style: TextStyle(
             color: Colors.white,
@@ -131,7 +134,6 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
         SizedBox(height: 16),
         Container(
-          // Contenidor
           decoration: BoxDecoration(
             color: Colors.grey[900]!.withOpacity(0.5),
             borderRadius: BorderRadius.circular(12),
@@ -141,28 +143,21 @@ class _ProfilePageState extends State<ProfilePage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _buildStatItem(
-                // Construir element d'estadística
-                "Playlists", // Títol
-                userStats['ownedPlaylistsCount']?.toString() ??
-                    "0", // Valor de quantes playlists té l'usuari
+                "Playlists",
+                user!.ownedPlaylist.length.toString(),
               ),
               _buildStatItem(
-                // Construir element d'estadística
-                "Guardats", // Títol
-                "${(userStats['savedlaylistsCount'] ?? 0) + (userStats['savedAlbumsCount'] ?? 0)}", // Valor de quantes playlists i àlbums té guardats l'usuari
+                "Guardats",
+                totalSaved.toString(), // ← CORRECTE
               ),
               _buildStatItem(
-                // Construir element d'estadística
-                "Temps escoltat", // Títol
-                _formatListeningTime(
-                  userStats['totalListeningTime'] ?? 0,
-                ), // Valor de temps escoltat
+                "Temps escoltat",
+                _formatListeningTime(userStats['totalListeningTime'] ?? 0),
               ),
               _buildStatItem(
-                // Construir element d'estadística
-                "Reproduccions", // Títol
-                userStats['playHistoryCount']?.toString() ??
-                    "0", // Valor de quantes reproduccions té l'usuari
+                "Reproduccions",
+                (userStats['playHistoryCount'] ?? user!.playHistory())
+                    .toString(),
               ),
             ],
           ),
@@ -254,46 +249,46 @@ class _ProfilePageState extends State<ProfilePage> {
                       const SizedBox(height: 8),
 
                       InkWell(
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => FollowDetails(
-                                    isFollower: true,
-                                    user: widget.playerService.userService.user,
-                                    playerService: widget.playerService,
-                                  ),
-                                ),
-                              );
-                            },
-                            child: Text(
-                              "${user!.followerCount()} seguidors",
-                              style: TextStyle(
-                                color: Colors.grey.shade400,
-                                fontSize: 14,
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => FollowDetails(
+                                isFollower: true,
+                                user: widget.playerService.userService.user,
+                                playerService: widget.playerService,
                               ),
                             ),
+                          );
+                        },
+                        child: Text(
+                          "${user!.followerCount()} seguidors",
+                          style: TextStyle(
+                            color: Colors.grey.shade400,
+                            fontSize: 14,
                           ),
-                          const SizedBox(width: 15),
-                          InkWell(
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => FollowDetails(
-                                    isFollower: false,
-                                    user: widget.playerService.userService.user,
-                                    playerService: widget.playerService,
-                                  ),
-                                ),
-                              );
-                            },
-                            child: Text(
-                              "${user!.followingCount()} seguint",
-                              style: TextStyle(
-                                color: Colors.grey.shade400,
-                                fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(width: 15),
+                      InkWell(
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => FollowDetails(
+                                isFollower: false,
+                                user: widget.playerService.userService.user,
+                                playerService: widget.playerService,
                               ),
                             ),
+                          );
+                        },
+                        child: Text(
+                          "${user!.followingCount()} seguint",
+                          style: TextStyle(
+                            color: Colors.grey.shade400,
+                            fontSize: 14,
                           ),
+                        ),
+                      ),
                     ],
                   ),
                 ),

@@ -146,45 +146,54 @@ class _ArtistProfilePageState extends State<ArtistProfilePage> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildStatItem(
-                "Oients mensuals",
-                _formatMonthlyListeners(artistStats['monthlyListeners'] ?? 0),
+              Expanded(
+                child: _buildCenteredStatItem(
+                  "Temps escoltat",
+                  artistStats['formattedListeningTime'] ?? "0 minuts",
+                ),
               ),
-              _buildStatItem(
-                "Reproduccions totals",
-                _formatTotalPlays(artistStats['totalPlays'] ?? 0),
+              SizedBox(width: 8),
+              Expanded(
+                child: _buildCenteredStatItem(
+                  "Cançons",
+                  artistStats['songCount']?.toString() ?? "0",
+                ),
               ),
-              _buildStatItem(
-                "Cançons",
-                artistStats['songCount']?.toString() ?? "0",
+              SizedBox(width: 8),
+              Expanded(
+                child: _buildCenteredStatItem(
+                  "Àlbums",
+                  artistStats['albumCount']?.toString() ?? "0",
+                ),
               ),
             ],
           ),
         ),
         SizedBox(height: 16),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.grey[900]!.withOpacity(0.5),
-            borderRadius: BorderRadius.circular(12),
+      ],
+    );
+  }
+
+  Widget _buildCenteredStatItem(String title, String value) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment:
+          CrossAxisAlignment.center, // ← CENTRAT HORITZONTALMENT
+      children: [
+        Text(
+          value,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
           ),
-          padding: EdgeInsets.all(16),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildStatItem(
-                "Àlbums",
-                artistStats['albumCount']?.toString() ?? "0",
-              ),
-              _buildStatItem(
-                "Cançons totals",
-                artistStats['totalTracks']?.toString() ?? "0",
-              ),
-              _buildStatItem(
-                "Àlbums totals",
-                artistStats['totalAlbums']?.toString() ?? "0",
-              ),
-            ],
-          ),
+          textAlign: TextAlign.center, // ← CENTRAT DINS DEL TEXT
+        ),
+        SizedBox(height: 4),
+        Text(
+          title,
+          style: TextStyle(color: Colors.grey[400], fontSize: 12),
+          textAlign: TextAlign.center, // ← CENTRAT DINS DEL TEXT
         ),
       ],
     );

@@ -3,6 +3,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:projecte_pm/models/song.dart';
 import 'package:projecte_pm/services/UserService.dart';
+import 'dart:developer';
 
 enum LoopMode { off, one, all }
 
@@ -21,8 +22,16 @@ class PlayerService {
   bool _shuffleEnabled = false;
   LoopMode _loopMode = LoopMode.off;
 
+  // **NOVES VARIABLES PER SEGUIMENT DE TEMPS**
+  String? _currentHistoryDocId; // ID del document d'historial actual
+  DateTime? _playStartTime; // Quan va començar la reproducció actual
+  Timer? _playbackTimer; // Timer per registrar el temps a mesura que avança
+
   PlayerService(this.userService) {
     _audioPlayer.onPlayerComplete.listen((_) async {
+      // **Quan la cançó s'acaba, actualitza el temps**
+      await _updateHistoryDuration();
+
       if (_loopMode == LoopMode.one) {
         await _playCurrent();
         return;
@@ -36,6 +45,13 @@ class PlayerService {
           currentIndex = 0;
           await _playCurrent();
         }
+      }
+    });
+
+    _audioPlayer.onPlayerStateChanged.listen((PlayerState state) async {
+      if (state == PlayerState.stopped || state == PlayerState.completed) {
+        // **Si s'atura o completa, actualitza el temps**
+        await _updateHistoryDuration();
       }
     });
   }
@@ -123,8 +139,19 @@ class PlayerService {
   }
 
   // --- Controls ---
-  Future<void> play() => _audioPlayer.resume();
-  Future<void> pause() => _audioPlayer.pause();
+  Future<void> play() async {
+    if (_audioPlayer.state == PlayerState.paused) {
+      // **Si es reprèn després de pausa, reinicia el timer**
+      _playStartTime = DateTime.now();
+    }
+    await _audioPlayer.resume();
+  }
+
+  Future<void> pause() async {
+    // **Quan es pausa, actualitza el temps fins ara**
+    await _updateHistoryDuration();
+    await _audioPlayer.pause();
+  }
 
   Future<void> playPause() async {
     if (isPlaying) {
@@ -135,6 +162,9 @@ class PlayerService {
   }
 
   Future<void> next() async {
+    // **Abans de canviar de cançó, actualitza el temps de l'actual**
+    await _updateHistoryDuration();
+
     if (currentIndex < _queue.length - 1) {
       currentIndex++;
       await _playCurrent();
@@ -145,6 +175,9 @@ class PlayerService {
   }
 
   Future<void> previous() async {
+    // **Abans de canviar de cançó, actualitza el temps de l'actual**
+    await _updateHistoryDuration();
+
     if (currentIndex > 0) {
       currentIndex--;
       await _playCurrent();
@@ -155,6 +188,9 @@ class PlayerService {
   }
 
   Future<void> playNow(Song song) async {
+    // **Abans de canviar, actualitza temps de l'actual**
+    await _updateHistoryDuration();
+
     _currentPlaylist = null;
     _currentPlaylistId = null;
 
@@ -172,6 +208,9 @@ class PlayerService {
   }
 
   Future<void> playSongFromPlaylist(int index) async {
+    // **Abans de canviar, actualitza temps de l'actual**
+    await _updateHistoryDuration();
+
     if (index >= 0 && index < _queue.length) {
       currentIndex = index;
       await _playCurrent();
@@ -180,6 +219,8 @@ class PlayerService {
 
   Future<void> playSongFromId(String songId) async {
     try {
+      // **Abans de canviar, actualitza temps de l'actual**
+      await _updateHistoryDuration();
       await _audioPlayer.stop();
 
       _queue.clear();
@@ -211,6 +252,62 @@ class PlayerService {
     }
   }
 
+  Future<void> _updateHistoryDuration() async {
+    if (_currentHistoryDocId != null && _playStartTime != null) {
+      final now = DateTime.now();
+      final seconds = now.difference(_playStartTime!).inSeconds;
+
+      // Només actualitza si s'ha escoltat almenys 10 segons
+      if (seconds >= 10) {
+        await userService.updatePlayHistoryDuration(
+          _currentHistoryDocId!,
+          seconds,
+        );
+
+        // **NOU: També registra el temps per a l'artista**
+        if (currentSong != null) {
+          await userService.recordArtistListeningTime(
+            currentSong!.artistId,
+            seconds,
+          );
+        }
+      }
+
+      // Atura el timer si hi ha
+      _playbackTimer?.cancel();
+      _playbackTimer = null;
+    }
+
+    _currentHistoryDocId = null;
+    _playStartTime = null;
+  }
+
+  // I modifica també el timer periodic:
+
+  void _startPlaybackTimer() {
+    _playbackTimer?.cancel();
+
+    _playbackTimer = Timer.periodic(Duration(seconds: 30), (timer) async {
+      if (_currentHistoryDocId != null && _playStartTime != null) {
+        final seconds = DateTime.now().difference(_playStartTime!).inSeconds;
+
+        // Actualitza cada 30 segons
+        await userService.updatePlayHistoryDuration(
+          _currentHistoryDocId!,
+          seconds,
+        );
+
+        // **NOU: També registra el temps per a l'artista cada 30 segons**
+        if (currentSong != null) {
+          await userService.recordArtistListeningTime(
+            currentSong!.artistId,
+            seconds,
+          );
+        }
+      }
+    });
+  }
+
   // --- Intern ---
   Future<Song?> _ensureFullSong(Song song) async {
     if (song.fileURL.isNotEmpty) {
@@ -233,10 +330,37 @@ class PlayerService {
     }
   }
 
+  // **NOU: Funció per crear una entrada a l'historial**
+  Future<void> _addToPlayHistory(Song song) async {
+    try {
+      final historyRef = userService.currentUserRef!.collection('playHistory');
+
+      final doc = await historyRef.add({
+        'songId': FirebaseFirestore.instance.doc('songs/${song.id}'),
+        'playedAt': FieldValue.serverTimestamp(),
+        'playDuration': 0, // Temporal - s'actualitzarà
+        'completed': false, // Es posarà a true quan s'acabi
+      });
+
+      _currentHistoryDocId = doc.id;
+      _playStartTime = DateTime.now();
+
+      // Inicia el timer per actualitzacions periòdiques
+      _startPlaybackTimer();
+
+      log('Historial iniciat per cançó ${song.id}', name: 'PlayerService');
+    } catch (e) {
+      print("Error afegint a l'historial: $e");
+    }
+  }
+
   Future<void> _playCurrent() async {
     if (currentSong == null) return;
 
     try {
+      // **Actualitza el temps de la cançó anterior (si n'hi ha)**
+      await _updateHistoryDuration();
+
       // com que podem tenir cançons incompletes perque no hem guardat el fileurl a tot arreu del firebase
       final fullSong = await _ensureFullSong(currentSong!);
       if (fullSong == null) return;
@@ -244,7 +368,7 @@ class PlayerService {
       // IMPORTANT: actualitzem la cua amb la versió completa
       _queue[currentIndex] = fullSong;
 
-      // I també l’original (per shuffle off)
+      // I també l'original (per shuffle off)
       final originalIndex = _originalQueue.indexWhere(
         (s) => s.id == fullSong.id,
       );
@@ -254,7 +378,8 @@ class PlayerService {
 
       await _audioPlayer.play(UrlSource(fullSong.fileURL));
 
-      userService.addToHistory(fullSong.id);
+      // **NOU: Aquesta és la clau - crea una entrada a l'historial**
+      await _addToPlayHistory(fullSong);
     } catch (e) {
       print("Error reproduint la cançó: $e");
     }
@@ -282,6 +407,9 @@ class PlayerService {
   }
 
   void dispose() {
+    // **Assegura't d'actualitzar el temps quan es disposa**
+    _updateHistoryDuration();
+    _playbackTimer?.cancel();
     _audioPlayer.dispose();
   }
 }

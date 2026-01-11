@@ -86,7 +86,7 @@ class _SearchPageState extends State<SearchPage> {
                   includePlaylists: _effectiveFilter('playlist'),
                   includeArtists: _effectiveFilter('artist'),
                   includeUsers: _effectiveFilter('user'),
-                  limit: 100, // Ajustat a 100 resultats
+                  limit: 20,
                 ),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {

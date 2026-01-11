@@ -292,24 +292,22 @@ class UserService {
   // Metodes de PlayerService
   Future<void> addToHistory(String songId) async {
     try {
-      final historyRef = _currentUserRef!.collection(
-        'playHistory',
-      ); // Referència a l'historial de reproducció
+      final historyRef = _currentUserRef!.collection('playHistory');
 
+      // Això s'utilitza quan alguna altra part del codi ho crida
+      // En realitat, PlayerService és qui ha de gestionar això
       await historyRef.add({
-        // Afegeix una nova entrada a l'historial
-        'songId': _firestore.doc('songs/$songId'), // Referència a la cançó
-        'playedAt': FieldValue.serverTimestamp(), // Timestamp de reproducció
-        'playDuration': 0, // Duració de reproducció (inicialment 0)
-        'completed': false, // Estat de completat (inicialment false)
+        'songId': _firestore.doc('songs/$songId'),
+        'playedAt': FieldValue.serverTimestamp(),
+        'playDuration': 0, // Es podria intentar estimar aquí
+        'completed': false,
       });
 
       log(
-        'Cançó $songId afegida a historial',
+        'Cançó $songId afegida a historial (mètode vell)',
         name: 'UserService',
-      ); // Log de confirmació
+      );
     } catch (e) {
-      // Captura d'errors
       print("Error guardant historial: $e");
     }
   }
@@ -1036,5 +1034,106 @@ class UserService {
       currentUserRef: artistRef,
       user: user,
     );
+  }
+
+  Future<void> updatePlayHistoryDuration(
+    String historyDocId,
+    int durationSeconds,
+  ) async {
+    if (_currentUserRef == null) return;
+
+    try {
+      await _currentUserRef!.collection('playHistory').doc(historyDocId).update(
+        {'playDuration': durationSeconds, 'completed': true},
+      );
+
+      log(
+        'Temps de reproducció actualitzat per $historyDocId: $durationSeconds segons',
+        name: 'UserService',
+      );
+    } catch (e) {
+      print("Error actualitzant temps de reproducció: $e");
+    }
+  }
+
+  Future<void> recordArtistListeningTime(
+    String artistId,
+    int durationSeconds,
+  ) async {
+    if (_currentUserRef == null || durationSeconds < 10) return;
+
+    try {
+      final now = DateTime.now();
+      final userId = _user.id;
+
+      // **1. Registrar al document de l'usuari**
+      final artistListeningRef = _currentUserRef!
+          .collection('artistListeningTime')
+          .doc(artistId);
+
+      final artistListeningDoc = await artistListeningRef.get();
+
+      if (artistListeningDoc.exists) {
+        final currentSeconds =
+            artistListeningDoc.data()?['totalSeconds'] as int? ?? 0;
+        await artistListeningRef.update({
+          'totalSeconds': currentSeconds + durationSeconds,
+          'lastListened': FieldValue.serverTimestamp(),
+          'artistId': artistId,
+        });
+      } else {
+        await artistListeningRef.set({
+          'totalSeconds': durationSeconds,
+          'lastListened': FieldValue.serverTimestamp(),
+          'artistId': artistId,
+          'createdAt': FieldValue.serverTimestamp(),
+          'userId': userId,
+        });
+      }
+      final firstDayOfMonth = DateTime(now.year, now.month, 1);
+
+      final monthlyListenRef = _currentUserRef!
+          .collection('monthlyArtistPlays')
+          .doc('${artistId}_${now.year}_${now.month}');
+
+      final monthlyListenDoc = await monthlyListenRef.get();
+
+      if (!monthlyListenDoc.exists) {
+        final artistRef = _firestore.collection('artists').doc(artistId);
+        final updateData = {
+          'totalListeningTime': FieldValue.increment(durationSeconds),
+          'lastListened': FieldValue.serverTimestamp(),
+          'totalPlays': FieldValue.increment(1),
+          'monthlyListeners': FieldValue.increment(1),
+        };
+        await artistRef.update(updateData);
+
+        await monthlyListenRef.set({
+          'artistId': artistId,
+          'userId': userId,
+          'month': '${now.year}-${now.month}',
+          'firstPlayed': FieldValue.serverTimestamp(),
+          'lastPlayed': FieldValue.serverTimestamp(),
+        });
+      } else {
+        // **Ja ha escoltat aquest mes - només incrementar temps i reproduccions**
+        final artistRef = _firestore.collection('artists').doc(artistId);
+
+        final updateData = {
+          'totalListeningTime': FieldValue.increment(durationSeconds),
+          'lastListened': FieldValue.serverTimestamp(),
+          'totalPlays': FieldValue.increment(1),
+        };
+
+        await artistRef.update(updateData);
+
+        // Actualitzar data d'última reproducció
+        await monthlyListenRef.update({
+          'lastPlayed': FieldValue.serverTimestamp(),
+        });
+      }
+    } catch (e) {
+      print("Error registrant temps d'artista: $e");
+    }
   }
 }

@@ -1,9 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-
 import 'package:projecte_pm/models/subClass/save_id.dart';
 
 class Artist {
-  //Atributs clase User
+  //Atributs clase Artist
   final String _id;
   String _name;
   String _bio;
@@ -16,6 +15,12 @@ class Artist {
   List<String> _genre;
   Map<String, String> _socialLink;
   final DateTime _createdAt;
+
+  // **NOUS CAMPS PER ESTADÍSTIQUES**
+  int _totalListeningTime; // Temps total en segons
+  DateTime? _lastListened; // Última vegada que algú va escoltar
+  int _monthlyListeners; // Oients del mes actual
+  int _totalPlays; // Reproduccions totals
 
   List<SaveId> _artistFollower;
   List<SaveId> _artistSong;
@@ -35,10 +40,16 @@ class Artist {
     List<String>? genre,
     Map<String, String>? socialLink,
     DateTime? createdAt,
+
+    // **NOUS PARÀMETRES**
+    int? totalListeningTime,
+    DateTime? lastListened,
+    int? monthlyListeners,
+    int? totalPlays,
+
     List<SaveId>? artistFollower,
     List<SaveId>? artistSong,
-    List<SaveId>?
-    artistAlbum, // Afegit per poder fer el fetch de albums del artista en el perfil (VICTOR)
+    List<SaveId>? artistAlbum,
   }) : _id = id,
        _name = name ?? 'unnamed',
        _email = email,
@@ -51,6 +62,11 @@ class Artist {
        _genre = genre ?? [],
        _socialLink = socialLink ?? {},
        _createdAt = createdAt ?? DateTime.now(),
+       // **INICIALITZAR NOUS CAMPS**
+       _totalListeningTime = totalListeningTime ?? 0,
+       _lastListened = lastListened,
+       _monthlyListeners = monthlyListeners ?? 0,
+       _totalPlays = totalPlays ?? 0,
        _artistFollower = artistFollower ?? [],
        _artistSong = artistSong ?? [],
        _artistAlbum = artistAlbum ?? [];
@@ -68,6 +84,13 @@ class Artist {
   List<String> get genre => _genre;
   Map<String, String> get socialLink => _socialLink;
   DateTime get createdAt => _createdAt;
+
+  // **NOUS GETTERS**
+  int get totalListeningTime => _totalListeningTime;
+  DateTime? get lastListened => _lastListened;
+  int get monthlyListeners => _monthlyListeners;
+  int get totalPlays => _totalPlays;
+
   List<SaveId> get artistAlbum => _artistAlbum;
   List<SaveId> get artistFollower => _artistFollower;
   List<SaveId> get artistSong => _artistSong;
@@ -81,6 +104,12 @@ class Artist {
   set label(String label) => _label = label;
   set manager(String manager) => _manager = manager;
 
+  // **NOUS SETTERS**
+  set totalListeningTime(int value) => _totalListeningTime = value;
+  set lastListened(DateTime? value) => _lastListened = value;
+  set monthlyListeners(int value) => _monthlyListeners = value;
+  set totalPlays(int value) => _totalPlays = value;
+
   //Metodes per genre
   set genre(List<String> genre) => _genre = genre;
   void addGenre(String genre) => _genre.add(genre);
@@ -90,6 +119,16 @@ class Artist {
   set socialLink(Map<String, String> socialLink) => _socialLink = socialLink;
   void addSocialLink(String platform, String url) => socialLink[platform] = url;
   void removeSocialLink(String platform) => socialLink.remove(platform);
+
+  //Mètodes per incrementar estadístiques
+  void addListeningTime(int seconds) {
+    _totalListeningTime += seconds;
+    _lastListened = DateTime.now();
+  }
+
+  void incrementPlays() {
+    _totalPlays++;
+  }
 
   //Metode per afegir un seguidor al artista
   void addFollower(String userId) {
@@ -140,6 +179,26 @@ class Artist {
   int songCount() => _artistSong.length;
   int albumCount() => _artistAlbum.length;
 
+  // Mètode per formatejar el temps d'escolta
+  String formatListeningTime() {
+    if (_totalListeningTime <= 0) return '0 minuts';
+
+    final hours = _totalListeningTime ~/ 3600;
+    final minutes = (_totalListeningTime % 3600) ~/ 60;
+
+    if (hours > 0) {
+      if (minutes > 0) {
+        return '${hours}h ${minutes}m';
+      } else {
+        return '${hours}h';
+      }
+    } else if (minutes > 0) {
+      return '${minutes} minuts';
+    } else {
+      return '${_totalListeningTime} segons';
+    }
+  }
+
   //Metode que ompleix la clase a partir de un map de Firebase
   factory Artist.fromMap(Map<String, dynamic> data) {
     return Artist(
@@ -152,9 +211,16 @@ class Artist {
       verified: data['verified'] ?? false,
       label: data['label'] ?? '',
       manager: data['manager'] ?? '',
-      genre: List<String>.from(data['genre']),
-      socialLink: Map<String, String>.from(data['socialLink']),
+      genre: List<String>.from(data['genre'] ?? []),
+      socialLink: Map<String, String>.from(data['socialLink'] ?? {}),
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+
+      // **NOUS CAMPS**
+      totalListeningTime: (data['totalListeningTime'] as int?) ?? 0,
+      lastListened: (data['lastListened'] as Timestamp?)?.toDate(),
+      monthlyListeners: (data['monthlyListeners'] as int?) ?? 0,
+      totalPlays: (data['totalPlays'] as int?) ?? 0,
+
       artistFollower: (data['artistFollower'] as List<dynamic>? ?? [])
           .map(
             (followerData) =>
@@ -185,6 +251,15 @@ class Artist {
       'genre': _genre,
       'socialLink': _socialLink,
       'createdAt': Timestamp.fromDate(_createdAt),
+
+      // **NOUS CAMPS**
+      'totalListeningTime': _totalListeningTime,
+      'lastListened': _lastListened != null
+          ? Timestamp.fromDate(_lastListened!)
+          : null,
+      'monthlyListeners': _monthlyListeners,
+      'totalPlays': _totalPlays,
+
       'artistFollower': _artistFollower
           .map((follower) => follower.toMap())
           .toList(),
