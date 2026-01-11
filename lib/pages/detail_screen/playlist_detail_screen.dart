@@ -460,7 +460,7 @@ class _PlaylistDetailScreenState extends State<PlaylistDetailScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Playlist pública',
+                                  'Playlist estat',
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 16,
@@ -469,9 +469,7 @@ class _PlaylistDetailScreenState extends State<PlaylistDetailScreen> {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  isPublic
-                                      ? 'Tothom pot veure aquesta playlist'
-                                      : 'Només tu pots veure aquesta playlist',
+                                  isPublic ? 'Pública' : 'Privada',
                                   style: TextStyle(
                                     color: Colors.grey[400],
                                     fontSize: 12,

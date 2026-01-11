@@ -316,48 +316,43 @@ class _CreateAlbumPageState extends State<CreateAlbumPage> {
                       ],
                     ),
                     const SizedBox(height: 30),
-                    Row(
-                      children: [
-                        Expanded(
-                          flex: 1,
-                          child: DropdownButtonFormField<String>(
-                            isExpanded: true,
-                            isDense: true,
-                            value: _type,
-                            dropdownColor: const Color(0xFF282828),
-                            style: const TextStyle(color: Colors.white),
-                            decoration: _inputStyle("Tipus", Icons.album),
-                            items: ['album', 'EP', 'single']
-                                .map(
-                                  (t) => DropdownMenuItem(
-                                    value: t,
-                                    child: Text(t.toUpperCase()),
-                                  ),
-                                )
-                                .toList(),
-                            onChanged: (v) => setState(() => _type = v!),
+                    Expanded(
+                      flex: 1,
+                      child: DropdownButtonFormField<String>(
+                        isExpanded: true,
+                        isDense: true,
+                        value: _type,
+                        dropdownColor: const Color(0xFF282828),
+                        style: const TextStyle(color: Colors.white),
+                        decoration: _inputStyle("Tipus", Icons.album),
+                        items: ['album', 'EP', 'single']
+                            .map(
+                              (t) => DropdownMenuItem(
+                                value: t,
+                                child: Text(t.toUpperCase()),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (v) => setState(() => _type = v!),
+                      ),
+                    ),
+                    const SizedBox(height: 15),
+                    Expanded(
+                      flex: 2,
+                      child: TextField(
+                        controller: _genreInputController,
+                        style: const TextStyle(color: Colors.white),
+                        decoration: _inputStyle("Gènere", Icons.tag).copyWith(
+                          suffixIcon: IconButton(
+                            icon: const Icon(
+                              Icons.add_circle,
+                              color: Colors.blueAccent,
+                            ),
+                            onPressed: _addGenre,
                           ),
                         ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          flex: 2,
-                          child: TextField(
-                            controller: _genreInputController,
-                            style: const TextStyle(color: Colors.white),
-                            decoration: _inputStyle("Gènere", Icons.tag)
-                                .copyWith(
-                                  suffixIcon: IconButton(
-                                    icon: const Icon(
-                                      Icons.add_circle,
-                                      color: Colors.blueAccent,
-                                    ),
-                                    onPressed: _addGenre,
-                                  ),
-                                ),
-                            onSubmitted: (_) => _addGenre(),
-                          ),
-                        ),
-                      ],
+                        onSubmitted: (_) => _addGenre(),
+                      ),
                     ),
                     const SizedBox(height: 15),
                     Wrap(

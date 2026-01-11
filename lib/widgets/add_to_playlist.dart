@@ -116,7 +116,7 @@ class AddToPlaylistButton extends StatefulWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Playlist pública',
+                                  'Playlist estat',
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 16,
@@ -125,9 +125,7 @@ class AddToPlaylistButton extends StatefulWidget {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  isPublic
-                                      ? 'Tothom pot veure aquesta playlist'
-                                      : 'Només tu pots veure aquesta playlist',
+                                  isPublic ? 'Pública' : 'Privada',
                                   style: TextStyle(
                                     color: Colors.grey[400],
                                     fontSize: 12,
@@ -633,7 +631,7 @@ class _AddToPlaylistDialogContentState
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Playlist pública',
+                                  'Playlist estat',
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 16,
@@ -642,9 +640,7 @@ class _AddToPlaylistDialogContentState
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  isPublic
-                                      ? 'Tothom pot veure aquesta playlist'
-                                      : 'Només tu pots veure aquesta playlist',
+                                  isPublic ? 'Pública' : 'Privada',
                                   style: TextStyle(
                                     color: Colors.grey[400],
                                     fontSize: 12,
