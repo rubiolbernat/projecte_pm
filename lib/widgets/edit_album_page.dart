@@ -322,6 +322,7 @@ class _EditAlbumPageState extends State<EditAlbumPage> {
                           ? _songCoverUrlController.text
                           : _coverUrlController.text,
                       genre: List.from(_selectedGenres),
+                      // Cançons sempre tenen la mateixa visibilitat que l'àlbum
                       isPublic: _isPublic,
                       lyrics: _songLyricsController.text,
                       createdAt: _songToEdit?.createdAt ?? DateTime.now(),
@@ -441,6 +442,7 @@ class _EditAlbumPageState extends State<EditAlbumPage> {
     setState(() => _isSaving = true);
 
     try {
+      bool visibilityChanged = _album!.isPublic != _isPublic;
       _album!.name = _titleController.text;
       _album!.coverURL = _coverUrlController.text;
       _album!.label = _labelController.text;
@@ -458,6 +460,10 @@ class _EditAlbumPageState extends State<EditAlbumPage> {
       }
 
       for (Song song in _songs) {
+        // Si la visibilitat de l'àlbum ha canviat, actualitza les cançons existents
+        if (visibilityChanged) {
+          song.isPublic = _isPublic;
+        }
         await SongService.updateSong(song);
       }
 
@@ -479,7 +485,8 @@ class _EditAlbumPageState extends State<EditAlbumPage> {
             fileURL: song.fileURL,
             coverURL: song.coverURL,
             genre: List.from(_selectedGenres),
-            isPublic: song.isPublic,
+            // Assegura que les noves cançons tinguin la mateixa visibilitat que l'àlbum
+            isPublic: _isPublic,
             lyrics: song.lyrics,
             createdAt: song.createdAt,
           );
@@ -503,16 +510,22 @@ class _EditAlbumPageState extends State<EditAlbumPage> {
 
       await AlbumService.updateAlbum(_album!);
 
+      // Si la visibilitat ha canviat, actualitza totes les cançons de l'àlbum
+      if (visibilityChanged) {
+        // Actualitza totes les cançons de l'àlbum (incloses les que no estaven a la llista actual)
+        await _updateAllAlbumSongsVisibility();
+      }
+
       await widget.artistService.refreshArtist();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Álbum actualizado correctamente")),
+          const SnackBar(content: Text("Àlbum actualitzat correctament")),
         );
         Navigator.pop(context, true);
       }
     } catch (e) {
-      print("Error guardando cambios: $e");
+      print("Error desant canvis: $e");
       if (mounted) {
         ScaffoldMessenger.of(
           context,
@@ -520,6 +533,33 @@ class _EditAlbumPageState extends State<EditAlbumPage> {
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
+    }
+  }
+
+  // Nova funció per actualitzar la visibilitat de totes les cançons de l'àlbum
+  Future<void> _updateAllAlbumSongsVisibility() async {
+    try {
+      // Obtenir totes les cançons de l'àlbum (incloses les que no estan carregades)
+      final batch = _firestore.batch();
+
+      // Obtenir totes les cançons de l'àlbum des de Firestore
+      final songsSnapshot = await _firestore
+          .collection('songs')
+          .where('albumId', isEqualTo: widget.albumId)
+          .get();
+
+      for (final doc in songsSnapshot.docs) {
+        batch.update(doc.reference, {'isPublic': _isPublic});
+      }
+
+      await batch.commit();
+
+      print(
+        "Actualitzada visibilitat de ${songsSnapshot.docs.length} cançons a $_isPublic",
+      );
+    } catch (e) {
+      print("Error actualitzant visibilitat de cançons: $e");
+      throw e;
     }
   }
 
@@ -784,9 +824,11 @@ class _EditAlbumPageState extends State<EditAlbumPage> {
                         "Àlbum públic",
                         style: TextStyle(color: Colors.white),
                       ),
-                      subtitle: const Text(
-                        "Visible per a tots els usuaris",
-                        style: TextStyle(color: Colors.grey),
+                      subtitle: Text(
+                        _isPublic
+                            ? "Visible per a tots els usuaris (totes les cançons seran públiques)"
+                            : "Només visible per a tu (totes les cançons seran privades)",
+                        style: const TextStyle(color: Colors.grey),
                       ),
                       value: _isPublic,
                       onChanged: (value) => setState(() => _isPublic = value),
