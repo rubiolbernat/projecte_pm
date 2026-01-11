@@ -307,10 +307,12 @@ class _AddToPlaylistDialogContentState
     extends State<AddToPlaylistDialogContent> {
   bool _isLoading = false;
   List<Playlist> _userPlaylists = [];
+  late PlaylistService _playlistService;
 
   @override
   void initState() {
     super.initState();
+    _playlistService = widget.playlistService ?? PlaylistService();
     _loadUserPlaylists();
   }
 
@@ -320,7 +322,7 @@ class _AddToPlaylistDialogContentState
     }
 
     try {
-      final createdPlaylists = await widget.playlistService?.getUserPlaylists(
+      final createdPlaylists = await _playlistService.getUserPlaylists(
         widget.playerService.currentUserId,
       );
 
@@ -508,7 +510,7 @@ class _AddToPlaylistDialogContentState
 
   Future<void> _addSongToPlaylist(String playlistId) async {
     try {
-      await widget.playlistService?.addSongToPlaylist(
+      await _playlistService.addSongToPlaylist(
         playlistId: playlistId,
         songId: widget.songId,
         userId: widget.playerService.currentUserId,
@@ -720,14 +722,13 @@ class _AddToPlaylistDialogContentState
                             const Center(child: CircularProgressIndicator()),
                       );
 
-                      final playlistId = await widget.playlistService
-                          ?.createPlaylist(
-                            userId: widget.playerService.currentUserId,
-                            name: name,
-                            description: description,
-                            coverURL: coverURL,
-                            isPublic: isPublic,
-                          );
+                      final playlistId = await _playlistService.createPlaylist(
+                        userId: widget.playerService.currentUserId,
+                        name: name,
+                        description: description,
+                        coverURL: coverURL,
+                        isPublic: isPublic,
+                      );
 
                       final user = widget.playerService.userService.user;
                       user.addOwnedPlaylist(playlistId!);
@@ -739,8 +740,8 @@ class _AddToPlaylistDialogContentState
                       Navigator.pop(context);
                       Navigator.pop(context);
 
-                      await widget.playlistService?.addSongToPlaylist(
-                        playlistId: playlistId!,
+                      await _playlistService.addSongToPlaylist(
+                        playlistId: playlistId,
                         songId: widget.songId,
                         userId: widget.playerService.currentUserId,
                       );
